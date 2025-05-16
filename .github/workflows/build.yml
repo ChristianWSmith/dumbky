@@ -31,13 +31,32 @@ jobs:
         with:
           go-version: "1.24.3"
 
+      # Linux-specific deps
+      - name: Install Linux Dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y \
+          libgl1-mesa-dev xorg-dev libxkbcommon-dev
+
+      # Windows-specific deps (via Chocolatey)
+      - name: Install Windows Dependencies
+        if: matrix.os == 'windows-latest'
+        shell: powershell
+        run: |
+          choco install mingw -y
+          echo "C:\tools\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      # macOS-specific setup
+      - name: Install macOS Dependencies
+        if: matrix.os == 'macos-latest'
+        run: xcode-select --install || true # May already be installed
+
       - name: Install fyne CLI
-        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+        run: go install fyne.io/tools/cmd/fyne@latest
         env:
           GOBIN: ${{ github.workspace }}/bin
 
       - name: Package Fyne App
-        run: ${{ github.workspace }}/bin/fyne package -os ${{ matrix.goos }} -icon ${{ matrix.icon }}
+        run: ${{ github.workspace }}/bin/fyne package --os ${{ matrix.goos }} --icon ${{ matrix.icon }} --name Dumbky --app-id com.christianwsmith.dumbky --app-version 0.1.0
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
