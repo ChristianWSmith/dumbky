@@ -34,11 +34,9 @@ jobs:
       # Linux-specific deps
       - name: Install Linux Dependencies
         if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y \
-          libgl1 \
-          libglx-mesa0 \
-          xorg-dev \
-          libxkbcommon-dev
+        run:
+          sudo add-apt-repository universe && sudo apt-get update && sudo apt-get install -y \
+          golang gcc libgl1-mesa-dev xorg-dev libxkbcommon-dev
 
       # Windows-specific deps (via Chocolatey)
       - name: Install Windows Dependencies
