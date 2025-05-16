@@ -1,0 +1,53 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            goos: linux
+            icon: assets/icon.png
+          - os: windows-latest
+            goos: windows
+            icon: assets/icon.ico
+          - os: macos-latest
+            goos: darwin
+            icon: assets/icon.png
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.3"
+
+      - name: Install fyne CLI
+        run: go install fyne.io/fyne/v2/cmd/fyne@latest
+        env:
+          GOBIN: ${{ github.workspace }}/bin
+
+      - name: Package Fyne App
+        run: ${{ github.workspace }}/bin/fyne package -os ${{ matrix.goos }} -icon ${{ matrix.icon }}
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dumbky-${{ matrix.goos }}
+          path: |
+            *.exe
+            *.dmg
+            *.app
+            *.tar.xz
+            *.tar.gz
+            *.zip
+            *.desktop
