@@ -23,6 +23,7 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyKeyValueEditorView := common.ComposeKeyValueEditorView()
 	bodyTypeSelect := widget.NewSelect([]string{"FORM", "RAW", "NONE"}, nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
+	bodyRawEntry.TextStyle.Monospace = true
 
 	bodyContentStack := container.NewStack(bodyKeyValueEditorView.UI, bodyRawEntry)
 

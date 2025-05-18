@@ -20,14 +20,14 @@ func ComposeResponseView() ResponseView {
 	bodyBind := binding.NewString()
 
 	statusEntry := widget.NewEntry()
-	statusEntry.Disable()
 	statusEntry.SetPlaceHolder("<response status>")
+	statusEntry.TextStyle.Monospace = true
 	timeEntry := widget.NewEntry()
-	timeEntry.Disable()
 	timeEntry.SetPlaceHolder("<response time>")
-	bodyEntry := widget.NewMultiLineEntry()
-	bodyEntry.Disable()
+	timeEntry.TextStyle.Monospace = true
+	bodyEntry := widget.NewEntry()
 	bodyEntry.SetPlaceHolder("<response body>")
+	bodyEntry.TextStyle.Monospace = true
 
 	statusEntry.Bind(statusBind)
 	timeEntry.Bind(timeBind)

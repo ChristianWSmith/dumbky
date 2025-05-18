@@ -24,6 +24,7 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	methodSelect.SetSelectedIndex(0)
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder("https://www.example.com/")
+	urlEntry.TextStyle.Monospace = true
 	sslCheck := widget.NewCheck("SSL", nil)
 	sendButton := widget.NewButton("SEND", nil)
 

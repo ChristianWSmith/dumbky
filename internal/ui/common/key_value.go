@@ -22,8 +22,10 @@ func ComposeKeyValueView() KeyValueView {
 
 	keyEntry := widget.NewEntry()
 	keyEntry.SetPlaceHolder("<key>")
+	keyEntry.TextStyle.Monospace = true
 	valueEntry := widget.NewEntry()
 	valueEntry.SetPlaceHolder("<value>")
+	valueEntry.TextStyle.Monospace = true
 	enabledCheck := widget.NewCheck("", nil)
 	destroyButton := widget.NewButton("✖", nil)
 

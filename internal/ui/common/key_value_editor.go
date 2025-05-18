@@ -10,34 +10,19 @@ type KeyValueEditorView struct {
 	KeyValues map[KeyValueView]bool
 }
 
-func (kve KeyValueEditorView) GetEnabled() map[string]string {
+func (kve KeyValueEditorView) GetMap(filter func(kv *KeyValueView) bool) map[string]string {
 	out := make(map[string]string)
-
 	for kv, _ := range kve.KeyValues {
 		enabled, err := kv.Enabled.Get()
-		if enabled && err == nil {
-			key, keyErr := kv.Key.Get()
-			value, valueErr := kv.Value.Get()
-			if keyErr == nil && valueErr == nil {
-				out[key] = value
-			}
+		if err != nil || !enabled {
+			continue
 		}
-	}
-
-	return out
-}
-
-func (kve KeyValueEditorView) GetAll() map[string]string {
-	out := make(map[string]string)
-
-	for kv, _ := range kve.KeyValues {
 		key, keyErr := kv.Key.Get()
 		value, valueErr := kv.Value.Get()
-		if keyErr != nil && valueErr != nil {
+		if keyErr == nil && valueErr == nil {
 			out[key] = value
 		}
 	}
-
 	return out
 }
 
