@@ -1,6 +1,7 @@
 package app
 
 import (
+	"dumbky/internal/log"
 	"dumbky/internal/ui"
 
 	"fyne.io/fyne/v2"
@@ -38,5 +39,6 @@ func Run() {
 	// defer glfw.Terminate()
 	// w.Canvas().Refresh(rootView.UI)
 
+	log.Debug("AYY")
 	w.ShowAndRun()
 }
