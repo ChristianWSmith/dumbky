@@ -10,10 +10,10 @@ import (
 )
 
 type ResponseView struct {
-	UI *fyne.Container
-	Status binding.String
-	Time binding.String
-	Body binding.String
+	UI            *fyne.Container
+	StatusBinding binding.String
+	TimeBinding   binding.String
+	BodyBinding   binding.String
 }
 
 func ComposeResponseView() ResponseView {
@@ -38,7 +38,7 @@ func ComposeResponseView() ResponseView {
 	info := container.NewVBox(statusEntry, timeEntry)
 	ui := container.NewBorder(info, nil, nil, nil, bodyEntry)
 
-	return ResponseView {
+	return ResponseView{
 		ui,
 		statusBind,
 		timeBind,

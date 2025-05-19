@@ -2,6 +2,7 @@ package common
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -10,11 +11,25 @@ import (
 )
 
 type KeyValueView struct {
-	UI *fyne.Container
-	DestroyButton *widget.Button
-	Enabled binding.Bool
-	Key binding.String
-	Value binding.String
+	UI             *fyne.Container
+	DestroyButton  *widget.Button
+	EnabledBinding binding.Bool
+	KeyBinding     binding.String
+	ValueBinding   binding.String
+}
+
+func enabledCheckOnChangedWorker(checked bool, keyEntry, valueEntry *widget.Entry) {
+	if checked {
+		fyne.Do(func() {
+			keyEntry.Enable()
+			valueEntry.Enable()
+		})
+	} else {
+		fyne.Do(func() {
+			keyEntry.Disable()
+			valueEntry.Disable()
+		})
+	}
 }
 
 func ComposeKeyValueView() KeyValueView {
@@ -36,23 +51,18 @@ func ComposeKeyValueView() KeyValueView {
 	enabledCheck.Bind(enabledBinding)
 
 	enabledCheck.OnChanged = func(checked bool) {
-		// TODO: background
-		if checked {
-			keyEntry.Enable()
-			valueEntry.Enable()
-		} else {
-			keyEntry.Disable()
-			valueEntry.Disable()
-		}
+		go enabledCheckOnChangedWorker(checked, keyEntry, valueEntry)
 	}
 
 	err := enabledBinding.Set(true)
-	if err != nil { /* TODO: handle error */ }
+	if err != nil {
+		log.Error("Failed to set value for KeyValueView enabledBinding")
+	}
 
 	keyValue := container.NewGridWithColumns(2, keyEntry, valueEntry)
 
 	ui := container.NewBorder(nil, nil, enabledCheck, destroyButton, keyValue)
-	
+
 	return KeyValueView{
 		ui,
 		destroyButton,

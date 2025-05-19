@@ -10,12 +10,12 @@ import (
 )
 
 type ExchangeHeaderView struct {
-	UI *fyne.Container
-	SendButton *widget.Button
-	MethodSelect *widget.Select
-	Method binding.String
-	URL binding.String
-	UseSSL binding.Bool
+	UI            *fyne.Container
+	SendButton    *widget.Button
+	MethodSelect  *widget.Select
+	MethodBinding binding.String
+	URLBinding    binding.String
+	UseSSLBinding binding.Bool
 }
 
 func ComposeExchangeHeaderView() ExchangeHeaderView {
@@ -38,7 +38,7 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	sslSend := container.NewHBox(sslCheck, sendButton)
 	ui := container.NewBorder(nil, nil, methodSelect, sslSend, urlEntry)
 
-	return ExchangeHeaderView {
+	return ExchangeHeaderView{
 		ui,
 		sendButton,
 		methodSelect,

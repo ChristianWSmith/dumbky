@@ -11,10 +11,33 @@ import (
 )
 
 type RequestBodyView struct {
-	UI *fyne.Container
-	BodyKeyValue common.KeyValueEditorView
-	BodyType binding.String
-	BodyRaw binding.String
+	UI                 *fyne.Container
+	BodyKeyValueEditor common.KeyValueEditorView
+	BodyTypeSelect     *widget.Select
+	BodyTypeBinding    binding.String
+	BodyRawBinding     binding.String
+}
+
+func bodyTypeSelectOnChangedWorker(val string, bodyRawEntry *widget.Entry, bodyKeyValueEditorView common.KeyValueEditorView, bodyContentStack *fyne.Container) {
+	if val == constants.UI_BODY_TYPE_FORM {
+		fyne.Do(func() {
+			bodyRawEntry.Hide()
+			bodyKeyValueEditorView.UI.Show()
+			bodyContentStack.Refresh()
+		})
+	} else if val == constants.UI_BODY_TYPE_RAW {
+		fyne.Do(func() {
+			bodyKeyValueEditorView.UI.Hide()
+			bodyRawEntry.Show()
+			bodyContentStack.Refresh()
+		})
+	} else if val == constants.UI_BODY_TYPE_NONE {
+		fyne.Do(func() {
+			bodyKeyValueEditorView.UI.Hide()
+			bodyRawEntry.Hide()
+			bodyContentStack.Refresh()
+		})
+	}
 }
 
 func ComposeRequestBodyView() RequestBodyView {
@@ -33,20 +56,7 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyRawEntry.Bind(bodyRawBind)
 
 	bodyTypeSelect.OnChanged = func(val string) {
-		// TODO: background
-		if val == constants.UI_BODY_TYPE_FORM {
-			bodyRawEntry.Hide()
-			bodyKeyValueEditorView.UI.Show()
-			bodyContentStack.Refresh()
-		} else if val == constants.UI_BODY_TYPE_RAW {
-			bodyKeyValueEditorView.UI.Hide()
-			bodyRawEntry.Show()
-			bodyContentStack.Refresh()
-		} else if val == constants.UI_BODY_TYPE_NONE {
-			bodyKeyValueEditorView.UI.Hide()
-			bodyRawEntry.Hide()
-			bodyContentStack.Refresh()
-		}
+		go bodyTypeSelectOnChangedWorker(val, bodyRawEntry, bodyKeyValueEditorView, bodyContentStack)
 	}
 	bodyTypeSelect.SetSelectedIndex(0)
 
@@ -55,6 +65,7 @@ func ComposeRequestBodyView() RequestBodyView {
 	return RequestBodyView{
 		ui,
 		bodyKeyValueEditorView,
+		bodyTypeSelect,
 		bodyTypeBind,
 		bodyRawBind,
 	}
