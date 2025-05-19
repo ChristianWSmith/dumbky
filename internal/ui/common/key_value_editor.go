@@ -95,7 +95,6 @@ func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) err
 	addButton.OnTapped = func() {
 		go addButtonOnTappedWorker(keyValueViews, keyValueBox, keyValidator, valueValidator)
 	}
-	//addButton.Tapped(nil)
 
 	keyValueAddBox := container.NewVBox(keyValueBox, addButton)
 
