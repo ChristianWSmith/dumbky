@@ -36,7 +36,7 @@ func addButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueBox *f
 
 func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
 	out := []KeyValueView{}
-	for kv, _ := range kve.KeyValues {
+	for kv := range kve.KeyValues {
 		enabled, enabledErr := kv.EnabledBinding.Get()
 		if enabledErr != nil {
 			log.Error("Failed to get EnabledBinding in GetMap", enabledErr.Error())
