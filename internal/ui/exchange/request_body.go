@@ -59,7 +59,9 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	bodyRawEntry.Validator = validators.ValidateRawBodyContent
 
+	bodyTypeSelectOnChangedOld := bodyTypeSelect.OnChanged
 	bodyTypeSelect.OnChanged = func(val string) {
+		bodyTypeSelectOnChangedOld(val)
 		go bodyTypeSelectOnChangedWorker(val, bodyRawEntry, bodyKeyValueEditorView, bodyContentStack)
 	}
 	bodyTypeSelect.SetSelectedIndex(0)

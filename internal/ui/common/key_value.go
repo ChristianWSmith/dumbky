@@ -55,13 +55,15 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	keyEntry.Validator = keyValidator
 	valueEntry.Validator = valueValidator
 
+	enabledCheckOnChangedOld := enabledCheck.OnChanged
 	enabledCheck.OnChanged = func(checked bool) {
+		enabledCheckOnChangedOld(checked)
 		go enabledCheckOnChangedWorker(checked, keyEntry, valueEntry)
 	}
 
 	err := enabledBinding.Set(true)
 	if err != nil {
-		log.Error("Failed to set value for KeyValueView enabledBinding")
+		log.Error("Failed to set value for KeyValueView enabledBinding", err.Error())
 	}
 
 	keyValue := container.NewGridWithColumns(2, keyEntry, valueEntry)

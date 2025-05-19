@@ -19,53 +19,57 @@ type ExchangeView struct {
 func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView) {
 	url, urlErr := headerView.URLBinding.Get()
 	if urlErr != nil {
-		log.Error("Failed to Get URLBinding")
+		log.Error("Failed to Get URLBinding", urlErr.Error())
 		return
 	}
 	urlErr = headerView.URLEntry.Validate()
 	if urlErr != nil {
-		log.Warn("Failed to Validate URLEntry")
+		log.Warn("Failed to Validate URLEntry", urlErr.Error())
 		return
 	}
 	method, methodErr := headerView.MethodBinding.Get()
 	if methodErr != nil {
-		log.Error("Failed to Get MethodBinding")
+		log.Error("Failed to Get MethodBinding", methodErr.Error())
 		return
 	}
 	useSSL, useSSLErr := headerView.UseSSLBinding.Get()
 	if useSSLErr != nil {
-		log.Error("Failed to Get UseSSLBinding")
+		log.Error("Failed to Get UseSSLBinding", useSSLErr.Error())
 		return
 	}
 	headers := requestView.Headers.GetMap()
 	headersErr := requestView.Headers.Validate()
 	if headersErr != nil {
-		log.Error("Failed to Get Headers Map")
+		log.Error("Failed to Get Headers Map", headersErr.Error())
 		return
 	}
 	params := requestView.Params.GetMap()
 	paramsErr := requestView.Params.Validate()
 	if paramsErr != nil {
-		log.Error("Failed to Get Params Map")
+		log.Error("Failed to Get Params Map", paramsErr.Error())
 		return
 	}
 
 	bodyType, bodyTypeErr := requestView.Body.BodyTypeBinding.Get()
+	if bodyTypeErr != nil {
+		log.Error("Failed to Get BodyTypeBinding", bodyTypeErr.Error())
+		return
+	}
 	bodyRaw, bodyRawErr := requestView.Body.BodyRawBinding.Get()
-	if bodyRawErr != nil && (bodyType == constants.UI_BODY_TYPE_RAW || bodyTypeErr != nil) {
-		log.Error("Failed to Get BodyRawBinding")
+	if bodyRawErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
+		log.Error("Failed to Get BodyRawBinding", bodyRawErr.Error())
 		return
 	}
 	bodyRawErr = requestView.Body.BodyRawEntry.Validate()
-	if bodyRawErr != nil && (bodyType == constants.UI_BODY_TYPE_RAW || bodyTypeErr != nil) {
-		log.Warn("Failed to Validate BodyRawEntry")
+	if bodyRawErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
+		log.Warn("Failed to Validate BodyRawEntry", bodyRawErr.Error())
 		return
 	}
 
 	bodyForm := requestView.Body.BodyKeyValueEditor.GetMap()
 	bodyFormErr := requestView.Body.BodyKeyValueEditor.Validate()
-	if bodyFormErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM || bodyTypeErr != nil) {
-		log.Warn("Failed to Validate Body Map")
+	if bodyFormErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
+		log.Warn("Failed to Validate Body Map", bodyFormErr.Error())
 		return
 	}
 
@@ -75,28 +79,29 @@ func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestVi
 		UseSSL:   useSSL,
 		Headers:  headers,
 		Params:   params,
+		BodyType: bodyType,
 		BodyRaw:  bodyRaw,
 		BodyForm: bodyForm,
 	}
 
 	responsePayload, err := request.SendRequest(requestPayload)
 	if err != nil {
-		log.Error("Failed to SendRequest")
+		log.Error("Failed to SendRequest", err.Error())
 		return
 	}
 
 	fyne.Do(func() {
 		statusErr := responseView.StatusBinding.Set(responsePayload.Status)
 		if statusErr != nil {
-			log.Error("Failed to set StatusBinding")
+			log.Error("Failed to set StatusBinding", statusErr.Error())
 		}
 		timeErr := responseView.TimeBinding.Set(responsePayload.Time)
 		if timeErr != nil {
-			log.Error("Failed to set TimeBinding")
+			log.Error("Failed to set TimeBinding", timeErr.Error())
 		}
 		bodyErr := responseView.BodyBinding.Set(responsePayload.Body)
 		if bodyErr != nil {
-			log.Error("Failed to set BodyBinding")
+			log.Error("Failed to set BodyBinding", bodyErr.Error())
 		}
 	})
 }
@@ -124,7 +129,9 @@ func ComposeExchangeView() ExchangeView {
 		go headerViewSendButtonOnTappedWorker(headerView, requestView, responseView)
 	}
 
+	headerViewMethodSelectOnChangedOld := headerView.MethodSelect.OnChanged
 	headerView.MethodSelect.OnChanged = func(val string) {
+		headerViewMethodSelectOnChangedOld(val)
 		go headerViewMethodSelectOnChangedWorker(val, requestView)
 	}
 

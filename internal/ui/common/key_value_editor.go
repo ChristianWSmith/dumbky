@@ -39,7 +39,7 @@ func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
 	for kv, _ := range kve.KeyValues {
 		enabled, enabledErr := kv.EnabledBinding.Get()
 		if enabledErr != nil {
-			log.Error("Failed to get EnabledBinding in GetMap")
+			log.Error("Failed to get EnabledBinding in GetMap", enabledErr.Error())
 			continue
 		}
 		if !enabled {
@@ -55,12 +55,12 @@ func (kve KeyValueEditorView) Validate() error {
 	for _, kv := range kve.collectEnabled() {
 		err := kv.KeyEntry.Validate()
 		if err != nil {
-			log.Warn("failed to validate key")
+			log.Warn("failed to validate key", err.Error())
 			return err
 		}
 		err = kv.ValueEntry.Validate()
 		if err != nil {
-			log.Warn("failed to validate value")
+			log.Warn("failed to validate value", err.Error())
 			return err
 		}
 	}
@@ -72,12 +72,12 @@ func (kve KeyValueEditorView) GetMap() map[string]string {
 	for _, kv := range kve.collectEnabled() {
 		key, keyErr := kv.KeyBinding.Get()
 		if keyErr != nil {
-			log.Error("Failed to get KeyValue Key in GetMap")
+			log.Error("Failed to get KeyValue Key in GetMap", keyErr.Error())
 			continue
 		}
 		value, valueErr := kv.ValueBinding.Get()
 		if valueErr != nil {
-			log.Error("Failed to get KeyValue Value in GetMap")
+			log.Error("Failed to get KeyValue Value in GetMap", valueErr.Error())
 			continue
 		}
 		out[key] = value
