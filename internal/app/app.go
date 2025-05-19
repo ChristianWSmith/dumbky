@@ -8,6 +8,8 @@ import (
 	"github.com/fyne-io/glfw-js"
 )
 
+var Canvas fyne.Canvas
+
 func getWindowSize() (float32, float32) {
 	width := float32(800.0)
 	height := float32(600.0)
@@ -27,13 +29,14 @@ func getWindowSize() (float32, float32) {
 func Run() {
 	a := app.New()
 	w := a.NewWindow("Dumbky")
+	Canvas = w.Canvas()
 
 	rootView := ui.ComposeRootView()
 	w.SetContent(rootView.UI)
 
 	width, height := getWindowSize()
 	w.Resize(fyne.NewSize(width, height))
-	
+
 	// TODO: remove?
 	// defer glfw.Terminate()
 	// w.Canvas().Refresh(rootView.UI)
