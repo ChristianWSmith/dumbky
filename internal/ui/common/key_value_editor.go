@@ -1,6 +1,8 @@
 package common
 
 import (
+	"dumbky/internal/constants"
+
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
@@ -32,7 +34,8 @@ func ComposeKeyValueEditorView() KeyValueEditorView {
 	keyValueViews := make(map[KeyValueView]bool)
 	keyValueBox := container.NewVBox()
 
-	addButton := widget.NewButton("➕", func() {
+	addButton := widget.NewButton(constants.UI_LABEL_ADD, func() {
+		// TODO: background
 		keyValueView := ComposeKeyValueView()
 		keyValueView.DestroyButton.OnTapped = func () {
 			delete(keyValueViews, keyValueView)

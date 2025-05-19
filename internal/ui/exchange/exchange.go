@@ -18,7 +18,11 @@ func ComposeExchangeView() ExchangeView {
 	responseView := ComposeResponseView()
 
 	headerView.SendButton.OnTapped = func () {
-		/* TODO */
+		// TODO: send the request
+	}
+
+	headerView.MethodSelect.OnChanged = func (val string) {
+		// TODO: GET and HEAD don't support a body
 	}
 
 	requestResponseView := container.NewHSplit(requestView.UI, responseView.UI)

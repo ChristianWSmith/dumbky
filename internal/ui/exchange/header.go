@@ -1,6 +1,8 @@
 package exchange
 
 import (
+	"dumbky/internal/constants"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
@@ -10,6 +12,7 @@ import (
 type ExchangeHeaderView struct {
 	UI *fyne.Container
 	SendButton *widget.Button
+	MethodSelect *widget.Select
 	Method binding.String
 	URL binding.String
 	UseSSL binding.Bool
@@ -20,13 +23,13 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	urlBind := binding.NewString()
 	sslBind := binding.NewBool()
 
-	methodSelect := widget.NewSelect([]string{"GET", "PUT", "POST", "DELETE"}, nil)
+	methodSelect := widget.NewSelect(constants.HttpMethods(), nil)
 	methodSelect.SetSelectedIndex(0)
 	urlEntry := widget.NewEntry()
-	urlEntry.SetPlaceHolder("https://www.example.com/")
+	urlEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_URL)
 	urlEntry.TextStyle.Monospace = true
-	sslCheck := widget.NewCheck("SSL", nil)
-	sendButton := widget.NewButton("SEND", nil)
+	sslCheck := widget.NewCheck(constants.UI_LABEL_SSL, nil)
+	sendButton := widget.NewButton(constants.UI_LABEL_SEND, nil)
 
 	methodSelect.Bind(methodBind)
 	urlEntry.Bind(urlBind)
@@ -38,6 +41,7 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	return ExchangeHeaderView {
 		ui,
 		sendButton,
+		methodSelect,
 		methodBind,
 		urlBind,
 		sslBind,

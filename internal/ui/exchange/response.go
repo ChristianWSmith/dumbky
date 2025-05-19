@@ -1,6 +1,8 @@
 package exchange
 
 import (
+	"dumbky/internal/constants"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
@@ -20,13 +22,13 @@ func ComposeResponseView() ResponseView {
 	bodyBind := binding.NewString()
 
 	statusEntry := widget.NewEntry()
-	statusEntry.SetPlaceHolder("<response status>")
+	statusEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
 	statusEntry.TextStyle.Monospace = true
 	timeEntry := widget.NewEntry()
-	timeEntry.SetPlaceHolder("<response time>")
+	timeEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_TIME)
 	timeEntry.TextStyle.Monospace = true
 	bodyEntry := widget.NewEntry()
-	bodyEntry.SetPlaceHolder("<response body>")
+	bodyEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_BODY)
 	bodyEntry.TextStyle.Monospace = true
 
 	statusEntry.Bind(statusBind)

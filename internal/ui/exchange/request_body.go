@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/ui/common"
 
 	"fyne.io/fyne/v2"
@@ -21,10 +22,10 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyRawBind := binding.NewString()
 
 	bodyKeyValueEditorView := common.ComposeKeyValueEditorView()
-	bodyTypeSelect := widget.NewSelect([]string{"RAW", "FORM", "NONE"}, nil)
+	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
 	bodyRawEntry.TextStyle.Monospace = true
-	bodyRawEntry.SetPlaceHolder("{}")
+	bodyRawEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_BODY_TYPE_RAW)
 
 	bodyContentStack := container.NewStack(bodyKeyValueEditorView.UI, bodyRawEntry)
 
@@ -32,15 +33,16 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyRawEntry.Bind(bodyRawBind)
 
 	bodyTypeSelect.OnChanged = func(val string) {
-		if val == "FORM" {
+		// TODO: background
+		if val == constants.UI_BODY_TYPE_FORM {
 			bodyRawEntry.Hide()
 			bodyKeyValueEditorView.UI.Show()
 			bodyContentStack.Refresh()
-		} else if val == "RAW" {
+		} else if val == constants.UI_BODY_TYPE_RAW {
 			bodyKeyValueEditorView.UI.Hide()
 			bodyRawEntry.Show()
 			bodyContentStack.Refresh()
-		} else if val == "NONE" {
+		} else if val == constants.UI_BODY_TYPE_NONE {
 			bodyKeyValueEditorView.UI.Hide()
 			bodyRawEntry.Hide()
 			bodyContentStack.Refresh()

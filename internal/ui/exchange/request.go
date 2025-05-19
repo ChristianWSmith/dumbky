@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/ui/common"
 
 	"fyne.io/fyne/v2/container"
@@ -18,9 +19,9 @@ func ComposeRequestView() RequestView {
 	headersView := common.ComposeKeyValueEditorView()
 	bodyView := ComposeRequestBodyView()
 
-	paramsTab := container.NewTabItem("PARAMETERS", paramsView.UI)
-	headersTab := container.NewTabItem("HEADERS", headersView.UI)
-	bodyTab := container.NewTabItem("BODY", bodyView.UI)
+	paramsTab := container.NewTabItem(constants.UI_LABEL_PARAMETERS, paramsView.UI)
+	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersView.UI)
+	bodyTab := container.NewTabItem(constants.UI_LABEL_BODY, bodyView.UI)
 	
 	ui := container.NewAppTabs(paramsTab, headersTab, bodyTab)
 	
