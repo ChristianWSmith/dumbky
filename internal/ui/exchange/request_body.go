@@ -49,8 +49,6 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyKeyValueEditorView := common.ComposeKeyValueEditorView(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
 	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
-	// TODO remove NilValidator
-	bodyRawEntry.Validator = validators.ValidateRawBodyContent
 	bodyRawEntry.TextStyle.Monospace = true
 	bodyRawEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_BODY_TYPE_RAW)
 
@@ -58,6 +56,8 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	bodyTypeSelect.Bind(bodyTypeBind)
 	bodyRawEntry.Bind(bodyRawBind)
+
+	bodyRawEntry.Validator = validators.ValidateRawBodyContent
 
 	bodyTypeSelect.OnChanged = func(val string) {
 		go bodyTypeSelectOnChangedWorker(val, bodyRawEntry, bodyKeyValueEditorView, bodyContentStack)
