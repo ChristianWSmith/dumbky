@@ -59,6 +59,12 @@ func resolveURL(url string, params map[string]string) string {
 	return url
 }
 
+func resolveHeaders(request http.Request, headers map[string]string) {
+	for key, value := range headers {
+		request.Header.Set(key, value)
+	}
+}
+
 func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 	var client *http.Client
 
@@ -85,6 +91,7 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 		log.Error("Failed to create HTTP Request", err.Error())
 		return ResponsePayload{}, err
 	}
+	resolveHeaders(*request, requestPayload.Headers)
 
 	log.Info("Sending request")
 	start := time.Now()
