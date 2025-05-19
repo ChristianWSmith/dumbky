@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/ui/validators"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -13,6 +14,7 @@ type ExchangeHeaderView struct {
 	UI            *fyne.Container
 	SendButton    *widget.Button
 	MethodSelect  *widget.Select
+	URLEntry      *widget.Entry
 	MethodBinding binding.String
 	URLBinding    binding.String
 	UseSSLBinding binding.Bool
@@ -35,6 +37,8 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	urlEntry.Bind(urlBind)
 	sslCheck.Bind(sslBind)
 
+	urlEntry.Validator = validators.ValidateURL
+
 	sslSend := container.NewHBox(sslCheck, sendButton)
 	ui := container.NewBorder(nil, nil, methodSelect, sslSend, urlEntry)
 
@@ -42,6 +46,7 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 		ui,
 		sendButton,
 		methodSelect,
+		urlEntry,
 		methodBind,
 		urlBind,
 		sslBind,

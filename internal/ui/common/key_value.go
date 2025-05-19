@@ -13,6 +13,8 @@ import (
 type KeyValueView struct {
 	UI             *fyne.Container
 	DestroyButton  *widget.Button
+	KeyEntry       *widget.Entry
+	ValueEntry     *widget.Entry
 	EnabledBinding binding.Bool
 	KeyBinding     binding.String
 	ValueBinding   binding.String
@@ -32,7 +34,7 @@ func enabledCheckOnChangedWorker(checked bool, keyEntry, valueEntry *widget.Entr
 	}
 }
 
-func ComposeKeyValueView() KeyValueView {
+func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) KeyValueView {
 	keyBinding := binding.NewString()
 	valueBinding := binding.NewString()
 	enabledBinding := binding.NewBool()
@@ -50,6 +52,9 @@ func ComposeKeyValueView() KeyValueView {
 	valueEntry.Bind(valueBinding)
 	enabledCheck.Bind(enabledBinding)
 
+	keyEntry.Validator = keyValidator
+	valueEntry.Validator = valueValidator
+
 	enabledCheck.OnChanged = func(checked bool) {
 		go enabledCheckOnChangedWorker(checked, keyEntry, valueEntry)
 	}
@@ -66,6 +71,8 @@ func ComposeKeyValueView() KeyValueView {
 	return KeyValueView{
 		ui,
 		destroyButton,
+		keyEntry,
+		valueEntry,
 		enabledBinding,
 		keyBinding,
 		valueBinding,

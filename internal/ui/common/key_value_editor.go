@@ -22,8 +22,8 @@ func destroyButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueVi
 	})
 }
 
-func addButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueBox *fyne.Container) {
-	keyValueView := ComposeKeyValueView()
+func addButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueBox *fyne.Container, keyValidator, valueValidator func(val string) error) {
+	keyValueView := ComposeKeyValueView(keyValidator, valueValidator)
 	keyValueView.DestroyButton.OnTapped = func() {
 		go destroyButtonOnTappedWorker(keyValueViews, keyValueView, keyValueBox)
 	}
@@ -34,18 +34,42 @@ func addButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueBox *f
 	})
 }
 
-func (kve KeyValueEditorView) GetMap(filter func(kv *KeyValueView) bool) map[string]string {
-	out := make(map[string]string)
+func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
+	out := []KeyValueView{}
 	for kv, _ := range kve.KeyValues {
 		enabled, enabledErr := kv.EnabledBinding.Get()
 		if enabledErr != nil {
-			log.Error("")
+			log.Error("Failed to get EnabledBinding in GetMap")
 			continue
 		}
 		if !enabled {
 			log.Debug("Skipping disabled KeyValue")
 			continue
 		}
+		out = append(out, kv)
+	}
+	return out
+}
+
+func (kve KeyValueEditorView) Validate() error {
+	for _, kv := range kve.collectEnabled() {
+		err := kv.KeyEntry.Validate()
+		if err != nil {
+			log.Warn("failed to validate key")
+			return err
+		}
+		err = kv.ValueEntry.Validate()
+		if err != nil {
+			log.Warn("failed to validate value")
+			return err
+		}
+	}
+	return nil
+}
+
+func (kve KeyValueEditorView) GetMap() map[string]string {
+	out := make(map[string]string)
+	for _, kv := range kve.collectEnabled() {
 		key, keyErr := kv.KeyBinding.Get()
 		if keyErr != nil {
 			log.Error("Failed to get KeyValue Key in GetMap")
@@ -61,7 +85,7 @@ func (kve KeyValueEditorView) GetMap(filter func(kv *KeyValueView) bool) map[str
 	return out
 }
 
-func ComposeKeyValueEditorView() KeyValueEditorView {
+func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) error) KeyValueEditorView {
 
 	keyValueViews := make(map[KeyValueView]bool)
 	keyValueBox := container.NewVBox()
@@ -69,7 +93,7 @@ func ComposeKeyValueEditorView() KeyValueEditorView {
 	addButton := widget.NewButton(constants.UI_LABEL_ADD, nil)
 
 	addButton.OnTapped = func() {
-		go addButtonOnTappedWorker(keyValueViews, keyValueBox)
+		go addButtonOnTappedWorker(keyValueViews, keyValueBox, keyValidator, valueValidator)
 	}
 
 	addButton.Tapped(nil)

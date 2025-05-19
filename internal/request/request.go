@@ -1,5 +1,7 @@
 package request
 
+import "dumbky/internal/log"
+
 type RequestPayload struct {
 	URL      string
 	Method   string
@@ -17,6 +19,7 @@ type ResponsePayload struct {
 }
 
 func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
+	log.Info("Sending request: ", requestPayload)
 	status := "200 OK"
 	time := "0 ms"
 	body := "{}"
