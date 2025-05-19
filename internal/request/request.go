@@ -19,7 +19,7 @@ type ResponsePayload struct {
 }
 
 func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
-	log.Info("Sending request: ", requestPayload)
+	log.Info("Sending request")
 	status := "200 OK"
 	time := "0 ms"
 	body := "{}"

@@ -24,7 +24,7 @@ func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestVi
 	}
 	urlErr = headerView.URLEntry.Validate()
 	if urlErr != nil {
-		log.Error("Failed to Validate URLEntry")
+		log.Warn("Failed to Validate URLEntry")
 		return
 	}
 	method, methodErr := headerView.MethodBinding.Get()
@@ -58,14 +58,14 @@ func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestVi
 	}
 	bodyRawErr = requestView.Body.BodyRawEntry.Validate()
 	if bodyRawErr != nil && (bodyType == constants.UI_BODY_TYPE_RAW || bodyTypeErr != nil) {
-		log.Error("Failed to Validate BodyRawEntry")
+		log.Warn("Failed to Validate BodyRawEntry")
 		return
 	}
 
 	bodyForm := requestView.Body.BodyKeyValueEditor.GetMap()
 	bodyFormErr := requestView.Body.BodyKeyValueEditor.Validate()
 	if bodyFormErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM || bodyTypeErr != nil) {
-		log.Error("Failed to Validate Body Map")
+		log.Warn("Failed to Validate Body Map")
 		return
 	}
 
