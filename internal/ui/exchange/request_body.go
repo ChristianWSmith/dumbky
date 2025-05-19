@@ -21,9 +21,10 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyRawBind := binding.NewString()
 
 	bodyKeyValueEditorView := common.ComposeKeyValueEditorView()
-	bodyTypeSelect := widget.NewSelect([]string{"FORM", "RAW", "NONE"}, nil)
+	bodyTypeSelect := widget.NewSelect([]string{"RAW", "FORM", "NONE"}, nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
 	bodyRawEntry.TextStyle.Monospace = true
+	bodyRawEntry.SetPlaceHolder("{}")
 
 	bodyContentStack := container.NewStack(bodyKeyValueEditorView.UI, bodyRawEntry)
 
@@ -32,8 +33,8 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	bodyTypeSelect.OnChanged = func(val string) {
 		if val == "FORM" {
-			bodyKeyValueEditorView.UI.Show()
 			bodyRawEntry.Hide()
+			bodyKeyValueEditorView.UI.Show()
 			bodyContentStack.Refresh()
 		} else if val == "RAW" {
 			bodyKeyValueEditorView.UI.Hide()

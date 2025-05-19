@@ -13,6 +13,7 @@ type KeyValueEditorView struct {
 func (kve KeyValueEditorView) GetMap(filter func(kv *KeyValueView) bool) map[string]string {
 	out := make(map[string]string)
 	for kv, _ := range kve.KeyValues {
+		/* TODO: handle errors */
 		enabled, err := kv.Enabled.Get()
 		if err != nil || !enabled {
 			continue

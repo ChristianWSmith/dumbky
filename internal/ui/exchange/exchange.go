@@ -17,6 +17,10 @@ func ComposeExchangeView() ExchangeView {
 	requestView := ComposeRequestView()
 	responseView := ComposeResponseView()
 
+	headerView.SendButton.OnTapped = func () {
+		/* TODO */
+	}
+
 	requestResponseView := container.NewHSplit(requestView.UI, responseView.UI)
 	ui := container.NewBorder(headerView.UI, nil, nil, nil, requestResponseView)
 

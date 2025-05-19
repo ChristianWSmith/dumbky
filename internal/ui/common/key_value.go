@@ -33,7 +33,18 @@ func ComposeKeyValueView() KeyValueView {
 	valueEntry.Bind(valueBinding)
 	enabledCheck.Bind(enabledBinding)
 
-	enabledCheck.SetChecked(true)
+	enabledCheck.OnChanged = func(checked bool) {
+		if checked {
+			keyEntry.Enable()
+			valueEntry.Enable()
+		} else {
+			keyEntry.Disable()
+			valueEntry.Disable()
+		}
+	}
+
+	err := enabledBinding.Set(true)
+	if err != nil { /* TODO */ }
 
 	keyValue := container.NewGridWithColumns(2, keyEntry, valueEntry)
 
