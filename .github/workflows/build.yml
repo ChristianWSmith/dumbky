@@ -60,7 +60,7 @@ jobs:
 
       - name: Package Fyne App (Release)
         if: github.ref == 'refs/heads/main'
-        run: ${{ github.workspace }}/bin/fyne package --os ${{ matrix.goos }} --icon ${{ matrix.icon }} --name Dumbky --app-id com.christianwsmith.dumbky --app-version ${{ env.version }} --release
+        run: ${{ github.workspace }}/bin/fyne package --os ${{ matrix.goos }} --icon ${{ matrix.icon }} --name Dumbky --app-id com.christianwsmith.dumbky --app-version ${{ env.version }} --tags release --release
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

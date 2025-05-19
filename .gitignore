@@ -28,3 +28,6 @@ go.work.sum
 fyne_metadata_init.go
 tmp-pkg/
 *.tar.xz
+
+# bin
+dumbky
