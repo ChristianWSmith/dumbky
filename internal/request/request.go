@@ -45,7 +45,7 @@ func resolveBody(requestPayload RequestPayload) (*strings.Reader, error) {
 	return strings.NewReader(""), errors.New("invalid body type")
 }
 
-func resolveURL(url string, params map[string]string) string {
+func resolveURL(url string, params map[string]string, useSSL bool) string {
 	if len(params) != 0 {
 		paramList := []string{}
 		for key, value := range params {
@@ -54,6 +54,9 @@ func resolveURL(url string, params map[string]string) string {
 		url = url + "?" + strings.Join(paramList, "&")
 	}
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		if useSSL {
+			return "https://" + url
+		}
 		return "http://" + url
 	}
 	return url
@@ -84,7 +87,7 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 		return ResponsePayload{}, err
 	}
 
-	url := resolveURL(requestPayload.URL, requestPayload.Params)
+	url := resolveURL(requestPayload.URL, requestPayload.Params, requestPayload.UseSSL)
 
 	request, err := http.NewRequest(requestPayload.Method, url, body)
 	if err != nil {

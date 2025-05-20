@@ -67,22 +67,22 @@ func (kve KeyValueEditorView) Validate() error {
 	return nil
 }
 
-func (kve KeyValueEditorView) GetMap() map[string]string {
+func (kve KeyValueEditorView) GetMap() (map[string]string, error) {
 	out := make(map[string]string)
 	for _, kv := range kve.collectEnabled() {
 		key, keyErr := kv.KeyBinding.Get()
 		if keyErr != nil {
 			log.Error("Failed to get KeyValue Key in GetMap", keyErr.Error())
-			continue
+			return out, keyErr
 		}
 		value, valueErr := kv.ValueBinding.Get()
 		if valueErr != nil {
 			log.Error("Failed to get KeyValue Value in GetMap", valueErr.Error())
-			continue
+			return out, valueErr
 		}
 		out[key] = value
 	}
-	return out
+	return out, nil
 }
 
 func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) error) KeyValueEditorView {
