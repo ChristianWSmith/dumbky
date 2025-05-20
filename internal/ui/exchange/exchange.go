@@ -19,6 +19,20 @@ type ExchangeView struct {
 func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView) {
 	fyne.Do(func() {
 		headerView.SendButton.Disable()
+
+		// TODO: loading "animation"?
+		statusErr := responseView.StatusBinding.Set("")
+		if statusErr != nil {
+			log.Error("Failed to set StatusBinding", statusErr.Error())
+		}
+		timeErr := responseView.TimeBinding.Set("")
+		if timeErr != nil {
+			log.Error("Failed to set TimeBinding", timeErr.Error())
+		}
+		bodyErr := responseView.BodyBinding.Set("")
+		if bodyErr != nil {
+			log.Error("Failed to set BodyBinding", bodyErr.Error())
+		}
 	})
 
 	defer fyne.Do(func() {
