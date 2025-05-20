@@ -19,6 +19,79 @@ type ExchangeView struct {
 	ResponseView ResponseView
 }
 
+func generateRequestPayload(headerView ExchangeHeaderView, requestView RequestView) request.RequestPayload {
+	url, urlGetErr := headerView.URLBinding.Get()
+	if urlGetErr != nil {
+		log.Error("Failed to Get URLBinding", urlGetErr.Error())
+	}
+	urlValidateErr := headerView.URLEntry.Validate()
+	if urlValidateErr != nil {
+		log.Warn("Failed to Validate URLEntry", urlValidateErr.Error())
+	}
+
+	method, methodGetErr := headerView.MethodBinding.Get()
+	if methodGetErr != nil {
+		log.Error("Failed to Get MethodBinding", methodGetErr.Error())
+	}
+
+	useSSL, useSSLGetErr := headerView.UseSSLBinding.Get()
+	if useSSLGetErr != nil {
+		log.Error("Failed to Get UseSSLBinding", useSSLGetErr.Error())
+	}
+
+	headers, headersGetErr := requestView.Headers.GetMap()
+	if headersGetErr != nil {
+		log.Error("Failed to Get Headers Map", headersGetErr.Error())
+	}
+	headersValidatErr := requestView.Headers.Validate()
+	if headersValidatErr != nil {
+		log.Error("Failed to Validate Headers Map", headersValidatErr.Error())
+	}
+
+	params, paramsGetErr := requestView.Params.GetMap()
+	if paramsGetErr != nil {
+		log.Error("Failed to Get Params Map", paramsGetErr.Error())
+	}
+	paramsValidatErr := requestView.Params.Validate()
+	if paramsValidatErr != nil {
+		log.Error("Failed to Validate Params Map", paramsValidatErr.Error())
+	}
+
+	bodyType, bodyTypeGetErr := requestView.Body.BodyTypeBinding.Get()
+	if bodyTypeGetErr != nil {
+		log.Error("Failed to Get BodyTypeBinding", bodyTypeGetErr.Error())
+	}
+
+	bodyRaw, bodyRawGetErr := requestView.Body.BodyRawBinding.Get()
+	if bodyRawGetErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
+		log.Error("Failed to Get BodyRawBinding", bodyRawGetErr.Error())
+	}
+	bodyRawValidateErr := requestView.Body.BodyRawEntry.Validate()
+	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
+		log.Warn("Failed to Validate BodyRawEntry", bodyRawValidateErr.Error())
+	}
+
+	bodyForm, bodyFormGetErr := requestView.Body.BodyKeyValueEditor.GetMap()
+	if bodyFormGetErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
+		log.Warn("Failed to Get Body Map", bodyFormGetErr.Error())
+	}
+	bodyFormValidateErr := requestView.Body.BodyKeyValueEditor.Validate()
+	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
+		log.Warn("Failed to Validate Body Map", bodyFormValidateErr.Error())
+	}
+
+	return request.RequestPayload{
+		URL:      url,
+		Method:   method,
+		UseSSL:   useSSL,
+		Headers:  headers,
+		Params:   params,
+		BodyType: bodyType,
+		BodyRaw:  bodyRaw,
+		BodyForm: bodyForm,
+	}
+}
+
 func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView, requestPayload request.RequestPayload) {
 	defer fyne.Do(func() {
 		responseView.SetLoading(false)
@@ -88,76 +161,7 @@ func headerViewSendButtonOnTapped(headerView ExchangeHeaderView, requestView Req
 		log.Error("Failed to set BodyBinding", bodyErr.Error())
 	}
 
-	url, urlGetErr := headerView.URLBinding.Get()
-	if urlGetErr != nil {
-		log.Error("Failed to Get URLBinding", urlGetErr.Error())
-	}
-	urlValidateErr := headerView.URLEntry.Validate()
-	if urlValidateErr != nil {
-		log.Warn("Failed to Validate URLEntry", urlValidateErr.Error())
-	}
-
-	method, methodGetErr := headerView.MethodBinding.Get()
-	if methodGetErr != nil {
-		log.Error("Failed to Get MethodBinding", methodGetErr.Error())
-	}
-
-	useSSL, useSSLGetErr := headerView.UseSSLBinding.Get()
-	if useSSLGetErr != nil {
-		log.Error("Failed to Get UseSSLBinding", useSSLGetErr.Error())
-	}
-
-	headers, headersGetErr := requestView.Headers.GetMap()
-	if headersGetErr != nil {
-		log.Error("Failed to Get Headers Map", headersGetErr.Error())
-	}
-	headersValidatErr := requestView.Headers.Validate()
-	if headersValidatErr != nil {
-		log.Error("Failed to Validate Headers Map", headersValidatErr.Error())
-	}
-
-	params, paramsGetErr := requestView.Params.GetMap()
-	if paramsGetErr != nil {
-		log.Error("Failed to Get Params Map", paramsGetErr.Error())
-	}
-	paramsValidatErr := requestView.Params.Validate()
-	if paramsValidatErr != nil {
-		log.Error("Failed to Validate Params Map", paramsValidatErr.Error())
-	}
-
-	bodyType, bodyTypeGetErr := requestView.Body.BodyTypeBinding.Get()
-	if bodyTypeGetErr != nil {
-		log.Error("Failed to Get BodyTypeBinding", bodyTypeGetErr.Error())
-	}
-
-	bodyRaw, bodyRawGetErr := requestView.Body.BodyRawBinding.Get()
-	if bodyRawGetErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
-		log.Error("Failed to Get BodyRawBinding", bodyRawGetErr.Error())
-	}
-	bodyRawValidateErr := requestView.Body.BodyRawEntry.Validate()
-	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
-		log.Warn("Failed to Validate BodyRawEntry", bodyRawValidateErr.Error())
-	}
-
-	bodyForm, bodyFormGetErr := requestView.Body.BodyKeyValueEditor.GetMap()
-	if bodyFormGetErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
-		log.Warn("Failed to Get Body Map", bodyFormGetErr.Error())
-	}
-	bodyFormValidateErr := requestView.Body.BodyKeyValueEditor.Validate()
-	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
-		log.Warn("Failed to Validate Body Map", bodyFormValidateErr.Error())
-	}
-
-	requestPayload := request.RequestPayload{
-		URL:      url,
-		Method:   method,
-		UseSSL:   useSSL,
-		Headers:  headers,
-		Params:   params,
-		BodyType: bodyType,
-		BodyRaw:  bodyRaw,
-		BodyForm: bodyForm,
-	}
+	requestPayload := generateRequestPayload(headerView, requestView)
 
 	go headerViewSendButtonOnTappedWorker(headerView, requestView, responseView, requestPayload)
 }

@@ -21,17 +21,13 @@ type KeyValueView struct {
 	ValueBinding   binding.String
 }
 
-func enabledCheckOnChangedWorker(checked bool, keyEntry, valueEntry *widget.Entry) {
+func enabledCheckOnChanged(checked bool, keyEntry, valueEntry *widget.Entry) {
 	if checked {
-		fyne.Do(func() {
-			keyEntry.Enable()
-			valueEntry.Enable()
-		})
+		keyEntry.Enable()
+		valueEntry.Enable()
 	} else {
-		fyne.Do(func() {
-			keyEntry.Disable()
-			valueEntry.Disable()
-		})
+		keyEntry.Disable()
+		valueEntry.Disable()
 	}
 }
 
@@ -60,7 +56,7 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	enabledCheckOnChangedOld := enabledCheck.OnChanged
 	enabledCheck.OnChanged = func(checked bool) {
 		enabledCheckOnChangedOld(checked)
-		go enabledCheckOnChangedWorker(checked, keyEntry, valueEntry)
+		enabledCheckOnChanged(checked, keyEntry, valueEntry)
 	}
 
 	err := enabledBinding.Set(true)
