@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/ui/common"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -16,27 +17,29 @@ type ResponseView struct {
 	BodyBinding   binding.String
 }
 
+func styleResponseLabel(label *widget.Label) {
+	label.Selectable = true
+	label.Wrapping = fyne.TextWrapWord
+	label.TextStyle.Monospace = true
+}
+
 func ComposeResponseView() ResponseView {
 	statusBind := binding.NewString()
 	timeBind := binding.NewString()
 	bodyBind := binding.NewString()
 
-	statusEntry := widget.NewEntry()
-	statusEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
-	statusEntry.TextStyle.Monospace = true
-	timeEntry := widget.NewEntry()
-	timeEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_TIME)
-	timeEntry.TextStyle.Monospace = true
-	bodyEntry := widget.NewEntry()
-	bodyEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_BODY)
-	bodyEntry.TextStyle.Monospace = true
+	statusEntry, statusLabel, statusBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
+	timeEntry, timeLabel, timeBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
+	bodyEntry, bodyLabel, bodyBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
 
-	statusEntry.Bind(statusBind)
-	timeEntry.Bind(timeBind)
-	bodyEntry.Bind(bodyBind)
+	styleResponseLabel(statusLabel)
+	styleResponseLabel(timeLabel)
+	styleResponseLabel(bodyLabel)
+
+	statusBind.Set(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
 
 	info := container.NewVBox(statusEntry, timeEntry)
-	ui := container.NewBorder(info, nil, nil, nil, bodyEntry)
+	ui := container.NewBorder(info, nil, nil, nil, container.NewVScroll(bodyEntry))
 
 	return ResponseView{
 		ui,

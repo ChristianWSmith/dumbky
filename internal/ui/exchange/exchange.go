@@ -17,6 +17,14 @@ type ExchangeView struct {
 }
 
 func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView) {
+	fyne.Do(func() {
+		headerView.SendButton.Disable()
+	})
+
+	defer fyne.Do(func() {
+		headerView.SendButton.Enable()
+	})
+
 	url, urlErr := headerView.URLBinding.Get()
 	if urlErr != nil {
 		log.Error("Failed to Get URLBinding", urlErr.Error())
