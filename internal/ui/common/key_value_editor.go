@@ -1,11 +1,11 @@
 package common
 
 import (
-	"dumbky/internal/constants"
 	"dumbky/internal/log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -36,7 +36,7 @@ func addButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueBox *f
 
 func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
 	out := []KeyValueView{}
-	for kv, _ := range kve.KeyValues {
+	for kv := range kve.KeyValues {
 		enabled, enabledErr := kv.EnabledBinding.Get()
 		if enabledErr != nil {
 			log.Error("Failed to get EnabledBinding in GetMap", enabledErr.Error())
@@ -67,22 +67,22 @@ func (kve KeyValueEditorView) Validate() error {
 	return nil
 }
 
-func (kve KeyValueEditorView) GetMap() map[string]string {
+func (kve KeyValueEditorView) GetMap() (map[string]string, error) {
 	out := make(map[string]string)
 	for _, kv := range kve.collectEnabled() {
 		key, keyErr := kv.KeyBinding.Get()
 		if keyErr != nil {
 			log.Error("Failed to get KeyValue Key in GetMap", keyErr.Error())
-			continue
+			return out, keyErr
 		}
 		value, valueErr := kv.ValueBinding.Get()
 		if valueErr != nil {
 			log.Error("Failed to get KeyValue Value in GetMap", valueErr.Error())
-			continue
+			return out, valueErr
 		}
 		out[key] = value
 	}
-	return out
+	return out, nil
 }
 
 func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) error) KeyValueEditorView {
@@ -90,13 +90,12 @@ func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) err
 	keyValueViews := make(map[KeyValueView]bool)
 	keyValueBox := container.NewVBox()
 
-	addButton := widget.NewButton(constants.UI_LABEL_ADD, nil)
+	addButton := widget.NewButtonWithIcon("", nil, nil)
+	addButton.Icon = addButton.Theme().Icon(theme.IconNameContentAdd)
 
 	addButton.OnTapped = func() {
 		go addButtonOnTappedWorker(keyValueViews, keyValueBox, keyValidator, valueValidator)
 	}
-
-	addButton.Tapped(nil)
 
 	keyValueAddBox := container.NewVBox(keyValueBox, addButton)
 

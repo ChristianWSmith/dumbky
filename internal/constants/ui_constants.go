@@ -13,8 +13,6 @@ const UI_LABEL_SEND string = "SEND"
 const UI_LABEL_PARAMETERS string = "PARAMETERS"
 const UI_LABEL_HEADERS string = "HEADERS"
 const UI_LABEL_BODY string = "BODY"
-const UI_LABEL_ADD string = "+"
-const UI_LABEL_REMOVE string = "-"
 
 const UI_BODY_TYPE_RAW string = "RAW"
 const UI_BODY_TYPE_FORM string = "FORM"

@@ -12,6 +12,9 @@ func ValidateNil(val string) error {
 }
 
 func ValidateHeaderKey(s string) error {
+	if s == "" {
+		return errors.New("header key cannot be empty")
+	}
 	for _, r := range s {
 		if r <= 32 || r == 127 || strings.ContainsRune("()<>@,;:\\\"/[]?={} \t", r) {
 			return errors.New("invalid character in header key")
@@ -33,6 +36,9 @@ func ValidateHeaderValue(s string) error {
 }
 
 func ValidateURL(s string) error {
+	if s == "" {
+		return errors.New("url cannot be empty")
+	}
 	_, err := url.Parse(s)
 	if err != nil {
 		return err

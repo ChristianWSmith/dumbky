@@ -7,8 +7,8 @@ import (
 	"fyne.io/fyne/v2/container"
 )
 
-type RootView struct{
-	UI *fyne.Container
+type RootView struct {
+	UI           *fyne.Container
 	ExchangeView exchange.ExchangeView
 }
 

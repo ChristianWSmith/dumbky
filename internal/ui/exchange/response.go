@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/ui/common"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -10,38 +11,61 @@ import (
 )
 
 type ResponseView struct {
-	UI            *fyne.Container
-	StatusBinding binding.String
-	TimeBinding   binding.String
-	BodyBinding   binding.String
+	UI              *fyne.Container
+	StatusBinding   binding.String
+	TimeBinding     binding.String
+	BodyBinding     binding.String
+	statusContainer *fyne.Container
+	loadingBar      *widget.ProgressBarInfinite
+	statusStack     *fyne.Container
+}
+
+func styleResponseLabel(label *widget.Label) {
+	label.Selectable = true
+	label.Wrapping = fyne.TextWrapWord
+	label.TextStyle.Monospace = true
+}
+
+func (rv ResponseView) SetLoading(loading bool) {
+	if loading {
+		rv.statusContainer.Hide()
+		rv.loadingBar.Start()
+		rv.loadingBar.Show()
+		rv.statusStack.Refresh()
+	} else {
+		rv.loadingBar.Hide()
+		rv.loadingBar.Stop()
+		rv.statusContainer.Show()
+		rv.statusStack.Refresh()
+	}
 }
 
 func ComposeResponseView() ResponseView {
-	statusBind := binding.NewString()
-	timeBind := binding.NewString()
-	bodyBind := binding.NewString()
+	statusContainer, statusLabel, statusBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
+	timeContainer, timeLabel, timeBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
+	bodyContainer, bodyLabel, bodyBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
 
-	statusEntry := widget.NewEntry()
-	statusEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
-	statusEntry.TextStyle.Monospace = true
-	timeEntry := widget.NewEntry()
-	timeEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_TIME)
-	timeEntry.TextStyle.Monospace = true
-	bodyEntry := widget.NewEntry()
-	bodyEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_RESPONSE_BODY)
-	bodyEntry.TextStyle.Monospace = true
+	styleResponseLabel(statusLabel)
+	styleResponseLabel(timeLabel)
+	styleResponseLabel(bodyLabel)
 
-	statusEntry.Bind(statusBind)
-	timeEntry.Bind(timeBind)
-	bodyEntry.Bind(bodyBind)
+	statusBind.Set(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
 
-	info := container.NewVBox(statusEntry, timeEntry)
-	ui := container.NewBorder(info, nil, nil, nil, bodyEntry)
+	loadingBar := widget.NewProgressBarInfinite()
+	loadingBar.Stop()
+	loadingBar.Hide()
+	statusStack := container.NewVBox(loadingBar, statusContainer)
+
+	info := container.NewVBox(statusStack, timeContainer)
+	ui := container.NewBorder(info, nil, nil, nil, container.NewVScroll(bodyContainer))
 
 	return ResponseView{
 		ui,
 		statusBind,
 		timeBind,
 		bodyBind,
+		statusContainer,
+		loadingBar,
+		statusStack,
 	}
 }
