@@ -4,6 +4,7 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
 	"dumbky/internal/request"
+	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -125,7 +126,7 @@ func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestVi
 		if timeErr != nil {
 			log.Error("Failed to set TimeBinding", timeErr.Error())
 		}
-		bodyErr := responseView.BodyBinding.Set(responsePayload.Body)
+		bodyErr := responseView.BodyBinding.Set(utils.SmartFormat(responsePayload.Body))
 		if bodyErr != nil {
 			log.Error("Failed to set BodyBinding", bodyErr.Error())
 		}

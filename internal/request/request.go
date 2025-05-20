@@ -93,7 +93,7 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 	}
 	resolveHeaders(*request, requestPayload.Headers)
 
-	log.Info("Sending request")
+	log.Info("Sending request", request.URL, request.Header, request.Body)
 	start := time.Now()
 	response, err := client.Do(request)
 	elapsed := time.Since(start)
