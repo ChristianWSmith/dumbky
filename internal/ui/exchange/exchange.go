@@ -2,12 +2,14 @@ package exchange
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/global"
 	"dumbky/internal/log"
 	"dumbky/internal/request"
 	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/dialog"
 )
 
 type ExchangeView struct {
@@ -17,8 +19,11 @@ type ExchangeView struct {
 	ResponseView ResponseView
 }
 
-func headerViewSendButtonOnTappedWorker(requestView RequestView, responseView ResponseView, requestPayload request.RequestPayload, cleanupFunc func()) {
-	defer fyne.Do(cleanupFunc)
+func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView, requestPayload request.RequestPayload) {
+	defer fyne.Do(func() {
+		responseView.SetLoading(false)
+		headerView.SendButton.Enable()
+	})
 
 	fyne.Do(func() {
 		bodyType, bodyTypeGetErr := requestView.Body.BodyTypeBinding.Get()
@@ -44,6 +49,7 @@ func headerViewSendButtonOnTappedWorker(requestView RequestView, responseView Re
 	responsePayload, err := request.SendRequest(requestPayload)
 	if err != nil {
 		log.Error("Failed to SendRequest", err.Error())
+		dialog.ShowError(err, global.Window)
 		return
 	}
 
@@ -65,18 +71,7 @@ func headerViewSendButtonOnTappedWorker(requestView RequestView, responseView Re
 	})
 }
 
-func headerViewSendButtonOnTapped(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView) (marshalled bool) {
-	cleanupFunc := func() {
-		responseView.SetLoading(false)
-		headerView.SendButton.Enable()
-	}
-
-	defer func() {
-		if !marshalled {
-			cleanupFunc()
-		}
-	}()
-
+func headerViewSendButtonOnTapped(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView) {
 	headerView.SendButton.Disable()
 	responseView.SetLoading(true)
 
@@ -96,74 +91,61 @@ func headerViewSendButtonOnTapped(headerView ExchangeHeaderView, requestView Req
 	url, urlGetErr := headerView.URLBinding.Get()
 	if urlGetErr != nil {
 		log.Error("Failed to Get URLBinding", urlGetErr.Error())
-		return false
 	}
 	urlValidateErr := headerView.URLEntry.Validate()
 	if urlValidateErr != nil {
 		log.Warn("Failed to Validate URLEntry", urlValidateErr.Error())
-		return false
 	}
 
 	method, methodGetErr := headerView.MethodBinding.Get()
 	if methodGetErr != nil {
 		log.Error("Failed to Get MethodBinding", methodGetErr.Error())
-		return false
 	}
 
 	useSSL, useSSLGetErr := headerView.UseSSLBinding.Get()
 	if useSSLGetErr != nil {
 		log.Error("Failed to Get UseSSLBinding", useSSLGetErr.Error())
-		return false
 	}
 
 	headers, headersGetErr := requestView.Headers.GetMap()
 	if headersGetErr != nil {
 		log.Error("Failed to Get Headers Map", headersGetErr.Error())
-		return false
 	}
 	headersValidatErr := requestView.Headers.Validate()
 	if headersValidatErr != nil {
 		log.Error("Failed to Validate Headers Map", headersValidatErr.Error())
-		return false
 	}
 
 	params, paramsGetErr := requestView.Params.GetMap()
 	if paramsGetErr != nil {
 		log.Error("Failed to Get Params Map", paramsGetErr.Error())
-		return false
 	}
 	paramsValidatErr := requestView.Params.Validate()
 	if paramsValidatErr != nil {
 		log.Error("Failed to Validate Params Map", paramsValidatErr.Error())
-		return false
 	}
 
 	bodyType, bodyTypeGetErr := requestView.Body.BodyTypeBinding.Get()
 	if bodyTypeGetErr != nil {
 		log.Error("Failed to Get BodyTypeBinding", bodyTypeGetErr.Error())
-		return false
 	}
 
 	bodyRaw, bodyRawGetErr := requestView.Body.BodyRawBinding.Get()
 	if bodyRawGetErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Error("Failed to Get BodyRawBinding", bodyRawGetErr.Error())
-		return false
 	}
 	bodyRawValidateErr := requestView.Body.BodyRawEntry.Validate()
 	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Warn("Failed to Validate BodyRawEntry", bodyRawValidateErr.Error())
-		return false
 	}
 
 	bodyForm, bodyFormGetErr := requestView.Body.BodyKeyValueEditor.GetMap()
 	if bodyFormGetErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn("Failed to Get Body Map", bodyFormGetErr.Error())
-		return false
 	}
 	bodyFormValidateErr := requestView.Body.BodyKeyValueEditor.Validate()
 	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn("Failed to Validate Body Map", bodyFormValidateErr.Error())
-		return false
 	}
 
 	requestPayload := request.RequestPayload{
@@ -177,8 +159,7 @@ func headerViewSendButtonOnTapped(headerView ExchangeHeaderView, requestView Req
 		BodyForm: bodyForm,
 	}
 
-	go headerViewSendButtonOnTappedWorker(requestView, responseView, requestPayload, cleanupFunc)
-	return true
+	go headerViewSendButtonOnTappedWorker(headerView, requestView, responseView, requestPayload)
 }
 
 func headerViewMethodSelectOnChanged(val string, requestView RequestView) {
@@ -197,10 +178,7 @@ func ComposeExchangeView() ExchangeView {
 	responseView := ComposeResponseView()
 
 	headerView.SendButton.OnTapped = func() {
-		marshalled := headerViewSendButtonOnTapped(headerView, requestView, responseView)
-		if !marshalled {
-			log.Warn("Failed to marshal request")
-		}
+		headerViewSendButtonOnTapped(headerView, requestView, responseView)
 	}
 
 	headerViewMethodSelectOnChangedOld := headerView.MethodSelect.OnChanged

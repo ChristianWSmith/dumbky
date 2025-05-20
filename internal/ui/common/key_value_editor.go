@@ -1,11 +1,11 @@
 package common
 
 import (
-	"dumbky/internal/constants"
 	"dumbky/internal/log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -90,7 +90,8 @@ func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) err
 	keyValueViews := make(map[KeyValueView]bool)
 	keyValueBox := container.NewVBox()
 
-	addButton := widget.NewButton(constants.UI_LABEL_ADD, nil)
+	addButton := widget.NewButtonWithIcon("", nil, nil)
+	addButton.Icon = addButton.Theme().Icon(theme.IconNameContentAdd)
 
 	addButton.OnTapped = func() {
 		go addButtonOnTappedWorker(keyValueViews, keyValueBox, keyValidator, valueValidator)

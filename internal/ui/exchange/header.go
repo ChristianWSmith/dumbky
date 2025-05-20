@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -32,6 +33,7 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	urlEntry.TextStyle.Monospace = true
 	sslCheck := widget.NewCheck(constants.UI_LABEL_SSL, nil)
 	sendButton := widget.NewButton(constants.UI_LABEL_SEND, nil)
+	sendButton.Icon = sendButton.Theme().Icon(theme.IconNameMailSend)
 
 	methodSelect.Bind(methodBind)
 	urlEntry.Bind(urlBind)

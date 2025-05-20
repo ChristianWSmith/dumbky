@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -46,7 +47,10 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	valueEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_VALUE)
 	valueEntry.TextStyle.Monospace = true
 	enabledCheck := widget.NewCheck("", nil)
-	destroyButton := widget.NewButton(constants.UI_LABEL_REMOVE, nil)
+	//destroyButton := widget.NewButton(constants.UI_LABEL_REMOVE, nil)
+
+	destroyButton := widget.NewButtonWithIcon("", nil, nil)
+	destroyButton.Icon = destroyButton.Theme().Icon(theme.IconNameContentClear)
 
 	keyEntry.Bind(keyBinding)
 	valueEntry.Bind(valueBinding)

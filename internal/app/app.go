@@ -1,14 +1,13 @@
 package app
 
 import (
+	"dumbky/internal/global"
 	"dumbky/internal/ui"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"github.com/fyne-io/glfw-js"
 )
-
-var Canvas fyne.Canvas
 
 func getWindowSize() (float32, float32) {
 	width := float32(800.0)
@@ -29,7 +28,7 @@ func getWindowSize() (float32, float32) {
 func Run() {
 	a := app.New()
 	w := a.NewWindow("Dumbky")
-	Canvas = w.Canvas()
+	global.Window = w
 
 	rootView := ui.ComposeRootView()
 	w.SetContent(rootView.UI)
