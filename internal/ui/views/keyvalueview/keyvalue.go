@@ -100,6 +100,10 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	keyEntry.Validator = keyValidator
 	valueEntry.Validator = valueValidator
 
+	err := enabledBinding.Set(true)
+	if err != nil {
+		log.Error(err)
+	}
 	enabledBinding.AddListener(binding.NewDataListener(func() {
 		enabled, enabledErr := enabledBinding.Get()
 		if enabledErr != nil {
@@ -114,11 +118,6 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 			valueEntry.Disable()
 		}
 	}))
-
-	err := enabledBinding.Set(true)
-	if err != nil {
-		log.Error(err)
-	}
 
 	keyValue := container.NewGridWithColumns(2, keyEntry, valueEntry)
 

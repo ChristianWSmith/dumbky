@@ -5,6 +5,8 @@ import (
 	"dumbky/internal/log"
 	"dumbky/internal/ui/validators"
 	"dumbky/internal/ui/views/keyvalueeditorview"
+	"dumbky/internal/utils"
+	"errors"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -52,7 +54,11 @@ func (rbv RequestBodyView) ToState() (RequestBodyState, error) {
 }
 
 func (rbv RequestBodyView) LoadState(requestBodyState RequestBodyState) error {
-	bodyTypeErr := rbv.BodyTypeBinding.Set(requestBodyState.BodyType)
+	bodyType := requestBodyState.BodyType
+	if !utils.ElementInSlice(constants.UIBodyTypes(), bodyType) {
+		bodyType = constants.UI_BODY_TYPE_DEFAULT
+	}
+	bodyTypeErr := rbv.BodyTypeBinding.Set(bodyType)
 	if bodyTypeErr != nil {
 		log.Error(bodyTypeErr)
 		return bodyTypeErr
@@ -99,6 +105,7 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	bodyRawEntry.Validator = validators.ValidateRawBodyContent
 
+	bodyTypeBind.Set(constants.UI_BODY_TYPE_DEFAULT)
 	bodyTypeBind.AddListener(binding.NewDataListener(func() {
 		bodyType, bodyTypeErr := bodyTypeBind.Get()
 		if bodyTypeErr != nil {
@@ -117,10 +124,11 @@ func ComposeRequestBodyView() RequestBodyView {
 			bodyKeyValueEditorView.UI.Hide()
 			bodyRawEntry.Hide()
 			bodyContentStack.Refresh()
+		} else {
+			log.Error(errors.New("invalid body type"))
 		}
 	}))
 
-	bodyTypeBind.Set(constants.UI_BODY_TYPE_NONE)
 	ui := container.NewBorder(bodyTypeSelect, nil, nil, nil, bodyContentStack)
 
 	return RequestBodyView{

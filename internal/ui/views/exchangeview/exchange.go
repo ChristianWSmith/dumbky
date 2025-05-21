@@ -9,6 +9,7 @@ import (
 	"dumbky/internal/ui/views/requestview"
 	"dumbky/internal/ui/views/responseview"
 	"dumbky/internal/utils"
+	"errors"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -46,15 +47,15 @@ func (ev ExchangeView) ToState() (ExchangeState, error) {
 }
 
 func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
-	headerErr := ev.headerView.LoadState(exchangeState.Header)
-	if headerErr != nil {
-		log.Error(headerErr)
-		return headerErr
-	}
 	requestErr := ev.requestView.LoadState(exchangeState.Request)
 	if requestErr != nil {
 		log.Error(requestErr)
 		return requestErr
+	}
+	headerErr := ev.headerView.LoadState(exchangeState.Header)
+	if headerErr != nil {
+		log.Error(headerErr)
+		return headerErr
 	}
 	return nil
 }
@@ -217,14 +218,21 @@ func ComposeExchangeView() ExchangeView {
 			log.Error(methodErr)
 			return
 		}
-		if method == constants.HTTP_METHOD_GET || method == constants.HTTP_METHOD_HEAD {
+		if method == constants.HTTP_METHOD_GET ||
+			method == constants.HTTP_METHOD_HEAD {
 			bodyTypeErr := requestView.Body.BodyTypeBinding.Set(constants.UI_BODY_TYPE_NONE)
 			if bodyTypeErr != nil {
 				log.Error(bodyTypeErr)
 			}
 			requestView.Body.DisableBodyTypeSelect()
-		} else {
+		} else if method == constants.HTTP_METHOD_DELETE ||
+			method == constants.HTTP_METHOD_OPTIONS ||
+			method == constants.HTTP_METHOD_PATCH ||
+			method == constants.HTTP_METHOD_POST ||
+			method == constants.HTTP_METHOD_PUT {
 			requestView.Body.EnableBodyTypeSelect()
+		} else {
+			log.Error(errors.New("invalid http method"))
 		}
 	}))
 

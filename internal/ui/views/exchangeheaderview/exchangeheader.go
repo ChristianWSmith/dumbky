@@ -4,6 +4,7 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
 	"dumbky/internal/ui/validators"
+	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -52,7 +53,11 @@ func (ehv ExchangeHeaderView) ToState() (ExchangeHeaderState, error) {
 }
 
 func (ehv ExchangeHeaderView) LoadState(exchangeHeaderState ExchangeHeaderState) error {
-	methodErr := ehv.MethodBinding.Set(exchangeHeaderState.Method)
+	method := exchangeHeaderState.Method
+	if !utils.ElementInSlice(constants.HttpMethods(), method) {
+		method = constants.HTTP_METHOD_DEFAULT
+	}
+	methodErr := ehv.MethodBinding.Set(method)
 	if methodErr != nil {
 		log.Error(methodErr)
 		return methodErr
