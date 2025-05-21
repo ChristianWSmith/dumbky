@@ -39,17 +39,17 @@ func (kvv KeyValueView) ValidateValue() error {
 func (kvv KeyValueView) ToState() (KeyValueState, error) {
 	enabled, enabledErr := kvv.EnabledBinding.Get()
 	if enabledErr != nil {
-		log.Error("failed to Get EnabledBinding in v", enabledErr.Error())
+		log.Error(enabledErr)
 		return KeyValueState{}, enabledErr
 	}
 	key, keyErr := kvv.KeyBinding.Get()
 	if keyErr != nil {
-		log.Error("failed to Get KeyBinding in ToState", keyErr.Error())
+		log.Error(keyErr)
 		return KeyValueState{}, keyErr
 	}
 	value, valueErr := kvv.ValueBinding.Get()
 	if valueErr != nil {
-		log.Error("failed to Get ValueBinding in ToState", valueErr.Error())
+		log.Error(valueErr)
 		return KeyValueState{}, valueErr
 	}
 	return KeyValueState{
@@ -62,17 +62,17 @@ func (kvv KeyValueView) ToState() (KeyValueState, error) {
 func (kvv KeyValueView) LoadState(kvs KeyValueState) error {
 	enabledErr := kvv.EnabledBinding.Set(kvs.Enabled)
 	if enabledErr != nil {
-		log.Error("failed to Set EnabledBinding in LoadState", enabledErr.Error())
+		log.Error(enabledErr)
 		return enabledErr
 	}
 	keyErr := kvv.KeyBinding.Set(kvs.Key)
 	if keyErr != nil {
-		log.Error("failed to Set KeyBinding in LoadState", keyErr.Error())
+		log.Error(keyErr)
 		return keyErr
 	}
 	valueErr := kvv.ValueBinding.Set(kvs.Value)
 	if valueErr != nil {
-		log.Error("failed to Set ValueBinding in LoadState", valueErr.Error())
+		log.Error(valueErr)
 		return valueErr
 	}
 	return nil
@@ -103,7 +103,7 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	enabledBinding.AddListener(binding.NewDataListener(func() {
 		enabled, enabledErr := enabledBinding.Get()
 		if enabledErr != nil {
-			log.Error("Failed to Get enabledBinding in DataListener", enabledErr.Error())
+			log.Error(enabledErr)
 			return
 		}
 		if enabled {
@@ -117,7 +117,7 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 
 	err := enabledBinding.Set(true)
 	if err != nil {
-		log.Error("Failed to set value for KeyValueView enabledBinding", err.Error())
+		log.Error(err)
 	}
 
 	keyValue := container.NewGridWithColumns(2, keyEntry, valueEntry)

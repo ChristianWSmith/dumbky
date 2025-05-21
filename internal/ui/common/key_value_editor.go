@@ -27,7 +27,7 @@ func (kve KeyValueEditorView) ToState() (KeyValueEditorState, error) {
 	for keyValue := range kve.keyValueViews {
 		keyValueState, err := keyValue.ToState()
 		if err != nil {
-			log.Error("", err.Error())
+			log.Error(err)
 			return KeyValueEditorState{}, err
 		}
 		keyValueStates = append(keyValueStates, keyValueState)
@@ -50,7 +50,7 @@ func (kve KeyValueEditorView) LoadState(keyValueEditorState KeyValueEditorState)
 	for _, keyValueState := range keyValueEditorState.KeyValueStates {
 		err := kve.addKeyValue(keyValueState)
 		if err != nil {
-			log.Error("", err.Error())
+			log.Error(err)
 			return err
 		}
 	}
@@ -61,12 +61,12 @@ func (kve KeyValueEditorView) Validate() error {
 	for _, kv := range kve.collectEnabled() {
 		err := kv.ValidateKey()
 		if err != nil {
-			log.Warn("failed to validate key", err.Error())
+			log.Warn(err)
 			return err
 		}
 		err = kv.ValidateValue()
 		if err != nil {
-			log.Warn("failed to validate value", err.Error())
+			log.Warn(err)
 			return err
 		}
 	}
@@ -78,12 +78,12 @@ func (kve KeyValueEditorView) GetMap() (map[string]string, error) {
 	for _, kv := range kve.collectEnabled() {
 		key, keyErr := kv.KeyBinding.Get()
 		if keyErr != nil {
-			log.Error("Failed to get KeyValue Key in GetMap", keyErr.Error())
+			log.Error(keyErr)
 			return out, keyErr
 		}
 		value, valueErr := kv.ValueBinding.Get()
 		if valueErr != nil {
-			log.Error("Failed to get KeyValue Value in GetMap", valueErr.Error())
+			log.Error(valueErr)
 			return out, valueErr
 		}
 		out[key] = value
@@ -95,7 +95,7 @@ func (kve KeyValueEditorView) addKeyValue(keyValueState KeyValueState) error {
 	keyValueView := ComposeKeyValueView(kve.keyValidator, kve.valueValidator)
 	err := keyValueView.LoadState(keyValueState)
 	if err != nil {
-		log.Error("", err.Error())
+		log.Error(err)
 		return err
 	}
 	keyValueView.DestroyButton.OnTapped = func() {
@@ -118,7 +118,7 @@ func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
 	for kv := range kve.keyValueViews {
 		enabled, enabledErr := kv.EnabledBinding.Get()
 		if enabledErr != nil {
-			log.Error("Failed to get EnabledBinding in GetMap", enabledErr.Error())
+			log.Error(enabledErr)
 			continue
 		}
 		if !enabled {

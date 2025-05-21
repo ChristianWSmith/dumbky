@@ -31,17 +31,17 @@ type ExchangeHeaderState struct {
 func (ehv ExchangeHeaderView) ToState() (ExchangeHeaderState, error) {
 	method, methodErr := ehv.MethodBinding.Get()
 	if methodErr != nil {
-		log.Error("", methodErr.Error())
+		log.Error(methodErr)
 		return ExchangeHeaderState{}, methodErr
 	}
 	url, urlErr := ehv.URLBinding.Get()
 	if urlErr != nil {
-		log.Error("", urlErr.Error())
+		log.Error(urlErr)
 		return ExchangeHeaderState{}, urlErr
 	}
 	useSSL, useSSLErr := ehv.UseSSLBinding.Get()
 	if useSSLErr != nil {
-		log.Error("", useSSLErr.Error())
+		log.Error(useSSLErr)
 		return ExchangeHeaderState{}, useSSLErr
 	}
 	return ExchangeHeaderState{
@@ -54,17 +54,17 @@ func (ehv ExchangeHeaderView) ToState() (ExchangeHeaderState, error) {
 func (ehv ExchangeHeaderView) LoadState(exchangeHeaderState ExchangeHeaderState) error {
 	methodErr := ehv.MethodBinding.Set(exchangeHeaderState.Method)
 	if methodErr != nil {
-		log.Error("", methodErr.Error())
+		log.Error(methodErr)
 		return methodErr
 	}
 	urlErr := ehv.URLBinding.Set(exchangeHeaderState.URL)
 	if urlErr != nil {
-		log.Error("", urlErr.Error())
+		log.Error(urlErr)
 		return urlErr
 	}
 	useSSLErr := ehv.UseSSLBinding.Set(exchangeHeaderState.UseSSL)
 	if useSSLErr != nil {
-		log.Error("", useSSLErr.Error())
+		log.Error(useSSLErr)
 		return useSSLErr
 	}
 	return nil

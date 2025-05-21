@@ -83,7 +83,7 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 
 	body, err := resolveBody(requestPayload)
 	if err != nil {
-		log.Error("Failed to resolve request body", err.Error())
+		log.Error(err)
 		return ResponsePayload{}, err
 	}
 
@@ -91,25 +91,26 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 
 	request, err := http.NewRequest(requestPayload.Method, url, body)
 	if err != nil {
-		log.Error("Failed to create HTTP Request", err.Error())
+		log.Error(err)
 		return ResponsePayload{}, err
 	}
 	resolveHeaders(*request, requestPayload.Headers)
 
-	log.Info("Sending request", request.URL, request.Header, request.Body)
+	log.Info("Sending request")
 	start := time.Now()
 	response, err := client.Do(request)
 	elapsed := time.Since(start)
-	log.Info("Request sent")
 
 	if err != nil {
-		log.Warn("Failed to send HTTP Request", err.Error())
+		log.Warn(err)
 		return ResponsePayload{}, err
+	} else {
+		log.Info("Request sent")
 	}
 
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Error("Failed to read response body", err.Error())
+		log.Error(err)
 		return ResponsePayload{}, err
 	}
 

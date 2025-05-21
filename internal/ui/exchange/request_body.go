@@ -31,17 +31,17 @@ type RequestBodyState struct {
 func (rbv RequestBodyView) ToState() (RequestBodyState, error) {
 	bodyType, bodyTypeErr := rbv.BodyTypeBinding.Get()
 	if bodyTypeErr != nil {
-		log.Error("", bodyTypeErr.Error())
+		log.Error(bodyTypeErr)
 		return RequestBodyState{}, bodyTypeErr
 	}
 	bodyForm, bodyFormErr := rbv.BodyKeyValueEditor.ToState()
 	if bodyFormErr != nil {
-		log.Error("", bodyFormErr.Error())
+		log.Error(bodyFormErr)
 		return RequestBodyState{}, bodyFormErr
 	}
 	bodyRaw, bodyRawErr := rbv.BodyRawBinding.Get()
 	if bodyRawErr != nil {
-		log.Error("", bodyRawErr.Error())
+		log.Error(bodyRawErr)
 		return RequestBodyState{}, bodyRawErr
 	}
 	return RequestBodyState{
@@ -54,17 +54,17 @@ func (rbv RequestBodyView) ToState() (RequestBodyState, error) {
 func (rbv RequestBodyView) LoadState(requestBodyState RequestBodyState) error {
 	bodyTypeErr := rbv.BodyTypeBinding.Set(requestBodyState.BodyType)
 	if bodyTypeErr != nil {
-		log.Error("", bodyTypeErr.Error())
+		log.Error(bodyTypeErr)
 		return bodyTypeErr
 	}
 	bodyFormErr := rbv.BodyKeyValueEditor.LoadState(requestBodyState.BodyForm)
 	if bodyFormErr != nil {
-		log.Error("", bodyFormErr.Error())
+		log.Error(bodyFormErr)
 		return bodyFormErr
 	}
 	bodyRawErr := rbv.BodyRawBinding.Set(requestBodyState.BodyRaw)
 	if bodyRawErr != nil {
-		log.Error("", bodyRawErr.Error())
+		log.Error(bodyRawErr)
 		return bodyRawErr
 	}
 	return nil
@@ -102,7 +102,7 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyTypeBind.AddListener(binding.NewDataListener(func() {
 		bodyType, bodyTypeErr := bodyTypeBind.Get()
 		if bodyTypeErr != nil {
-			log.Error("Failed to Get bodyTypeBind in DataListener", bodyTypeErr.Error())
+			log.Error(bodyTypeErr)
 			return
 		}
 		if bodyType == constants.UI_BODY_TYPE_FORM {
