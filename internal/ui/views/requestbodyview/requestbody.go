@@ -1,10 +1,10 @@
-package exchange
+package requestbodyview
 
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/common"
 	"dumbky/internal/ui/validators"
+	"dumbky/internal/ui/views/keyvalueeditorview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -14,7 +14,7 @@ import (
 
 type RequestBodyView struct {
 	UI                 *fyne.Container
-	BodyKeyValueEditor common.KeyValueEditorView
+	BodyKeyValueEditor keyvalueeditorview.KeyValueEditorView
 	BodyTypeBinding    binding.String
 	BodyRawBinding     binding.String
 
@@ -24,7 +24,7 @@ type RequestBodyView struct {
 
 type RequestBodyState struct {
 	BodyType string
-	BodyForm common.KeyValueEditorState
+	BodyForm keyvalueeditorview.KeyValueEditorState
 	BodyRaw  string
 }
 
@@ -86,7 +86,7 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyTypeBind := binding.NewString()
 	bodyRawBind := binding.NewString()
 
-	bodyKeyValueEditorView := common.ComposeKeyValueEditorView(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
+	bodyKeyValueEditorView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
 	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
 	bodyRawEntry.TextStyle.Monospace = true

@@ -1,25 +1,26 @@
-package exchange
+package requestview
 
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/common"
 	"dumbky/internal/ui/validators"
+	"dumbky/internal/ui/views/keyvalueeditorview"
+	"dumbky/internal/ui/views/requestbodyview"
 
 	"fyne.io/fyne/v2/container"
 )
 
 type RequestView struct {
 	UI      *container.AppTabs
-	Params  common.KeyValueEditorView
-	Headers common.KeyValueEditorView
-	Body    RequestBodyView
+	Params  keyvalueeditorview.KeyValueEditorView
+	Headers keyvalueeditorview.KeyValueEditorView
+	Body    requestbodyview.RequestBodyView
 }
 
 type RequestState struct {
-	Params  common.KeyValueEditorState `json:"params"`
-	Headers common.KeyValueEditorState `json:"headers"`
-	Body    RequestBodyState           `json:"body"`
+	Params  keyvalueeditorview.KeyValueEditorState `json:"params"`
+	Headers keyvalueeditorview.KeyValueEditorState `json:"headers"`
+	Body    requestbodyview.RequestBodyState       `json:"body"`
 }
 
 func (rv RequestView) ToState() (RequestState, error) {
@@ -65,9 +66,9 @@ func (rv RequestView) LoadState(requestState RequestState) error {
 }
 
 func ComposeRequestView() RequestView {
-	paramsView := common.ComposeKeyValueEditorView(validators.ValidateURLParamKey, validators.ValidateURLParamValue)
-	headersView := common.ComposeKeyValueEditorView(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
-	bodyView := ComposeRequestBodyView()
+	paramsView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateURLParamKey, validators.ValidateURLParamValue)
+	headersView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
+	bodyView := requestbodyview.ComposeRequestBodyView()
 
 	paramsTab := container.NewTabItem(constants.UI_LABEL_PARAMETERS, paramsView.UI)
 	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersView.UI)

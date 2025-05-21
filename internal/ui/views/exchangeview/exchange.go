@@ -1,10 +1,13 @@
-package exchange
+package exchangeview
 
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/global"
 	"dumbky/internal/log"
 	"dumbky/internal/request"
+	"dumbky/internal/ui/views/exchangeheaderview"
+	"dumbky/internal/ui/views/requestview"
+	"dumbky/internal/ui/views/responseview"
 	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
@@ -15,23 +18,23 @@ import (
 
 type ExchangeView struct {
 	UI           *fyne.Container
-	HeaderView   ExchangeHeaderView
-	RequestView  RequestView
-	ResponseView ResponseView
+	headerView   exchangeheaderview.ExchangeHeaderView
+	requestView  requestview.RequestView
+	responseView responseview.ResponseView
 }
 
 type ExchangeState struct {
-	Header  ExchangeHeaderState `json:"header"`
-	Request RequestState        `json:"request"`
+	Header  exchangeheaderview.ExchangeHeaderState `json:"header"`
+	Request requestview.RequestState               `json:"request"`
 }
 
 func (ev ExchangeView) ToState() (ExchangeState, error) {
-	header, headerErr := ev.HeaderView.ToState()
+	header, headerErr := ev.headerView.ToState()
 	if headerErr != nil {
 		log.Error(headerErr)
 		return ExchangeState{}, headerErr
 	}
-	request, requestErr := ev.RequestView.ToState()
+	request, requestErr := ev.requestView.ToState()
 	if requestErr != nil {
 		log.Error(requestErr)
 		return ExchangeState{}, requestErr
@@ -43,12 +46,12 @@ func (ev ExchangeView) ToState() (ExchangeState, error) {
 }
 
 func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
-	headerErr := ev.HeaderView.LoadState(exchangeState.Header)
+	headerErr := ev.headerView.LoadState(exchangeState.Header)
 	if headerErr != nil {
 		log.Error(headerErr)
 		return headerErr
 	}
-	requestErr := ev.RequestView.LoadState(exchangeState.Request)
+	requestErr := ev.requestView.LoadState(exchangeState.Request)
 	if requestErr != nil {
 		log.Error(requestErr)
 		return requestErr
@@ -57,62 +60,62 @@ func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
 }
 
 func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
-	url, urlGetErr := ev.HeaderView.URLBinding.Get()
+	url, urlGetErr := ev.headerView.URLBinding.Get()
 	if urlGetErr != nil {
 		log.Error(urlGetErr)
 	}
-	urlValidateErr := ev.HeaderView.ValidateURL()
+	urlValidateErr := ev.headerView.ValidateURL()
 	if urlValidateErr != nil {
 		log.Warn(urlValidateErr)
 	}
 
-	method, methodGetErr := ev.HeaderView.MethodBinding.Get()
+	method, methodGetErr := ev.headerView.MethodBinding.Get()
 	if methodGetErr != nil {
 		log.Error(methodGetErr)
 	}
 
-	useSSL, useSSLGetErr := ev.HeaderView.UseSSLBinding.Get()
+	useSSL, useSSLGetErr := ev.headerView.UseSSLBinding.Get()
 	if useSSLGetErr != nil {
 		log.Error(useSSLGetErr)
 	}
 
-	headers, headersGetErr := ev.RequestView.Headers.GetMap()
+	headers, headersGetErr := ev.requestView.Headers.GetMap()
 	if headersGetErr != nil {
 		log.Error(headersGetErr)
 	}
-	headersValidatErr := ev.RequestView.Headers.Validate()
+	headersValidatErr := ev.requestView.Headers.Validate()
 	if headersValidatErr != nil {
 		log.Error(headersValidatErr)
 	}
 
-	params, paramsGetErr := ev.RequestView.Params.GetMap()
+	params, paramsGetErr := ev.requestView.Params.GetMap()
 	if paramsGetErr != nil {
 		log.Error(paramsGetErr)
 	}
-	paramsValidatErr := ev.RequestView.Params.Validate()
+	paramsValidatErr := ev.requestView.Params.Validate()
 	if paramsValidatErr != nil {
 		log.Error(paramsValidatErr)
 	}
 
-	bodyType, bodyTypeGetErr := ev.RequestView.Body.BodyTypeBinding.Get()
+	bodyType, bodyTypeGetErr := ev.requestView.Body.BodyTypeBinding.Get()
 	if bodyTypeGetErr != nil {
 		log.Error(bodyTypeGetErr)
 	}
 
-	bodyRaw, bodyRawGetErr := ev.RequestView.Body.BodyRawBinding.Get()
+	bodyRaw, bodyRawGetErr := ev.requestView.Body.BodyRawBinding.Get()
 	if bodyRawGetErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Error(bodyRawGetErr)
 	}
-	bodyRawValidateErr := ev.RequestView.Body.ValidateBodyRaw()
+	bodyRawValidateErr := ev.requestView.Body.ValidateBodyRaw()
 	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Warn(bodyRawValidateErr)
 	}
 
-	bodyForm, bodyFormGetErr := ev.RequestView.Body.BodyKeyValueEditor.GetMap()
+	bodyForm, bodyFormGetErr := ev.requestView.Body.BodyKeyValueEditor.GetMap()
 	if bodyFormGetErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn(bodyFormGetErr)
 	}
-	bodyFormValidateErr := ev.RequestView.Body.BodyKeyValueEditor.Validate()
+	bodyFormValidateErr := ev.requestView.Body.BodyKeyValueEditor.Validate()
 	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn(bodyFormValidateErr)
 	}
@@ -131,12 +134,12 @@ func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
 
 func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) {
 	defer fyne.Do(func() {
-		ev.ResponseView.SetLoading(false)
-		ev.HeaderView.SendButton.Enable()
+		ev.responseView.SetLoading(false)
+		ev.headerView.SendButton.Enable()
 	})
 
 	fyne.Do(func() {
-		bodyType, bodyTypeGetErr := ev.RequestView.Body.BodyTypeBinding.Get()
+		bodyType, bodyTypeGetErr := ev.requestView.Body.BodyTypeBinding.Get()
 		if bodyTypeGetErr != nil {
 			log.Error(bodyTypeGetErr)
 		}
@@ -144,12 +147,12 @@ func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) 
 			log.Debug("Skipping autoformat for non-raw bodyType")
 			return
 		}
-		bodyRaw, bodyRawGetErr := ev.RequestView.Body.BodyRawBinding.Get()
+		bodyRaw, bodyRawGetErr := ev.requestView.Body.BodyRawBinding.Get()
 		if bodyRawGetErr != nil {
 			log.Error(bodyRawGetErr)
 			return
 		}
-		bodyRawSetErr := ev.RequestView.Body.BodyRawBinding.Set(utils.SmartFormat(bodyRaw))
+		bodyRawSetErr := ev.requestView.Body.BodyRawBinding.Set(utils.SmartFormat(bodyRaw))
 		if bodyRawSetErr != nil {
 			log.Error(bodyRawSetErr)
 			return
@@ -164,17 +167,17 @@ func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) 
 	}
 
 	fyne.Do(func() {
-		statusErr := ev.ResponseView.StatusBinding.Set(responsePayload.Status)
+		statusErr := ev.responseView.StatusBinding.Set(responsePayload.Status)
 		if statusErr != nil {
 			log.Error(statusErr)
 		}
 
-		timeErr := ev.ResponseView.TimeBinding.Set(responsePayload.Time)
+		timeErr := ev.responseView.TimeBinding.Set(responsePayload.Time)
 		if timeErr != nil {
 			log.Error(timeErr)
 		}
 
-		bodyErr := ev.ResponseView.BodyBinding.Set(utils.SmartFormat(responsePayload.Body))
+		bodyErr := ev.responseView.BodyBinding.Set(utils.SmartFormat(responsePayload.Body))
 		if bodyErr != nil {
 			log.Error(bodyErr)
 		}
@@ -182,18 +185,18 @@ func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) 
 }
 
 func (ev ExchangeView) sendButtonHandler() {
-	ev.HeaderView.SendButton.Disable()
-	ev.ResponseView.SetLoading(true)
+	ev.headerView.SendButton.Disable()
+	ev.responseView.SetLoading(true)
 
-	statusErr := ev.ResponseView.StatusBinding.Set("")
+	statusErr := ev.responseView.StatusBinding.Set("")
 	if statusErr != nil {
 		log.Error(statusErr)
 	}
-	timeErr := ev.ResponseView.TimeBinding.Set("")
+	timeErr := ev.responseView.TimeBinding.Set("")
 	if timeErr != nil {
 		log.Error(timeErr)
 	}
-	bodyErr := ev.ResponseView.BodyBinding.Set("")
+	bodyErr := ev.responseView.BodyBinding.Set("")
 	if bodyErr != nil {
 		log.Error(bodyErr)
 	}
@@ -204,9 +207,9 @@ func (ev ExchangeView) sendButtonHandler() {
 }
 
 func ComposeExchangeView() ExchangeView {
-	headerView := ComposeExchangeHeaderView()
-	requestView := ComposeRequestView()
-	responseView := ComposeResponseView()
+	headerView := exchangeheaderview.ComposeExchangeHeaderView()
+	requestView := requestview.ComposeRequestView()
+	responseView := responseview.ComposeResponseView()
 
 	headerView.MethodBinding.AddListener(binding.NewDataListener(func() {
 		method, methodErr := headerView.MethodBinding.Get()

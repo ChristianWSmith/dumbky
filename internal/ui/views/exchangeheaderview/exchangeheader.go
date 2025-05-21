@@ -1,4 +1,4 @@
-package exchange
+package exchangeheaderview
 
 import (
 	"dumbky/internal/constants"

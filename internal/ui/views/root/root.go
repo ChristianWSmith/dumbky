@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"dumbky/internal/ui/exchange"
+	"dumbky/internal/ui/views/exchangeview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -9,11 +9,11 @@ import (
 
 type RootView struct {
 	UI           *fyne.Container
-	ExchangeView exchange.ExchangeView
+	ExchangeView exchangeview.ExchangeView
 }
 
 func ComposeRootView() RootView {
-	exchangeView := exchange.ComposeExchangeView()
+	exchangeView := exchangeview.ComposeExchangeView()
 
 	ui := container.NewBorder(nil, nil, nil, nil, exchangeView.UI)
 
