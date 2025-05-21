@@ -1,6 +1,7 @@
 package keyvalueeditorview
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/log"
 	"dumbky/internal/ui/views/keyvalueview"
 
@@ -136,7 +137,7 @@ func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) err
 	keyValueViews := make(map[keyvalueview.KeyValueView]bool)
 	keyValueBox := container.NewVBox()
 
-	addButton := widget.NewButtonWithIcon("", nil, nil)
+	addButton := widget.NewButtonWithIcon(constants.UI_LABEL_KEY_VALUE_ADD, nil, nil)
 	addButton.Icon = addButton.Theme().Icon(theme.IconNameContentAdd)
 
 	keyValueAddBox := container.NewVBox(keyValueBox, addButton)

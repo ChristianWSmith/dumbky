@@ -92,11 +92,16 @@ func ComposeExchangeHeaderView() ExchangeHeaderView {
 	sendButton := widget.NewButton(constants.UI_LABEL_SEND, nil)
 	sendButton.Icon = sendButton.Theme().Icon(theme.IconNameMailSend)
 
+	methodSelect.SetSelected(constants.HTTP_METHOD_DEFAULT)
+	methodErr := methodBind.Set(constants.HTTP_METHOD_DEFAULT)
+	if methodErr != nil {
+		log.Error(methodErr)
+	}
+
 	methodSelect.Bind(methodBind)
 	urlEntry.Bind(urlBind)
 	sslCheck.Bind(sslBind)
 
-	methodBind.Set(constants.HTTP_METHOD_GET)
 	urlEntry.Validator = validators.ValidateURL
 
 	sslSend := container.NewHBox(sslCheck, sendButton)

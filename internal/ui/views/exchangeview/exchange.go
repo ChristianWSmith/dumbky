@@ -189,15 +189,15 @@ func (ev ExchangeView) sendButtonHandler() {
 	ev.headerView.SendButton.Disable()
 	ev.responseView.SetLoading(true)
 
-	statusErr := ev.responseView.StatusBinding.Set("")
+	statusErr := ev.responseView.StatusBinding.Set(constants.UI_LOADING_RESPONSE_STATUS)
 	if statusErr != nil {
 		log.Error(statusErr)
 	}
-	timeErr := ev.responseView.TimeBinding.Set("")
+	timeErr := ev.responseView.TimeBinding.Set(constants.UI_LOADING_RESPONSE_TIME)
 	if timeErr != nil {
 		log.Error(timeErr)
 	}
-	bodyErr := ev.responseView.BodyBinding.Set("")
+	bodyErr := ev.responseView.BodyBinding.Set(constants.UI_LOADING_RESPONSE_BODY)
 	if bodyErr != nil {
 		log.Error(bodyErr)
 	}

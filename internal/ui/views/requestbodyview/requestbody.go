@@ -100,12 +100,17 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	bodyContentStack := container.NewStack(bodyKeyValueEditorView.UI, bodyRawEntry)
 
+	bodyTypeSelect.SetSelected(constants.UI_BODY_TYPE_DEFAULT)
+	bodyTypeErr := bodyTypeBind.Set(constants.UI_BODY_TYPE_DEFAULT)
+	if bodyTypeErr != nil {
+		log.Error(bodyTypeErr)
+	}
+
 	bodyTypeSelect.Bind(bodyTypeBind)
 	bodyRawEntry.Bind(bodyRawBind)
 
 	bodyRawEntry.Validator = validators.ValidateRawBodyContent
 
-	bodyTypeBind.Set(constants.UI_BODY_TYPE_DEFAULT)
 	bodyTypeBind.AddListener(binding.NewDataListener(func() {
 		bodyType, bodyTypeErr := bodyTypeBind.Get()
 		if bodyTypeErr != nil {
