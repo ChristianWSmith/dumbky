@@ -11,23 +11,30 @@ import (
 )
 
 type RequestView struct {
-	UI      *container.AppTabs
-	Params  keyvalueeditorview.KeyValueEditorView
-	Headers keyvalueeditorview.KeyValueEditorView
-	Body    requestbodyview.RequestBodyView
+	UI          *container.AppTabs
+	QueryParams keyvalueeditorview.KeyValueEditorView
+	PathParams  keyvalueeditorview.KeyValueEditorView
+	Headers     keyvalueeditorview.KeyValueEditorView
+	Body        requestbodyview.RequestBodyView
 }
 
 type RequestState struct {
-	Params  keyvalueeditorview.KeyValueEditorState `json:"params"`
-	Headers keyvalueeditorview.KeyValueEditorState `json:"headers"`
-	Body    requestbodyview.RequestBodyState       `json:"body"`
+	QueryParams keyvalueeditorview.KeyValueEditorState `json:"queryParams"`
+	PathParams  keyvalueeditorview.KeyValueEditorState `json:"pathParams"`
+	Headers     keyvalueeditorview.KeyValueEditorState `json:"headers"`
+	Body        requestbodyview.RequestBodyState       `json:"body"`
 }
 
 func (rv RequestView) ToState() (RequestState, error) {
-	params, paramsErr := rv.Params.ToState()
-	if paramsErr != nil {
-		log.Error(paramsErr)
-		return RequestState{}, paramsErr
+	queryParams, queryParamsErr := rv.QueryParams.ToState()
+	if queryParamsErr != nil {
+		log.Error(queryParamsErr)
+		return RequestState{}, queryParamsErr
+	}
+	pathParams, pathParamsErr := rv.PathParams.ToState()
+	if pathParamsErr != nil {
+		log.Error(pathParamsErr)
+		return RequestState{}, pathParamsErr
 	}
 	headers, headersErr := rv.Headers.ToState()
 	if headersErr != nil {
@@ -40,17 +47,23 @@ func (rv RequestView) ToState() (RequestState, error) {
 		return RequestState{}, bodyErr
 	}
 	return RequestState{
-		Params:  params,
-		Headers: headers,
-		Body:    body,
+		QueryParams: queryParams,
+		PathParams:  pathParams,
+		Headers:     headers,
+		Body:        body,
 	}, nil
 }
 
 func (rv RequestView) LoadState(requestState RequestState) error {
-	paramsErr := rv.Params.LoadState(requestState.Params)
-	if paramsErr != nil {
-		log.Error(paramsErr)
-		return paramsErr
+	queryParamsErr := rv.QueryParams.LoadState(requestState.QueryParams)
+	if queryParamsErr != nil {
+		log.Error(queryParamsErr)
+		return queryParamsErr
+	}
+	pathParamsErr := rv.PathParams.LoadState(requestState.QueryParams)
+	if pathParamsErr != nil {
+		log.Error(pathParamsErr)
+		return pathParamsErr
 	}
 	headersErr := rv.Headers.LoadState(requestState.Headers)
 	if headersErr != nil {
@@ -66,19 +79,22 @@ func (rv RequestView) LoadState(requestState RequestState) error {
 }
 
 func ComposeRequestView() RequestView {
-	paramsView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateURLParamKey, validators.ValidateURLParamValue)
+	queryParamsView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
+	pathParamsView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
 	headersView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
 	bodyView := requestbodyview.ComposeRequestBodyView()
 
-	paramsTab := container.NewTabItem(constants.UI_LABEL_PARAMETERS, paramsView.UI)
+	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsView.UI)
+	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsView.UI)
 	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersView.UI)
 	bodyTab := container.NewTabItem(constants.UI_LABEL_BODY, bodyView.UI)
 
-	ui := container.NewAppTabs(paramsTab, headersTab, bodyTab)
+	ui := container.NewAppTabs(queryParamsTab, pathParamsTab, headersTab, bodyTab)
 
 	return RequestView{
 		ui,
-		paramsView,
+		queryParamsView,
+		pathParamsView,
 		headersView,
 		bodyView,
 	}

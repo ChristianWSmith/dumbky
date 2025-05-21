@@ -89,13 +89,22 @@ func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
 		log.Error(headersValidatErr)
 	}
 
-	params, paramsGetErr := ev.requestView.Params.GetMap()
-	if paramsGetErr != nil {
-		log.Error(paramsGetErr)
+	queryParams, queryParamsGetErr := ev.requestView.QueryParams.GetMap()
+	if queryParamsGetErr != nil {
+		log.Error(queryParamsGetErr)
 	}
-	paramsValidatErr := ev.requestView.Params.Validate()
-	if paramsValidatErr != nil {
-		log.Error(paramsValidatErr)
+	queryParamsValidatErr := ev.requestView.QueryParams.Validate()
+	if queryParamsValidatErr != nil {
+		log.Error(queryParamsValidatErr)
+	}
+
+	pathParams, pathParamsGetErr := ev.requestView.PathParams.GetMap()
+	if pathParamsGetErr != nil {
+		log.Error(pathParamsGetErr)
+	}
+	pathParamsValidatErr := ev.requestView.PathParams.Validate()
+	if pathParamsValidatErr != nil {
+		log.Error(pathParamsValidatErr)
 	}
 
 	bodyType, bodyTypeGetErr := ev.requestView.Body.BodyTypeBinding.Get()
@@ -122,14 +131,15 @@ func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
 	}
 
 	return request.RequestPayload{
-		URL:      url,
-		Method:   method,
-		UseSSL:   useSSL,
-		Headers:  headers,
-		Params:   params,
-		BodyType: bodyType,
-		BodyRaw:  bodyRaw,
-		BodyForm: bodyForm,
+		URL:         url,
+		Method:      method,
+		UseSSL:      useSSL,
+		Headers:     headers,
+		QueryParams: queryParams,
+		PathParams:  pathParams,
+		BodyType:    bodyType,
+		BodyRaw:     bodyRaw,
+		BodyForm:    bodyForm,
 	}
 }
 

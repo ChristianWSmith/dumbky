@@ -3,6 +3,7 @@ package validators
 import (
 	"errors"
 	"net/url"
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -46,14 +47,32 @@ func ValidateURL(s string) error {
 	return nil
 }
 
-func ValidateURLParamKey(s string) error {
+func ValidateQueryParamKey(s string) error {
 	if _, err := url.QueryUnescape(s); err != nil {
 		return err
 	}
 	return nil
 }
 
-func ValidateURLParamValue(s string) error {
+func ValidateQueryParamValue(s string) error {
+	if _, err := url.QueryUnescape(s); err != nil {
+		return err
+	}
+	return nil
+}
+
+func ValidatePathParamKey(s string) error {
+	match, err := regexp.MatchString("^[a-zA-Z_]+$", s)
+	if err != nil {
+		return err
+	}
+	if !match {
+		return errors.New("invalid path param key")
+	}
+	return nil
+}
+
+func ValidatePathParamValue(s string) error {
 	if _, err := url.QueryUnescape(s); err != nil {
 		return err
 	}

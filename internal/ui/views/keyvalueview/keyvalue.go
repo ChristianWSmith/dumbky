@@ -89,7 +89,7 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	valueEntry := widget.NewEntry()
 	valueEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_VALUE)
 	valueEntry.TextStyle.Monospace = true
-	enabledCheck := widget.NewCheck("", nil)
+	enabledCheck := widget.NewCheck(constants.UI_LABEL_KEY_VALUE_ENABLE, nil)
 	destroyButton := widget.NewButtonWithIcon("", nil, nil)
 	destroyButton.Icon = destroyButton.Theme().Icon(theme.IconNameContentClear)
 
