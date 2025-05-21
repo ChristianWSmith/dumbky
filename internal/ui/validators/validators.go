@@ -29,7 +29,7 @@ func ValidateHeaderValue(s string) error {
 			return errors.New("control character in header value")
 		}
 		if r == 127 {
-			return errors.New("DEL character in header value")
+			return errors.New("del character in header value")
 		}
 	}
 	return nil

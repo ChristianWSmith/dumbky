@@ -2,7 +2,7 @@ package app
 
 import (
 	"dumbky/internal/global"
-	ui "dumbky/internal/ui/views/root"
+	"dumbky/internal/ui/views/rootview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -30,7 +30,7 @@ func Run() {
 	w := a.NewWindow("Dumbky")
 	global.Window = w
 
-	rootView := ui.ComposeRootView()
+	rootView := rootview.ComposeRootView()
 	w.SetContent(rootView.UI)
 
 	width, height := getWindowSize()

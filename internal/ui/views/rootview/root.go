@@ -1,4 +1,4 @@
-package ui
+package rootview
 
 import (
 	"dumbky/internal/ui/views/exchangeview"
