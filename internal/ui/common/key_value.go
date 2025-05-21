@@ -14,21 +14,68 @@ import (
 type KeyValueView struct {
 	UI             *fyne.Container
 	DestroyButton  *widget.Button
-	KeyEntry       *widget.Entry
-	ValueEntry     *widget.Entry
 	EnabledBinding binding.Bool
 	KeyBinding     binding.String
 	ValueBinding   binding.String
+
+	keyEntry   *widget.Entry
+	valueEntry *widget.Entry
 }
 
-func enabledCheckOnChanged(checked bool, keyEntry, valueEntry *widget.Entry) {
-	if checked {
-		keyEntry.Enable()
-		valueEntry.Enable()
-	} else {
-		keyEntry.Disable()
-		valueEntry.Disable()
+type KeyValueState struct {
+	Enabled bool   `json:"enabled"`
+	Key     string `json:"key"`
+	Value   string `json:"value"`
+}
+
+func (kvv KeyValueView) ValidateKey() error {
+	return kvv.keyEntry.Validate()
+}
+
+func (kvv KeyValueView) ValidateValue() error {
+	return kvv.valueEntry.Validate()
+}
+
+func (kvv KeyValueView) ToState() (KeyValueState, error) {
+	enabled, enabledErr := kvv.EnabledBinding.Get()
+	if enabledErr != nil {
+		log.Error("failed to Get EnabledBinding in v", enabledErr.Error())
+		return KeyValueState{}, enabledErr
 	}
+	key, keyErr := kvv.KeyBinding.Get()
+	if keyErr != nil {
+		log.Error("failed to Get KeyBinding in ToState", keyErr.Error())
+		return KeyValueState{}, keyErr
+	}
+	value, valueErr := kvv.ValueBinding.Get()
+	if valueErr != nil {
+		log.Error("failed to Get ValueBinding in ToState", valueErr.Error())
+		return KeyValueState{}, valueErr
+	}
+	return KeyValueState{
+		Enabled: enabled,
+		Key:     key,
+		Value:   value,
+	}, nil
+}
+
+func (kvv KeyValueView) LoadState(kvs KeyValueState) error {
+	enabledErr := kvv.EnabledBinding.Set(kvs.Enabled)
+	if enabledErr != nil {
+		log.Error("failed to Set EnabledBinding in LoadState", enabledErr.Error())
+		return enabledErr
+	}
+	keyErr := kvv.KeyBinding.Set(kvs.Key)
+	if keyErr != nil {
+		log.Error("failed to Set KeyBinding in LoadState", keyErr.Error())
+		return keyErr
+	}
+	valueErr := kvv.ValueBinding.Set(kvs.Value)
+	if valueErr != nil {
+		log.Error("failed to Set ValueBinding in LoadState", valueErr.Error())
+		return valueErr
+	}
+	return nil
 }
 
 func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) KeyValueView {
@@ -53,11 +100,20 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	keyEntry.Validator = keyValidator
 	valueEntry.Validator = valueValidator
 
-	enabledCheckOnChangedOld := enabledCheck.OnChanged
-	enabledCheck.OnChanged = func(checked bool) {
-		enabledCheckOnChangedOld(checked)
-		enabledCheckOnChanged(checked, keyEntry, valueEntry)
-	}
+	enabledBinding.AddListener(binding.NewDataListener(func() {
+		enabled, enabledErr := enabledBinding.Get()
+		if enabledErr != nil {
+			log.Error("Failed to Get enabledBinding in DataListener", enabledErr.Error())
+			return
+		}
+		if enabled {
+			keyEntry.Enable()
+			valueEntry.Enable()
+		} else {
+			keyEntry.Disable()
+			valueEntry.Disable()
+		}
+	}))
 
 	err := enabledBinding.Set(true)
 	if err != nil {
@@ -71,10 +127,10 @@ func ComposeKeyValueView(keyValidator, valueValidator func(val string) error) Ke
 	return KeyValueView{
 		ui,
 		destroyButton,
-		keyEntry,
-		valueEntry,
 		enabledBinding,
 		keyBinding,
 		valueBinding,
+		keyEntry,
+		valueEntry,
 	}
 }

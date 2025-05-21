@@ -10,55 +10,61 @@ import (
 )
 
 type KeyValueEditorView struct {
-	UI        *container.Scroll
-	KeyValues map[KeyValueView]bool
+	UI *container.Scroll
+
+	keyValueViews  map[KeyValueView]bool
+	keyValueBox    *fyne.Container
+	keyValidator   func(val string) error
+	valueValidator func(val string) error
 }
 
-func destroyButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueView KeyValueView, keyValueBox *fyne.Container) {
-	delete(keyValueViews, keyValueView)
+type KeyValueEditorState struct {
+	KeyValueStates []KeyValueState `json:"keyValueStates"`
+}
+
+func (kve KeyValueEditorView) ToState() (KeyValueEditorState, error) {
+	keyValueStates := []KeyValueState{}
+	for keyValue := range kve.keyValueViews {
+		keyValueState, err := keyValue.ToState()
+		if err != nil {
+			log.Error("", err.Error())
+			return KeyValueEditorState{}, err
+		}
+		keyValueStates = append(keyValueStates, keyValueState)
+	}
+	return KeyValueEditorState{
+		KeyValueStates: keyValueStates,
+	}, nil
+}
+
+func (kve KeyValueEditorView) clear() {
+	kve.keyValueViews = make(map[KeyValueView]bool)
 	fyne.Do(func() {
-		keyValueBox.Remove(keyValueView.UI)
-		keyValueBox.Refresh()
+		kve.keyValueBox.RemoveAll()
+		kve.keyValueBox.Refresh()
 	})
 }
 
-func addButtonOnTappedWorker(keyValueViews map[KeyValueView]bool, keyValueBox *fyne.Container, keyValidator, valueValidator func(val string) error) {
-	keyValueView := ComposeKeyValueView(keyValidator, valueValidator)
-	keyValueView.DestroyButton.OnTapped = func() {
-		go destroyButtonOnTappedWorker(keyValueViews, keyValueView, keyValueBox)
-	}
-	keyValueViews[keyValueView] = true
-	fyne.Do(func() {
-		keyValueBox.Add(keyValueView.UI)
-		keyValueBox.Refresh()
-	})
-}
-
-func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
-	out := []KeyValueView{}
-	for kv := range kve.KeyValues {
-		enabled, enabledErr := kv.EnabledBinding.Get()
-		if enabledErr != nil {
-			log.Error("Failed to get EnabledBinding in GetMap", enabledErr.Error())
-			continue
+func (kve KeyValueEditorView) LoadState(keyValueEditorState KeyValueEditorState) error {
+	kve.clear()
+	for _, keyValueState := range keyValueEditorState.KeyValueStates {
+		err := kve.addKeyValue(keyValueState)
+		if err != nil {
+			log.Error("", err.Error())
+			return err
 		}
-		if !enabled {
-			log.Debug("Skipping disabled KeyValue")
-			continue
-		}
-		out = append(out, kv)
 	}
-	return out
+	return nil
 }
 
 func (kve KeyValueEditorView) Validate() error {
 	for _, kv := range kve.collectEnabled() {
-		err := kv.KeyEntry.Validate()
+		err := kv.ValidateKey()
 		if err != nil {
 			log.Warn("failed to validate key", err.Error())
 			return err
 		}
-		err = kv.ValueEntry.Validate()
+		err = kv.ValidateValue()
 		if err != nil {
 			log.Warn("failed to validate value", err.Error())
 			return err
@@ -85,6 +91,45 @@ func (kve KeyValueEditorView) GetMap() (map[string]string, error) {
 	return out, nil
 }
 
+func (kve KeyValueEditorView) addKeyValue(keyValueState KeyValueState) error {
+	keyValueView := ComposeKeyValueView(kve.keyValidator, kve.valueValidator)
+	err := keyValueView.LoadState(keyValueState)
+	if err != nil {
+		log.Error("", err.Error())
+		return err
+	}
+	keyValueView.DestroyButton.OnTapped = func() {
+		delete(kve.keyValueViews, keyValueView)
+		fyne.Do(func() {
+			kve.keyValueBox.Remove(keyValueView.UI)
+			kve.keyValueBox.Refresh()
+		})
+	}
+	kve.keyValueViews[keyValueView] = true
+	fyne.Do(func() {
+		kve.keyValueBox.Add(keyValueView.UI)
+		kve.keyValueBox.Refresh()
+	})
+	return nil
+}
+
+func (kve KeyValueEditorView) collectEnabled() []KeyValueView {
+	out := []KeyValueView{}
+	for kv := range kve.keyValueViews {
+		enabled, enabledErr := kv.EnabledBinding.Get()
+		if enabledErr != nil {
+			log.Error("Failed to get EnabledBinding in GetMap", enabledErr.Error())
+			continue
+		}
+		if !enabled {
+			log.Debug("Skipping disabled KeyValue")
+			continue
+		}
+		out = append(out, kv)
+	}
+	return out
+}
+
 func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) error) KeyValueEditorView {
 
 	keyValueViews := make(map[KeyValueView]bool)
@@ -93,15 +138,20 @@ func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) err
 	addButton := widget.NewButtonWithIcon("", nil, nil)
 	addButton.Icon = addButton.Theme().Icon(theme.IconNameContentAdd)
 
-	addButton.OnTapped = func() {
-		go addButtonOnTappedWorker(keyValueViews, keyValueBox, keyValidator, valueValidator)
-	}
-
 	keyValueAddBox := container.NewVBox(keyValueBox, addButton)
 
 	ui := container.NewVScroll(keyValueAddBox)
-	return KeyValueEditorView{
+	kve := KeyValueEditorView{
 		ui,
 		keyValueViews,
+		keyValueBox,
+		keyValidator,
+		valueValidator,
 	}
+
+	addButton.OnTapped = func() {
+		go kve.addKeyValue(KeyValueState{Enabled: true, Key: "", Value: ""})
+	}
+
+	return kve
 }

@@ -9,6 +9,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 )
 
@@ -19,63 +20,99 @@ type ExchangeView struct {
 	ResponseView ResponseView
 }
 
-func generateRequestPayload(headerView ExchangeHeaderView, requestView RequestView) request.RequestPayload {
-	url, urlGetErr := headerView.URLBinding.Get()
+type ExchangeState struct {
+	Header  ExchangeHeaderState `json:"header"`
+	Request RequestState        `json:"request"`
+}
+
+func (ev ExchangeView) ToState() (ExchangeState, error) {
+	header, headerErr := ev.HeaderView.ToState()
+	if headerErr != nil {
+		log.Error("", headerErr.Error())
+		return ExchangeState{}, headerErr
+	}
+	request, requestErr := ev.RequestView.ToState()
+	if requestErr != nil {
+		log.Error("", requestErr.Error())
+		return ExchangeState{}, requestErr
+	}
+	return ExchangeState{
+		Header:  header,
+		Request: request,
+	}, nil
+}
+
+func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
+	headerErr := ev.HeaderView.LoadState(exchangeState.Header)
+	if headerErr != nil {
+		log.Error("", headerErr.Error())
+		return headerErr
+	}
+	requestErr := ev.RequestView.LoadState(exchangeState.Request)
+	if requestErr != nil {
+		log.Error("", requestErr.Error())
+		return requestErr
+	}
+	return nil
+}
+
+func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
+	url, urlGetErr := ev.HeaderView.URLBinding.Get()
 	if urlGetErr != nil {
 		log.Error("Failed to Get URLBinding", urlGetErr.Error())
 	}
-	urlValidateErr := headerView.URLEntry.Validate()
+	urlValidateErr := ev.HeaderView.ValidateURL()
 	if urlValidateErr != nil {
 		log.Warn("Failed to Validate URLEntry", urlValidateErr.Error())
 	}
 
-	method, methodGetErr := headerView.MethodBinding.Get()
+	method, methodGetErr := ev.HeaderView.MethodBinding.Get()
 	if methodGetErr != nil {
 		log.Error("Failed to Get MethodBinding", methodGetErr.Error())
 	}
 
-	useSSL, useSSLGetErr := headerView.UseSSLBinding.Get()
+	useSSL, useSSLGetErr := ev.HeaderView.UseSSLBinding.Get()
 	if useSSLGetErr != nil {
 		log.Error("Failed to Get UseSSLBinding", useSSLGetErr.Error())
 	}
 
-	headers, headersGetErr := requestView.Headers.GetMap()
+	headers, headersGetErr := ev.RequestView.Headers.GetMap()
 	if headersGetErr != nil {
 		log.Error("Failed to Get Headers Map", headersGetErr.Error())
 	}
-	headersValidatErr := requestView.Headers.Validate()
+	headersValidatErr := ev.RequestView.Headers.Validate()
 	if headersValidatErr != nil {
 		log.Error("Failed to Validate Headers Map", headersValidatErr.Error())
 	}
 
-	params, paramsGetErr := requestView.Params.GetMap()
+	params, paramsGetErr := ev.RequestView.Params.GetMap()
 	if paramsGetErr != nil {
 		log.Error("Failed to Get Params Map", paramsGetErr.Error())
 	}
-	paramsValidatErr := requestView.Params.Validate()
+	paramsValidatErr := ev.RequestView.Params.Validate()
 	if paramsValidatErr != nil {
 		log.Error("Failed to Validate Params Map", paramsValidatErr.Error())
 	}
 
-	bodyType, bodyTypeGetErr := requestView.Body.BodyTypeBinding.Get()
+	bodyType, bodyTypeGetErr := ev.RequestView.Body.BodyTypeBinding.Get()
 	if bodyTypeGetErr != nil {
 		log.Error("Failed to Get BodyTypeBinding", bodyTypeGetErr.Error())
 	}
 
-	bodyRaw, bodyRawGetErr := requestView.Body.BodyRawBinding.Get()
+	bodyRaw, bodyRawGetErr := ev.RequestView.Body.BodyRawBinding.Get()
 	if bodyRawGetErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Error("Failed to Get BodyRawBinding", bodyRawGetErr.Error())
 	}
-	bodyRawValidateErr := requestView.Body.BodyRawEntry.Validate()
+	bodyRawValidateErr := ev.RequestView.Body.ValidateBodyRaw()
 	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Warn("Failed to Validate BodyRawEntry", bodyRawValidateErr.Error())
 	}
 
-	bodyForm, bodyFormGetErr := requestView.Body.BodyKeyValueEditor.GetMap()
+	bodyForm, bodyFormGetErr := ev.RequestView.Body.BodyKeyValueEditor.GetMap()
 	if bodyFormGetErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn("Failed to Get Body Map", bodyFormGetErr.Error())
 	}
-	bodyFormValidateErr := requestView.Body.BodyKeyValueEditor.Validate()
+	bodyFormValidateErr := ev.RequestView.Body.BodyKeyValueEditor.Validate()
 	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn("Failed to Validate Body Map", bodyFormValidateErr.Error())
 	}
@@ -92,14 +129,14 @@ func generateRequestPayload(headerView ExchangeHeaderView, requestView RequestVi
 	}
 }
 
-func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView, requestPayload request.RequestPayload) {
+func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) {
 	defer fyne.Do(func() {
-		responseView.SetLoading(false)
-		headerView.SendButton.Enable()
+		ev.ResponseView.SetLoading(false)
+		ev.HeaderView.SendButton.Enable()
 	})
 
 	fyne.Do(func() {
-		bodyType, bodyTypeGetErr := requestView.Body.BodyTypeBinding.Get()
+		bodyType, bodyTypeGetErr := ev.RequestView.Body.BodyTypeBinding.Get()
 		if bodyTypeGetErr != nil {
 			log.Error("Failed to Get BodyTypeBinding during autoformat", bodyTypeGetErr.Error())
 		}
@@ -107,12 +144,12 @@ func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestVi
 			log.Debug("Skipping autoformat for non-raw bodyType")
 			return
 		}
-		bodyRaw, bodyRawGetErr := requestView.Body.BodyRawBinding.Get()
+		bodyRaw, bodyRawGetErr := ev.RequestView.Body.BodyRawBinding.Get()
 		if bodyRawGetErr != nil {
 			log.Error("Failed to Get BodyRawBinding during autoformat", bodyRawGetErr.Error())
 			return
 		}
-		bodyRawSetErr := requestView.Body.BodyRawBinding.Set(utils.SmartFormat(bodyRaw))
+		bodyRawSetErr := ev.RequestView.Body.BodyRawBinding.Set(utils.SmartFormat(bodyRaw))
 		if bodyRawSetErr != nil {
 			log.Error("Failed to Set BodyRawBinding during autoformat", bodyRawSetErr.Error())
 			return
@@ -127,53 +164,43 @@ func headerViewSendButtonOnTappedWorker(headerView ExchangeHeaderView, requestVi
 	}
 
 	fyne.Do(func() {
-		statusErr := responseView.StatusBinding.Set(responsePayload.Status)
+		statusErr := ev.ResponseView.StatusBinding.Set(responsePayload.Status)
 		if statusErr != nil {
 			log.Error("Failed to set StatusBinding", statusErr.Error())
 		}
 
-		timeErr := responseView.TimeBinding.Set(responsePayload.Time)
+		timeErr := ev.ResponseView.TimeBinding.Set(responsePayload.Time)
 		if timeErr != nil {
 			log.Error("Failed to set TimeBinding", timeErr.Error())
 		}
 
-		bodyErr := responseView.BodyBinding.Set(utils.SmartFormat(responsePayload.Body))
+		bodyErr := ev.ResponseView.BodyBinding.Set(utils.SmartFormat(responsePayload.Body))
 		if bodyErr != nil {
 			log.Error("Failed to set BodyBinding", bodyErr.Error())
 		}
 	})
 }
 
-func headerViewSendButtonOnTapped(headerView ExchangeHeaderView, requestView RequestView, responseView ResponseView) {
-	headerView.SendButton.Disable()
-	responseView.SetLoading(true)
+func (ev ExchangeView) sendButtonHandler() {
+	ev.HeaderView.SendButton.Disable()
+	ev.ResponseView.SetLoading(true)
 
-	statusErr := responseView.StatusBinding.Set("")
+	statusErr := ev.ResponseView.StatusBinding.Set("")
 	if statusErr != nil {
 		log.Error("Failed to set StatusBinding", statusErr.Error())
 	}
-	timeErr := responseView.TimeBinding.Set("")
+	timeErr := ev.ResponseView.TimeBinding.Set("")
 	if timeErr != nil {
 		log.Error("Failed to set TimeBinding", timeErr.Error())
 	}
-	bodyErr := responseView.BodyBinding.Set("")
+	bodyErr := ev.ResponseView.BodyBinding.Set("")
 	if bodyErr != nil {
 		log.Error("Failed to set BodyBinding", bodyErr.Error())
 	}
 
-	requestPayload := generateRequestPayload(headerView, requestView)
+	requestPayload := ev.ToRequestPayload()
 
-	go headerViewSendButtonOnTappedWorker(headerView, requestView, responseView, requestPayload)
-}
-
-func headerViewMethodSelectOnChanged(val string, requestView RequestView) {
-	if val == constants.HTTP_METHOD_GET || val == constants.HTTP_METHOD_HEAD {
-		requestView.Body.BodyTypeSelect.SetSelected(constants.UI_BODY_TYPE_NONE)
-		requestView.Body.BodyTypeSelect.Disable()
-	} else {
-		requestView.Body.BodyTypeSelect.Enable()
-	}
-
+	go ev.sendRequestWorker(requestPayload)
 }
 
 func ComposeExchangeView() ExchangeView {
@@ -181,26 +208,36 @@ func ComposeExchangeView() ExchangeView {
 	requestView := ComposeRequestView()
 	responseView := ComposeResponseView()
 
-	headerView.SendButton.OnTapped = func() {
-		headerViewSendButtonOnTapped(headerView, requestView, responseView)
-	}
-
-	headerViewMethodSelectOnChangedOld := headerView.MethodSelect.OnChanged
-	headerView.MethodSelect.OnChanged = func(val string) {
-		headerViewMethodSelectOnChangedOld(val)
-		headerViewMethodSelectOnChanged(val, requestView)
-	}
-
-	headerView.MethodSelect.SetSelectedIndex(headerView.MethodSelect.SelectedIndex())
-	requestView.Body.BodyTypeSelect.SetSelectedIndex(requestView.Body.BodyTypeSelect.SelectedIndex())
+	headerView.MethodBinding.AddListener(binding.NewDataListener(func() {
+		method, methodErr := headerView.MethodBinding.Get()
+		if methodErr != nil {
+			log.Error("Failed to Get MethodBinding in DataListener", methodErr.Error())
+			return
+		}
+		if method == constants.HTTP_METHOD_GET || method == constants.HTTP_METHOD_HEAD {
+			bodyTypeErr := requestView.Body.BodyTypeBinding.Set(constants.UI_BODY_TYPE_NONE)
+			if bodyTypeErr != nil {
+				log.Error("Failed to Set BodyTypeBinding in DataListener", bodyTypeErr.Error())
+			}
+			requestView.Body.DisableBodyTypeSelect()
+		} else {
+			requestView.Body.EnableBodyTypeSelect()
+		}
+	}))
 
 	requestResponseView := container.NewHSplit(requestView.UI, responseView.UI)
 	ui := container.NewBorder(headerView.UI, nil, nil, nil, requestResponseView)
 
-	return ExchangeView{
+	ev := ExchangeView{
 		ui,
 		headerView,
 		requestView,
 		responseView,
 	}
+
+	headerView.SendButton.OnTapped = func() {
+		ev.sendButtonHandler()
+	}
+
+	return ev
 }

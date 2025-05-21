@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/log"
 	"dumbky/internal/ui/common"
 	"dumbky/internal/ui/validators"
 
@@ -14,26 +15,71 @@ import (
 type RequestBodyView struct {
 	UI                 *fyne.Container
 	BodyKeyValueEditor common.KeyValueEditorView
-	BodyTypeSelect     *widget.Select
-	BodyRawEntry       *widget.Entry
 	BodyTypeBinding    binding.String
 	BodyRawBinding     binding.String
+
+	bodyRawEntry   *widget.Entry
+	bodyTypeSelect *widget.Select
 }
 
-func bodyTypeSelectOnChanged(val string, bodyRawEntry *widget.Entry, bodyKeyValueEditorView common.KeyValueEditorView, bodyContentStack *fyne.Container) {
-	if val == constants.UI_BODY_TYPE_FORM {
-		bodyRawEntry.Hide()
-		bodyKeyValueEditorView.UI.Show()
-		bodyContentStack.Refresh()
-	} else if val == constants.UI_BODY_TYPE_RAW {
-		bodyKeyValueEditorView.UI.Hide()
-		bodyRawEntry.Show()
-		bodyContentStack.Refresh()
-	} else if val == constants.UI_BODY_TYPE_NONE {
-		bodyKeyValueEditorView.UI.Hide()
-		bodyRawEntry.Hide()
-		bodyContentStack.Refresh()
+type RequestBodyState struct {
+	BodyType string
+	BodyForm common.KeyValueEditorState
+	BodyRaw  string
+}
+
+func (rbv RequestBodyView) ToState() (RequestBodyState, error) {
+	bodyType, bodyTypeErr := rbv.BodyTypeBinding.Get()
+	if bodyTypeErr != nil {
+		log.Error("", bodyTypeErr.Error())
+		return RequestBodyState{}, bodyTypeErr
 	}
+	bodyForm, bodyFormErr := rbv.BodyKeyValueEditor.ToState()
+	if bodyFormErr != nil {
+		log.Error("", bodyFormErr.Error())
+		return RequestBodyState{}, bodyFormErr
+	}
+	bodyRaw, bodyRawErr := rbv.BodyRawBinding.Get()
+	if bodyRawErr != nil {
+		log.Error("", bodyRawErr.Error())
+		return RequestBodyState{}, bodyRawErr
+	}
+	return RequestBodyState{
+		BodyType: bodyType,
+		BodyForm: bodyForm,
+		BodyRaw:  bodyRaw,
+	}, nil
+}
+
+func (rbv RequestBodyView) LoadState(requestBodyState RequestBodyState) error {
+	bodyTypeErr := rbv.BodyTypeBinding.Set(requestBodyState.BodyType)
+	if bodyTypeErr != nil {
+		log.Error("", bodyTypeErr.Error())
+		return bodyTypeErr
+	}
+	bodyFormErr := rbv.BodyKeyValueEditor.LoadState(requestBodyState.BodyForm)
+	if bodyFormErr != nil {
+		log.Error("", bodyFormErr.Error())
+		return bodyFormErr
+	}
+	bodyRawErr := rbv.BodyRawBinding.Set(requestBodyState.BodyRaw)
+	if bodyRawErr != nil {
+		log.Error("", bodyRawErr.Error())
+		return bodyRawErr
+	}
+	return nil
+}
+
+func (rbv RequestBodyView) ValidateBodyRaw() error {
+	return rbv.bodyRawEntry.Validate()
+}
+
+func (rbv RequestBodyView) EnableBodyTypeSelect() {
+	rbv.bodyTypeSelect.Enable()
+}
+
+func (rbv RequestBodyView) DisableBodyTypeSelect() {
+	rbv.bodyTypeSelect.Disable()
 }
 
 func ComposeRequestBodyView() RequestBodyView {
@@ -53,21 +99,36 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	bodyRawEntry.Validator = validators.ValidateRawBodyContent
 
-	bodyTypeSelectOnChangedOld := bodyTypeSelect.OnChanged
-	bodyTypeSelect.OnChanged = func(val string) {
-		bodyTypeSelectOnChangedOld(val)
-		bodyTypeSelectOnChanged(val, bodyRawEntry, bodyKeyValueEditorView, bodyContentStack)
-	}
-	bodyTypeSelect.SetSelectedIndex(0)
+	bodyTypeBind.AddListener(binding.NewDataListener(func() {
+		bodyType, bodyTypeErr := bodyTypeBind.Get()
+		if bodyTypeErr != nil {
+			log.Error("Failed to Get bodyTypeBind in DataListener", bodyTypeErr.Error())
+			return
+		}
+		if bodyType == constants.UI_BODY_TYPE_FORM {
+			bodyRawEntry.Hide()
+			bodyKeyValueEditorView.UI.Show()
+			bodyContentStack.Refresh()
+		} else if bodyType == constants.UI_BODY_TYPE_RAW {
+			bodyKeyValueEditorView.UI.Hide()
+			bodyRawEntry.Show()
+			bodyContentStack.Refresh()
+		} else if bodyType == constants.UI_BODY_TYPE_NONE {
+			bodyKeyValueEditorView.UI.Hide()
+			bodyRawEntry.Hide()
+			bodyContentStack.Refresh()
+		}
+	}))
 
+	bodyTypeBind.Set(constants.UI_BODY_TYPE_NONE)
 	ui := container.NewBorder(bodyTypeSelect, nil, nil, nil, bodyContentStack)
 
 	return RequestBodyView{
 		ui,
 		bodyKeyValueEditorView,
-		bodyTypeSelect,
-		bodyRawEntry,
 		bodyTypeBind,
 		bodyRawBind,
+		bodyRawEntry,
+		bodyTypeSelect,
 	}
 }

@@ -11,10 +11,11 @@ import (
 )
 
 type ResponseView struct {
-	UI              *fyne.Container
-	StatusBinding   binding.String
-	TimeBinding     binding.String
-	BodyBinding     binding.String
+	UI            *fyne.Container
+	StatusBinding binding.String
+	TimeBinding   binding.String
+	BodyBinding   binding.String
+
 	statusContainer *fyne.Container
 	loadingBar      *widget.ProgressBarInfinite
 	statusStack     *fyne.Container
