@@ -30,8 +30,8 @@ func ComposeWorkspaceHeaderView() WorkspaceHeaderView {
 	loadButton := widget.NewButtonWithIcon("", nil, nil)
 	loadButton.Icon = addButton.Theme().Icon(theme.IconNameFolderOpen)
 
-	controlsLeft := container.NewHBox(saveButton, loadButton)
-	controlsRight := container.NewHBox(addButton)
+	controlsLeft := container.NewHBox(addButton)
+	controlsRight := container.NewHBox(saveButton, loadButton)
 
 	ui := container.NewBorder(nil, nil, controlsLeft, controlsRight, titleEntry)
 	return WorkspaceHeaderView{
