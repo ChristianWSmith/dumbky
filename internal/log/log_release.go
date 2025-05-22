@@ -4,10 +4,10 @@ package log
 
 func Init() {}
 
-func Debug(msg string, args ...any) {}
+func Debug(msg string) {}
 
-func Info(msg string, args ...any) {}
+func Info(msg string) {}
 
-func Warn(msg string, args ...any) {}
+func Warn(err error) {}
 
-func Error(msg string, args ...any) {}
+func Error(err error) {}

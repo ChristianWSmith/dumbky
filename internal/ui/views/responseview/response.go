@@ -1,8 +1,8 @@
-package exchange
+package responseview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/ui/common"
+	"dumbky/internal/ui/components"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -11,10 +11,11 @@ import (
 )
 
 type ResponseView struct {
-	UI              *fyne.Container
-	StatusBinding   binding.String
-	TimeBinding     binding.String
-	BodyBinding     binding.String
+	UI            *fyne.Container
+	StatusBinding binding.String
+	TimeBinding   binding.String
+	BodyBinding   binding.String
+
 	statusContainer *fyne.Container
 	loadingBar      *widget.ProgressBarInfinite
 	statusStack     *fyne.Container
@@ -41,9 +42,9 @@ func (rv ResponseView) SetLoading(loading bool) {
 }
 
 func ComposeResponseView() ResponseView {
-	statusContainer, statusLabel, statusBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
-	timeContainer, timeLabel, timeBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
-	bodyContainer, bodyLabel, bodyBind := common.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
+	statusContainer, statusLabel, statusBind := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
+	timeContainer, timeLabel, timeBind := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
+	bodyContainer, bodyLabel, bodyBind := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
 
 	styleResponseLabel(statusLabel)
 	styleResponseLabel(timeLabel)

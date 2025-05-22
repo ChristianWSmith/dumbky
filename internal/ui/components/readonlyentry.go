@@ -1,4 +1,4 @@
-package common
+package components
 
 import (
 	"dumbky/internal/log"
@@ -18,7 +18,7 @@ func NewReadOnlyEntry(text string) (*fyne.Container, *widget.Label, binding.Stri
 	label.Bind(labelBind)
 	err := labelBind.Set(text)
 	if err != nil {
-		log.Error("Failed to set labelBind", err.Error())
+		log.Error(err)
 	}
 	th := label.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()

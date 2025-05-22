@@ -13,14 +13,15 @@ import (
 )
 
 type RequestPayload struct {
-	URL      string
-	Method   string
-	UseSSL   bool
-	Headers  map[string]string
-	Params   map[string]string
-	BodyType string
-	BodyRaw  string
-	BodyForm map[string]string
+	URL         string
+	Method      string
+	UseSSL      bool
+	Headers     map[string]string
+	QueryParams map[string]string
+	PathParams  map[string]string
+	BodyType    string
+	BodyRaw     string
+	BodyForm    map[string]string
 }
 
 type ResponsePayload struct {
@@ -45,19 +46,24 @@ func resolveBody(requestPayload RequestPayload) (*strings.Reader, error) {
 	return strings.NewReader(""), errors.New("invalid body type")
 }
 
-func resolveURL(url string, params map[string]string, useSSL bool) string {
-	if len(params) != 0 {
+func resolveURL(requestPayload RequestPayload) string {
+	url := requestPayload.URL
+	if len(requestPayload.QueryParams) != 0 {
 		paramList := []string{}
-		for key, value := range params {
+		for key, value := range requestPayload.QueryParams {
 			paramList = append(paramList, fmt.Sprintf("%s=%s", key, value))
 		}
 		url = url + "?" + strings.Join(paramList, "&")
 	}
 	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
-		if useSSL {
-			return "https://" + url
+		if requestPayload.UseSSL {
+			url = "https://" + url
 		}
-		return "http://" + url
+		url = "http://" + url
+	}
+	for key, value := range requestPayload.PathParams {
+		log.Debug(fmt.Sprintf("%s=%s", key, value))
+		url = strings.ReplaceAll(url, fmt.Sprintf(":%s:", key), value)
 	}
 	return url
 }
@@ -83,33 +89,34 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 
 	body, err := resolveBody(requestPayload)
 	if err != nil {
-		log.Error("Failed to resolve request body", err.Error())
+		log.Error(err)
 		return ResponsePayload{}, err
 	}
 
-	url := resolveURL(requestPayload.URL, requestPayload.Params, requestPayload.UseSSL)
+	url := resolveURL(requestPayload)
 
 	request, err := http.NewRequest(requestPayload.Method, url, body)
 	if err != nil {
-		log.Error("Failed to create HTTP Request", err.Error())
+		log.Error(err)
 		return ResponsePayload{}, err
 	}
 	resolveHeaders(*request, requestPayload.Headers)
 
-	log.Info("Sending request", request.URL, request.Header, request.Body)
+	log.Info("Sending request")
 	start := time.Now()
 	response, err := client.Do(request)
 	elapsed := time.Since(start)
-	log.Info("Request sent")
 
 	if err != nil {
-		log.Warn("Failed to send HTTP Request", err.Error())
+		log.Warn(err)
 		return ResponsePayload{}, err
+	} else {
+		log.Info("Request sent")
 	}
 
 	responseBody, err := io.ReadAll(response.Body)
 	if err != nil {
-		log.Error("Failed to read response body", err.Error())
+		log.Error(err)
 		return ResponsePayload{}, err
 	}
 

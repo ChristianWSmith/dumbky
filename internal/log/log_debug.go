@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"runtime"
 	"strings"
 )
 
@@ -48,18 +49,29 @@ func Init() {
 	slog.SetDefault(logger)
 }
 
-func Debug(msg string, args ...any) {
-	slog.Debug(msg, args...)
+func Debug(msg string) {
+	doLog(msg, slog.Debug)
 }
 
-func Info(msg string, args ...any) {
-	slog.Info(msg, args...)
+func Info(msg string) {
+	doLog(msg, slog.Info)
 }
 
-func Warn(msg string, args ...any) {
-	slog.Warn(msg, args...)
+func Warn(err error) {
+	doLog(err.Error(), slog.Warn)
 }
 
-func Error(msg string, args ...any) {
-	slog.Error(msg, args...)
+func Error(err error) {
+	doLog(err.Error(), slog.Error)
+}
+
+func doLog(msg string, level func(string, ...any)) {
+	_, file, line, ok := runtime.Caller(2)
+	var fileLine string
+	if ok {
+		fileLine = fmt.Sprintf("%s:%d", file, line)
+	} else {
+		fileLine = "UNKNOWN FILE"
+	}
+	level(fileLine, "msg", msg)
 }
