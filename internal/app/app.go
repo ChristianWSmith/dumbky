@@ -27,7 +27,7 @@ func getWindowSize() (float32, float32) {
 }
 
 func Run() {
-	a := app.New()
+	a := app.NewWithID("com.christianwsmith.dumbky")
 	a.Settings().SetTheme(theme.DumbkyTheme{})
 	w := a.NewWindow("Dumbky")
 	global.Window = w
