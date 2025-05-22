@@ -42,6 +42,10 @@ func (wv WorkspaceView) addTab(document Document) {
 }
 
 func (wv WorkspaceView) saveTab(writer fyne.URIWriteCloser, document Document) {
+	if writer == nil {
+		log.Debug("nil writer")
+		return
+	}
 	if document.Title == "" {
 		document.Title = constants.UI_PLACEHOLDER_UNTITLED
 	}
@@ -63,6 +67,10 @@ func (wv WorkspaceView) saveTab(writer fyne.URIWriteCloser, document Document) {
 }
 
 func (wv WorkspaceView) loadTab(reader fyne.URIReadCloser) {
+	if reader == nil {
+		log.Debug("nil reader")
+		return
+	}
 	jsonData, err := io.ReadAll(reader)
 	if err != nil {
 		log.Error(err)
