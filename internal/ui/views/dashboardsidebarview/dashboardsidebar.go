@@ -1,56 +1,85 @@
 package dashboardsidebarview
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/widget"
 )
 
 type DashboardSidebarView struct {
-	UI               *fyne.Container
-	workingDirectory string
+	UI *fyne.Container
+	//workingDirectory string
 }
 
 func ComposeDashboardSidebarView() DashboardSidebarView {
+	currentPath, _ := os.Getwd()
+	pathLabel := widget.NewLabel(currentPath)
 
-	boundStringList := binding.NewStringList()
-
-	list := widget.NewListWithData(boundStringList,
+	fileList := widget.NewList(
+		func() int { return 0 },
 		func() fyne.CanvasObject {
-			return widget.NewLabel("")
+			return widget.NewLabel("template")
 		},
-		func(i binding.DataItem, o fyne.CanvasObject) {
-			o.(*widget.Label).Bind(i.(binding.String))
-		})
+		func(i widget.ListItemID, o fyne.CanvasObject) {},
+	)
 
-	ui := container.NewBorder(nil, nil, nil, nil, list)
-	boundStringList.Append("A")
-	boundStringList.Append("B")
-	boundStringList.Append("C")
-	boundStringList.Append("D")
-	boundStringList.Append("E")
-	boundStringList.Append("F")
-	boundStringList.Append("G")
-	boundStringList.Append("H")
-	boundStringList.Append("I")
-	boundStringList.Append("J")
-	boundStringList.Append("K")
-	boundStringList.Append("L")
-	boundStringList.Append("M")
-	boundStringList.Append("N")
-	boundStringList.Append("O")
-	boundStringList.Append("P")
-	boundStringList.Append("Q")
-	boundStringList.Append("R")
-	boundStringList.Append("S")
-	boundStringList.Append("T")
-	boundStringList.Append("U")
-	boundStringList.Append("V")
-	boundStringList.Append("W")
-	boundStringList.Append("X")
-	boundStringList.Append("Y")
-	boundStringList.Append("Z")
+	var updateFileList func(string)
+
+	updateFileList = func(path string) {
+		files, err := os.ReadDir(path)
+		if err != nil {
+			pathLabel.SetText("Failed to read directory")
+			return
+		}
+
+		items := []os.FileInfo{}
+		items = append(items, nil) // For ".."
+
+		for _, file := range files {
+			info, _ := file.Info()
+			items = append(items, info)
+		}
+
+		fileList.Length = func() int {
+			return len(items)
+		}
+		fileList.UpdateItem = func(i widget.ListItemID, o fyne.CanvasObject) {
+			label := o.(*widget.Label)
+			if i == 0 {
+				label.SetText("..")
+			} else {
+				label.SetText(items[i].Name())
+			}
+		}
+		fileList.OnSelected = func(i widget.ListItemID) {
+			fileList.UnselectAll()
+			if i == 0 {
+				newPath := filepath.Dir(path)
+				currentPath = newPath
+				pathLabel.SetText(newPath)
+				updateFileList(newPath)
+			} else {
+				selected := items[i]
+				fullPath := filepath.Join(path, selected.Name())
+				if selected.IsDir() {
+					currentPath = fullPath
+					pathLabel.SetText(fullPath)
+					updateFileList(fullPath)
+				} else {
+					fmt.Println("Selected file:", fullPath)
+				}
+			}
+		}
+		fileList.Refresh()
+	}
+
+	updateFileList(currentPath)
+
+	ui := container.NewBorder(pathLabel, nil, nil, nil, fileList)
 	return DashboardSidebarView{
 		UI: ui,
 	}
