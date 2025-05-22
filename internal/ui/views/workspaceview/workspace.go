@@ -63,15 +63,17 @@ func (wv WorkspaceView) saveTab(writer fyne.URIWriteCloser, document Document) {
 }
 
 func (wv WorkspaceView) loadTab(reader fyne.URIReadCloser) {
-
 	jsonData, err := io.ReadAll(reader)
 	if err != nil {
 		log.Error(err)
 		return
 	}
 	document := Document{}
-	json.Unmarshal(jsonData, &document)
-
+	unmarshalErr := json.Unmarshal(jsonData, &document)
+	if unmarshalErr != nil {
+		log.Error(unmarshalErr)
+		return
+	}
 	fyne.Do(func() {
 		wv.addTab(document)
 	})
