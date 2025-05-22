@@ -27,6 +27,8 @@ const UI_BODY_TYPE_FORM string = "FORM"
 const UI_BODY_TYPE_NONE string = "NONE"
 const UI_BODY_TYPE_DEFAULT string = UI_BODY_TYPE_NONE
 
+const UI_DASHBOARD_SIDEBAR_OFFSET float64 = 0.2
+
 func UIBodyTypes() []string {
 	return []string{
 		UI_BODY_TYPE_RAW,

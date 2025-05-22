@@ -1,7 +1,7 @@
 package rootview
 
 import (
-	"dumbky/internal/ui/views/workspaceview"
+	"dumbky/internal/ui/views/dashboardview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -12,9 +12,9 @@ type RootView struct {
 }
 
 func ComposeRootView() RootView {
-	workspaceView := workspaceview.ComposeWorkspaceView()
+	dashboardView := dashboardview.ComposeDashboardView()
 
-	ui := container.NewBorder(nil, nil, nil, nil, workspaceView.UI)
+	ui := container.NewBorder(nil, nil, nil, nil, dashboardView.UI)
 
 	return RootView{
 		ui,
