@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"dumbky/internal/db"
@@ -34,7 +35,8 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 		func() int { return len(view.collectionNames) },
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
-			menuButton := widget.NewButton("⋮", nil)
+			menuButton := widget.NewButtonWithIcon("", nil, nil)
+			menuButton.Icon = menuButton.Theme().Icon(theme.IconNameMoreVertical)
 			return container.NewBorder(nil, nil, nil, menuButton, label)
 		},
 		func(i widget.ListItemID, o fyne.CanvasObject) {

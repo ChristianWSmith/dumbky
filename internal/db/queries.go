@@ -1,8 +1,29 @@
 package db
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/log"
 )
+
+func CreateCollection(collectionName string) error {
+	_, err := DB.Exec(`UPDATE INTO collections (name) VALUES (?);`,
+		collectionName)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
+
+}
+
+func CreateDefaultCollection() error {
+	err := CreateCollection(constants.DB_DEFAULT_COLLECTION_NAME)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	return nil
+}
 
 func GetAllCollections() ([]Collection, error) {
 	rows, err := DB.Query(`SELECT id, name, created_at FROM collections`)
