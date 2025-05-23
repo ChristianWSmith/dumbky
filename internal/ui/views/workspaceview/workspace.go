@@ -2,18 +2,17 @@ package workspaceview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/global"
+	"dumbky/internal/db"
 	"dumbky/internal/log"
 	"dumbky/internal/ui/views/exchangeview"
 	"dumbky/internal/ui/views/workspaceheaderview"
 	"encoding/json"
 	"errors"
-	"io"
+	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/dialog"
 )
 
 type WorkspaceView struct {
@@ -24,8 +23,41 @@ type WorkspaceView struct {
 }
 
 type Document struct {
-	Title         string                     `json:"title"`
-	ExchangeState exchangeview.ExchangeState `json:"exchange"`
+	CollectionName string                     `json:"collection_name"`
+	Title          string                     `json:"title"`
+	ExchangeState  exchangeview.ExchangeState `json:"exchange"`
+}
+
+func DocumentToRequest(document Document) (db.Request, error) {
+	if document.Title == "" {
+		document.Title = constants.UI_PLACEHOLDER_UNTITLED
+	}
+
+	jsonData, err := json.Marshal(document)
+	if err != nil {
+		log.Error(err)
+		return db.Request{}, err
+	}
+
+	jsonString := string(jsonData)
+
+	return db.Request{
+		CollectionName: document.CollectionName,
+		Name:           document.Title,
+		Payload:        jsonString,
+	}, nil
+}
+
+func RequestToDocument(request db.Request) (Document, error) {
+	log.Info(fmt.Sprintf("%v", request))
+	document := Document{}
+	unmarshalErr := json.Unmarshal([]byte(request.Payload), &document)
+	if unmarshalErr != nil {
+		log.Error(unmarshalErr)
+		return Document{}, unmarshalErr
+	}
+
+	return document, nil
 }
 
 func (wv WorkspaceView) addTab(document Document) {
@@ -41,50 +73,36 @@ func (wv WorkspaceView) addTab(document Document) {
 	wv.exchangeTabs.Select(exchangeViewTab)
 }
 
-func (wv WorkspaceView) saveTab(writer fyne.URIWriteCloser, document Document) {
-	if writer == nil {
-		log.Debug("nil writer")
-		return
-	}
-	if document.Title == "" {
-		document.Title = constants.UI_PLACEHOLDER_UNTITLED
-	}
-	jsonData, err := json.Marshal(document)
+func saveTab(collectionName, title string, exchangeState exchangeview.ExchangeState) error {
+	document := Document{CollectionName: collectionName, Title: title, ExchangeState: exchangeState}
+	request, err := DocumentToRequest(document)
 	if err != nil {
 		log.Error(err)
-		return
+		return err
 	}
-
-	jsonString := string(jsonData)
-	_, writeErr := writer.Write([]byte(jsonString))
-	if writeErr != nil {
-		log.Error(writeErr)
+	saveRequestErr := db.SaveRequest(request)
+	if saveRequestErr != nil {
+		log.Error(saveRequestErr)
+		return err
 	}
-	writerErr := writer.Close()
-	if writerErr != nil {
-		log.Error(writerErr)
-	}
+	return nil
 }
 
-func (wv WorkspaceView) loadTab(reader fyne.URIReadCloser) {
-	if reader == nil {
-		log.Debug("nil reader")
-		return
-	}
-	jsonData, err := io.ReadAll(reader)
+func loadTab(collectionName, title string, workspaceView WorkspaceView) error {
+	request, err := db.LoadRequest(collectionName, title)
 	if err != nil {
 		log.Error(err)
-		return
+		return err
 	}
-	document := Document{}
-	unmarshalErr := json.Unmarshal(jsonData, &document)
-	if unmarshalErr != nil {
-		log.Error(unmarshalErr)
-		return
+	document, err := RequestToDocument(request)
+	if err != nil {
+		log.Error(err)
+		return err
 	}
 	fyne.Do(func() {
-		wv.addTab(document)
+		workspaceView.addTab(document)
 	})
+	return nil
 }
 
 func ComposeWorkspaceView() WorkspaceView {
@@ -133,38 +151,31 @@ func ComposeWorkspaceView() WorkspaceView {
 	}
 
 	workspaceHeader.SaveButton.OnTapped = func() {
-		dialog.ShowFileSave(func(writer fyne.URIWriteCloser, err error) {
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			title, titleErr := wv.workspaceHeader.TitleBinding.Get()
-			if titleErr != nil {
-				log.Error(titleErr)
-				return
-			}
-			exchangeView, ok := wv.tabsToExchangeViews[wv.exchangeTabs.Selected()]
-			if !ok {
-				log.Error(errors.New("failed to locate selected tab"))
-				return
-			}
-			exchangeState, exchangeStateErr := exchangeView.ToState()
-			if exchangeStateErr != nil {
-				log.Error(exchangeStateErr)
-				return
-			}
-			go wv.saveTab(writer, Document{Title: title, ExchangeState: exchangeState})
-		}, global.Window)
+		title, titleErr := wv.workspaceHeader.TitleBinding.Get()
+		if titleErr != nil {
+			log.Error(titleErr)
+			return
+		}
+		exchangeView, ok := wv.tabsToExchangeViews[wv.exchangeTabs.Selected()]
+		if !ok {
+			log.Error(errors.New("failed to locate selected tab"))
+			return
+		}
+		exchangeState, exchangeStateErr := exchangeView.ToState()
+		if exchangeStateErr != nil {
+			log.Error(exchangeStateErr)
+			return
+		}
+		go saveTab("", title, exchangeState) // TODO: pass collection name
 	}
 
 	workspaceHeader.LoadButton.OnTapped = func() {
-		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			go wv.loadTab(reader)
-		}, global.Window)
+		title, titleErr := wv.workspaceHeader.TitleBinding.Get()
+		if titleErr != nil {
+			log.Error(titleErr)
+			return
+		}
+		go loadTab("", title, wv) // TODO: remove empty string collection name
 	}
 
 	exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
