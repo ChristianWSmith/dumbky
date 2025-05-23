@@ -6,7 +6,7 @@ import (
 )
 
 func CreateCollection(collectionName string) error {
-	_, err := DB.Exec(`UPDATE INTO collections (name) VALUES (?);`,
+	_, err := DB.Exec(`REPLACE INTO collections (name) VALUES (?)`,
 		collectionName)
 	if err != nil {
 		log.Error(err)

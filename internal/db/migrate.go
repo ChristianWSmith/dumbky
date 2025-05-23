@@ -74,8 +74,7 @@ func migrateToV1(db *sql.DB) error {
 		payload TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		UNIQUE(name)
-	);
-	INSERT INTO collections (name) VALUES ('');`) // TODO: collection name
+	);`)
 	if err != nil {
 		log.Error(err)
 	}
