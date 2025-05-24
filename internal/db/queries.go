@@ -25,6 +25,56 @@ func CreateDefaultCollection() error {
 	return nil
 }
 
+func DeleteCollection(collectionName string) (err error) {
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	_, err = tx.Exec(`DELETE FROM requests WHERE collection_name = ?`, collectionName)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	_, err = tx.Exec(`DELETE FROM collections WHERE name = ?`, collectionName)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
+func DeleteRequest(collectionName, requestName string) error {
+	tx, err := DB.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			err = tx.Commit()
+		}
+	}()
+
+	_, err = tx.Exec(`DELETE FROM requests WHERE collection_name = ? AND name = ?`, collectionName, requestName)
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func GetAllCollections() ([]Collection, error) {
 	rows, err := DB.Query(`SELECT id, name, created_at FROM collections`)
 	if err != nil {

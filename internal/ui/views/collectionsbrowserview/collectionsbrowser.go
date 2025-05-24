@@ -1,8 +1,6 @@
 package collectionsbrowserview
 
 import (
-	"fmt"
-
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
@@ -70,11 +68,16 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 
 			menuBtn.OnTapped = func() {
 				pop := fyne.NewMenu("",
-					fyne.NewMenuItem("TODO: Delete", func() {
-						log.Debug(fmt.Sprintf("TODO: Delete %s", name))
-					}),
-					fyne.NewMenuItem("TODO: Rename", func() {
-						log.Debug(fmt.Sprintf("TODO: Rename %s", name))
+					fyne.NewMenuItem("Delete", func() {
+						go func() {
+							err := db.DeleteCollection(name)
+							if err != nil {
+								log.Error(err)
+							}
+							fyne.Do(func() {
+								cbv.RefreshCollections()
+							})
+						}()
 					}),
 				)
 				widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), menuBtn.Position(), o)
@@ -134,11 +137,22 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 
 			menuBtn.OnTapped = func() {
 				pop := fyne.NewMenu("",
-					fyne.NewMenuItem("TODO: Delete", func() {
-						log.Debug(fmt.Sprintf("TODO: Delete %s", name))
-					}),
-					fyne.NewMenuItem("TODO: Rename", func() {
-						log.Debug(fmt.Sprintf("TODO: Rename %s", name))
+					fyne.NewMenuItem("Delete", func() {
+						go func() {
+							collectionName, err := cbv.SelectedCollectionBinding.Get()
+							if err != nil {
+								log.Error(err)
+								return
+							}
+							err = db.DeleteRequest(collectionName, name)
+							if err != nil {
+								log.Error(err)
+								return
+							}
+							fyne.Do(func() {
+								cbv.RefreshRequests()
+							})
+						}()
 					}),
 				)
 				widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), menuBtn.Position(), o)
@@ -196,6 +210,12 @@ func (cbv *CollectionsBrowserView) ShowRequests(collection string) {
 			cbv.requestsView.Show()
 		})
 	}()
+}
+
+func (cbv *CollectionsBrowserView) RefreshCollections() {
+	if !cbv.collectionsView.Hidden {
+		cbv.ShowCollections()
+	}
 }
 
 func (cbv *CollectionsBrowserView) RefreshRequests() error {
