@@ -73,7 +73,7 @@ func ValidatePathParamKey(s string) error {
 }
 
 func ValidateCollectionName(s string) error {
-	match, err := regexp.MatchString("^[a-zA-Z_]+$", s)
+	match, err := regexp.MatchString("^[a-zA-Z_]*$", s)
 	if err != nil {
 		return err
 	}

@@ -68,17 +68,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 
 			menuBtn.OnTapped = func() {
 				pop := fyne.NewMenu("",
-					fyne.NewMenuItem("Delete", func() {
-						go func() {
-							err := db.DeleteCollection(name)
-							if err != nil {
-								log.Error(err)
-							}
-							fyne.Do(func() {
-								cbv.RefreshCollections()
-							})
-						}()
-					}),
+					fyne.NewMenuItem("Delete", func() { cbv.deleteCollection(name) }),
 				)
 				widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), menuBtn.Position(), o)
 			}
@@ -102,8 +92,17 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 			log.Error(err)
 			return
 		}
-		name, _ := addCollectionBind.Get()
-		addCollectionBind.Set("")
+		name, err := addCollectionBind.Get()
+		if err != nil {
+			log.Error(err)
+		}
+		err = addCollectionBind.Set("")
+		if err != nil {
+			log.Error(err)
+		}
+		if name == "" {
+			return
+		}
 		go func() {
 			err := db.CreateCollection(name)
 			if err != nil {
@@ -137,23 +136,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 
 			menuBtn.OnTapped = func() {
 				pop := fyne.NewMenu("",
-					fyne.NewMenuItem("Delete", func() {
-						go func() {
-							collectionName, err := cbv.SelectedCollectionBinding.Get()
-							if err != nil {
-								log.Error(err)
-								return
-							}
-							err = db.DeleteRequest(collectionName, name)
-							if err != nil {
-								log.Error(err)
-								return
-							}
-							fyne.Do(func() {
-								cbv.RefreshRequests()
-							})
-						}()
-					}),
+					fyne.NewMenuItem("Delete", func() { cbv.deleteRequest(name) }),
 				)
 				widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), menuBtn.Position(), o)
 			}
@@ -180,6 +163,36 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	// Initialize view
 	cbv.ShowCollections()
 	return cbv
+}
+
+func (cbv CollectionsBrowserView) deleteRequest(name string) {
+	collectionName, err := cbv.SelectedCollectionBinding.Get()
+	if err != nil {
+		log.Error(err)
+		return
+	}
+	go func() {
+		err = db.DeleteRequest(collectionName, name)
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		fyne.Do(func() {
+			cbv.RefreshRequests()
+		})
+	}()
+}
+
+func (cbv CollectionsBrowserView) deleteCollection(name string) {
+	go func() {
+		err := db.DeleteCollection(name)
+		if err != nil {
+			log.Error(err)
+		}
+		fyne.Do(func() {
+			cbv.RefreshCollections()
+		})
+	}()
 }
 
 func (cbv *CollectionsBrowserView) ShowCollections() {
