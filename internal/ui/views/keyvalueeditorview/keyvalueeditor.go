@@ -12,7 +12,7 @@ import (
 )
 
 type KeyValueEditorView struct {
-	UI *container.Scroll
+	UI *fyne.Container
 
 	keyValueViews  map[keyvalueview.KeyValueView]bool
 	keyValueBox    *fyne.Container
@@ -124,7 +124,6 @@ func (kve KeyValueEditorView) collectEnabled() []keyvalueview.KeyValueView {
 			continue
 		}
 		if !enabled {
-			log.Debug("Skipping disabled KeyValue")
 			continue
 		}
 		out = append(out, kv)
@@ -142,7 +141,8 @@ func ComposeKeyValueEditorView(keyValidator, valueValidator func(val string) err
 
 	keyValueAddBox := container.NewVBox(keyValueBox, addButton)
 
-	ui := container.NewVScroll(keyValueAddBox)
+	scroll := container.NewVScroll(keyValueAddBox)
+	ui := container.NewBorder(nil, nil, nil, nil, scroll)
 	kve := KeyValueEditorView{
 		ui,
 		keyValueViews,

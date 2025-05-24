@@ -60,7 +60,7 @@ func (rv RequestView) LoadState(requestState RequestState) error {
 		log.Error(queryParamsErr)
 		return queryParamsErr
 	}
-	pathParamsErr := rv.PathParams.LoadState(requestState.QueryParams)
+	pathParamsErr := rv.PathParams.LoadState(requestState.PathParams)
 	if pathParamsErr != nil {
 		log.Error(pathParamsErr)
 		return pathParamsErr

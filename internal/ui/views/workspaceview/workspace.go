@@ -2,89 +2,144 @@ package workspaceview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/global"
+	"dumbky/internal/db"
 	"dumbky/internal/log"
 	"dumbky/internal/ui/views/exchangeview"
 	"dumbky/internal/ui/views/workspaceheaderview"
 	"encoding/json"
 	"errors"
-	"io"
+	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/dialog"
 )
 
 type WorkspaceView struct {
-	UI                  *fyne.Container
-	workspaceHeader     workspaceheaderview.WorkspaceHeaderView
-	exchangeTabs        *container.DocTabs
-	tabsToExchangeViews map[*container.TabItem]exchangeview.ExchangeView
+	UI              *fyne.Container
+	WorkspaceHeader workspaceheaderview.WorkspaceHeaderView
+	exchangeTabs    *container.DocTabs
+	tabMap          map[*container.TabItem]WorkspaceTab
 }
 
 type Document struct {
-	Title         string                     `json:"title"`
-	ExchangeState exchangeview.ExchangeState `json:"exchange"`
+	CollectionName string                     `json:"collection_name"`
+	Title          string                     `json:"title"`
+	ExchangeState  exchangeview.ExchangeState `json:"exchange"`
 }
 
-func (wv WorkspaceView) addTab(document Document) {
+type WorkspaceTab struct {
+	CollectionName string
+	Title          string
+	ExchangeView   exchangeview.ExchangeView
+}
+
+func DocumentToRequest(document Document) (db.Request, error) {
+	if document.Title == "" {
+		document.Title = constants.UI_PLACEHOLDER_UNTITLED
+	}
+
+	jsonData, err := json.Marshal(document)
+	if err != nil {
+		log.Error(err)
+		return db.Request{}, err
+	}
+
+	jsonString := string(jsonData)
+
+	return db.Request{
+		CollectionName: document.CollectionName,
+		Name:           document.Title,
+		Payload:        jsonString,
+	}, nil
+}
+
+func RequestToDocument(request db.Request) (Document, error) {
+	log.Info(fmt.Sprintf("%v", request))
+	document := Document{}
+	unmarshalErr := json.Unmarshal([]byte(request.Payload), &document)
+	if unmarshalErr != nil {
+		log.Error(unmarshalErr)
+		return Document{}, unmarshalErr
+	}
+
+	return document, nil
+}
+
+func formatTabText(collectionName, title string) string {
+	return fmt.Sprintf("%s / %s", collectionName, title)
+}
+
+func (wv WorkspaceView) OpenTab(document Document) {
+	for fyneTab, workspaceTab := range wv.tabMap {
+		if workspaceTab.Title == document.Title && workspaceTab.CollectionName == document.CollectionName {
+			wv.exchangeTabs.Select(fyneTab)
+			return
+		}
+	}
+
 	exchangeView := exchangeview.ComposeExchangeView()
 	err := exchangeView.LoadState(document.ExchangeState)
 	if err != nil {
 		log.Error(err)
 		return
 	}
-	exchangeViewTab := container.NewTabItem(document.Title, exchangeView.UI)
+	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.Title), exchangeView.UI)
+	wv.tabMap[exchangeViewTab] = WorkspaceTab{
+		CollectionName: document.CollectionName,
+		Title:          document.Title,
+		ExchangeView:   exchangeView,
+	}
 	wv.exchangeTabs.Append(exchangeViewTab)
-	wv.tabsToExchangeViews[exchangeViewTab] = exchangeView
 	wv.exchangeTabs.Select(exchangeViewTab)
 }
 
-func (wv WorkspaceView) saveTab(writer fyne.URIWriteCloser, document Document) {
-	if writer == nil {
-		log.Debug("nil writer")
-		return
-	}
-	if document.Title == "" {
-		document.Title = constants.UI_PLACEHOLDER_UNTITLED
-	}
-	jsonData, err := json.Marshal(document)
-	if err != nil {
+func (wv WorkspaceView) SaveTab(callback func()) error {
+	workspaceTab, ok := wv.tabMap[wv.exchangeTabs.Selected()]
+	if !ok {
+		err := errors.New("failed to locate selected tab")
 		log.Error(err)
-		return
+		return err
+	}
+	exchangeState, exchangeStateErr := workspaceTab.ExchangeView.ToState()
+	if exchangeStateErr != nil {
+		log.Error(exchangeStateErr)
+		return exchangeStateErr
 	}
 
-	jsonString := string(jsonData)
-	_, writeErr := writer.Write([]byte(jsonString))
-	if writeErr != nil {
-		log.Error(writeErr)
+	collectionName := workspaceTab.CollectionName
+	title := workspaceTab.Title
+
+	document := Document{CollectionName: collectionName, Title: title, ExchangeState: exchangeState}
+	request, err := DocumentToRequest(document)
+	if err != nil {
+		log.Error(err)
+		return err
 	}
-	writerErr := writer.Close()
-	if writerErr != nil {
-		log.Error(writerErr)
-	}
+	go func() {
+		saveRequestErr := db.SaveRequest(request)
+		if saveRequestErr != nil {
+			log.Error(saveRequestErr)
+		}
+		callback()
+	}()
+	return nil
 }
 
-func (wv WorkspaceView) loadTab(reader fyne.URIReadCloser) {
-	if reader == nil {
-		log.Debug("nil reader")
-		return
-	}
-	jsonData, err := io.ReadAll(reader)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	document := Document{}
-	unmarshalErr := json.Unmarshal(jsonData, &document)
-	if unmarshalErr != nil {
-		log.Error(unmarshalErr)
-		return
-	}
-	fyne.Do(func() {
-		wv.addTab(document)
-	})
+func (wv WorkspaceView) LoadTab(collectionName, title string) {
+	go func() {
+		request, err := db.LoadRequest(collectionName, title)
+		if err != nil {
+			log.Error(err)
+		}
+		document, err := RequestToDocument(request)
+		if err != nil {
+			log.Error(err)
+		}
+		fyne.Do(func() {
+			wv.OpenTab(document)
+		})
+	}()
 }
 
 func ComposeWorkspaceView() WorkspaceView {
@@ -92,87 +147,62 @@ func ComposeWorkspaceView() WorkspaceView {
 
 	exchangeTabs := container.NewDocTabs()
 
+	ui := container.NewBorder(workspaceHeader.UI, nil, nil, nil, exchangeTabs)
+	wv := WorkspaceView{
+		UI:              ui,
+		WorkspaceHeader: workspaceHeader,
+		exchangeTabs:    exchangeTabs,
+		tabMap:          make(map[*container.TabItem]WorkspaceTab),
+	}
+
+	exchangeTabs.OnSelected = func(tabItem *container.TabItem) {
+		workspaceTab, ok := wv.tabMap[tabItem]
+		if !ok {
+			log.Error(errors.New("selected tab not in tabMap (OnSelected)"))
+			return
+		}
+		titleErr := workspaceHeader.TitleBinding.Set(workspaceTab.Title)
+		if titleErr != nil {
+			log.Error(titleErr)
+			return
+		}
+	}
+
+	exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
+		delete(wv.tabMap, tabItem)
+		if len(exchangeTabs.Items) == 0 {
+			wv.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
+		}
+	}
+
+	wv.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
+
 	workspaceHeader.TitleBinding.AddListener(binding.NewDataListener(func() {
+		selectedTab := wv.exchangeTabs.Selected()
+		if selectedTab == nil {
+			log.Error(errors.New("no selected tab"))
+			return
+		}
+		workspaceTab, ok := wv.tabMap[selectedTab]
+		if !ok {
+			log.Error(errors.New("selected tab not in tabMap"))
+			return
+		}
 		title, titleErr := workspaceHeader.TitleBinding.Get()
 		if titleErr != nil {
 			log.Error(titleErr)
 			return
 		}
-		if exchangeTabs.Selected() != nil {
-			if title == "" {
-				exchangeTabs.Selected().Text = constants.UI_PLACEHOLDER_UNTITLED
-			} else {
-				exchangeTabs.Selected().Text = title
-			}
-			exchangeTabs.Refresh()
+		workspaceTab.Title = title
+		wv.tabMap[selectedTab] = workspaceTab
+		if workspaceTab.Title == "" {
+			exchangeTabs.Selected().Text = formatTabText(workspaceTab.CollectionName, constants.UI_PLACEHOLDER_UNTITLED)
+		} else {
+			exchangeTabs.Selected().Text = formatTabText(workspaceTab.CollectionName, workspaceTab.Title)
 		}
+		exchangeTabs.Refresh()
+
 	}))
 
-	exchangeTabs.OnSelected = func(tabItem *container.TabItem) {
-		text := tabItem.Text
-		if tabItem.Text == constants.UI_PLACEHOLDER_UNTITLED {
-			text = ""
-		}
-		titleErr := workspaceHeader.TitleBinding.Set(text)
-		if titleErr != nil {
-			log.Error(titleErr)
-			return
-		}
-	}
-
-	ui := container.NewBorder(workspaceHeader.UI, nil, nil, nil, exchangeTabs)
-	wv := WorkspaceView{
-		UI:                  ui,
-		workspaceHeader:     workspaceHeader,
-		exchangeTabs:        exchangeTabs,
-		tabsToExchangeViews: make(map[*container.TabItem]exchangeview.ExchangeView),
-	}
-
-	workspaceHeader.AddButton.OnTapped = func() {
-		wv.addTab(Document{Title: constants.UI_PLACEHOLDER_UNTITLED})
-	}
-
-	workspaceHeader.SaveButton.OnTapped = func() {
-		dialog.ShowFileSave(func(writer fyne.URIWriteCloser, err error) {
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			title, titleErr := wv.workspaceHeader.TitleBinding.Get()
-			if titleErr != nil {
-				log.Error(titleErr)
-				return
-			}
-			exchangeView, ok := wv.tabsToExchangeViews[wv.exchangeTabs.Selected()]
-			if !ok {
-				log.Error(errors.New("failed to locate selected tab"))
-				return
-			}
-			exchangeState, exchangeStateErr := exchangeView.ToState()
-			if exchangeStateErr != nil {
-				log.Error(exchangeStateErr)
-				return
-			}
-			go wv.saveTab(writer, Document{Title: title, ExchangeState: exchangeState})
-		}, global.Window)
-	}
-
-	workspaceHeader.LoadButton.OnTapped = func() {
-		dialog.ShowFileOpen(func(reader fyne.URIReadCloser, err error) {
-			if err != nil {
-				log.Error(err)
-				return
-			}
-			go wv.loadTab(reader)
-		}, global.Window)
-	}
-
-	exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
-		if len(exchangeTabs.Items) == 0 {
-			wv.addTab(Document{Title: constants.UI_PLACEHOLDER_UNTITLED})
-		}
-	}
-
-	wv.addTab(Document{Title: constants.UI_PLACEHOLDER_UNTITLED})
 	return wv
 }
