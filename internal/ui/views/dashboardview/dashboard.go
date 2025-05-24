@@ -37,11 +37,7 @@ func ComposeDashboardView() DashboardView {
 		if collectionName == "" || requestName == "" {
 			return
 		}
-		err = workspaceView.LoadTab(collectionName, requestName)
-		if err != nil {
-			log.Error(err)
-			return
-		}
+		workspaceView.LoadTab(collectionName, requestName)
 	}))
 
 	workspaceView.WorkspaceHeader.AddButton.OnTapped = func() {

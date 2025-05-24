@@ -126,13 +126,12 @@ func (wv WorkspaceView) SaveTab(callback func()) error {
 	return nil
 }
 
-func (wv WorkspaceView) LoadTab(collectionName, title string) error {
-	request, err := db.LoadRequest(collectionName, title)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
+func (wv WorkspaceView) LoadTab(collectionName, title string) {
 	go func() {
+		request, err := db.LoadRequest(collectionName, title)
+		if err != nil {
+			log.Error(err)
+		}
 		document, err := RequestToDocument(request)
 		if err != nil {
 			log.Error(err)
@@ -141,7 +140,6 @@ func (wv WorkspaceView) LoadTab(collectionName, title string) error {
 			wv.OpenTab(document)
 		})
 	}()
-	return nil
 }
 
 func ComposeWorkspaceView() WorkspaceView {
