@@ -45,6 +45,46 @@ func GetAllCollections() ([]Collection, error) {
 	return out, nil
 }
 
+func FetchCollectionNames() []string {
+	rows, err := DB.Query("SELECT name FROM collections ORDER BY created_at ASC")
+	if err != nil {
+		log.Error(err)
+		return []string{}
+	}
+	defer rows.Close()
+
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Error(err)
+			continue
+		}
+		names = append(names, name)
+	}
+	return names
+}
+
+func FetchRequestNames(collectionName string) []string {
+	rows, err := DB.Query("SELECT name FROM requests WHERE collection_name = ? ORDER BY created_at ASC", collectionName)
+	if err != nil {
+		log.Error(err)
+		return []string{}
+	}
+	defer rows.Close()
+
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			log.Error(err)
+			continue
+		}
+		names = append(names, name)
+	}
+	return names
+}
+
 func SaveRequest(request Request) error {
 	_, err := DB.Exec(`INSERT INTO requests (collection_name, name, payload) VALUES (?, ?, ?)`,
 		request.CollectionName, request.Name, request.Payload)
