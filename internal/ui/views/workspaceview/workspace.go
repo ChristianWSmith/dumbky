@@ -132,14 +132,15 @@ func (wv WorkspaceView) LoadTab(collectionName, title string) error {
 		log.Error(err)
 		return err
 	}
-	document, err := RequestToDocument(request)
-	if err != nil {
-		log.Error(err)
-		return err
-	}
-	fyne.Do(func() {
-		wv.OpenTab(document)
-	})
+	go func() {
+		document, err := RequestToDocument(request)
+		if err != nil {
+			log.Error(err)
+		}
+		fyne.Do(func() {
+			wv.OpenTab(document)
+		})
+	}()
 	return nil
 }
 
