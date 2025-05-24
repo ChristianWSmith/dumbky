@@ -20,12 +20,13 @@ type CollectionsBrowserView struct {
 	SelectedCollectionBinding binding.String
 	SelectedRequestBinding    binding.String
 
-	collectionNames []string
-	requestNames    []string
-	collectionsList *widget.List
-	requestsList    *widget.List
-	collectionsView *fyne.Container
-	requestsView    *fyne.Container
+	addCollectionBinding binding.String
+	collectionNames      []string
+	requestNames         []string
+	collectionsList      *widget.List
+	requestsList         *widget.List
+	collectionsView      *fyne.Container
+	requestsView         *fyne.Container
 }
 
 func ComposeCollectionsBrowserView() CollectionsBrowserView {
@@ -118,33 +119,50 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	backButton := widget.NewButtonWithIcon("Back", theme.NavigateBackIcon(), nil)
 	cbv.requestsView = container.NewBorder(backButton, nil, nil, nil, cbv.requestsList)
 
-	// STACKED VIEWS
-
 	// ADD COLLECTION BUTTON
-	addBtn := widget.NewButton("Add Collection", func() {
-		entry := widget.NewEntry()
-		entry.SetPlaceHolder("Collection name")
-		dialog.ShowForm("New Collection", "Add", "Cancel", []*widget.FormItem{
-			widget.NewFormItem("Name", entry),
-		}, func(ok bool) {
-			if ok && entry.Text != "" {
-				err := db.CreateCollection(entry.Text)
-				if err != nil {
-					dialog.ShowError(err, global.Window)
-					return
-				}
-				cbv.ShowCollections()
-			}
-		}, global.Window)
-	})
+	addCollectionBind := binding.NewString()
+	cbv.addCollectionBinding = addCollectionBind
+	addCollectionEntry := widget.NewEntry()
+	addCollectionEntry.Bind(addCollectionBind)
 
-	cbv.collectionsView = container.NewBorder(nil, addBtn, nil, nil, cbv.collectionsList)
+	addCollectionButton := widget.NewButtonWithIcon("", nil, nil)
+	addCollectionButton.Icon = addCollectionButton.Theme().Icon(theme.IconNameContentAdd)
+	addCollectionButton.OnTapped = func() {
+		collectionName, err := cbv.addCollectionBinding.Get()
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		err = cbv.addCollectionBinding.Set("")
+		if err != nil {
+			log.Error(err)
+			return
+		}
+		go func() {
+			err = db.CreateCollection(collectionName)
+			if err != nil {
+				dialog.ShowError(err, global.Window)
+				return
+			}
+			fyne.Do(func() {
+				cbv.ShowCollections()
+			})
+		}()
+	}
+
+	addCollectionView := container.NewBorder(nil, nil, nil, addCollectionButton, addCollectionEntry)
+
+	cbv.collectionsView = container.NewBorder(nil, addCollectionView, nil, nil, cbv.collectionsList)
 	cbv.requestsView = container.NewBorder(nil, backButton, nil, nil, cbv.requestsList)
 	cbv.requestsView.Hide()
 
 	backButton.OnTapped = func() {
 		cbv.requestsView.Hide()
 		cbv.collectionsView.Show()
+		err := cbv.SelectedCollectionBinding.Set("")
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 	stack := container.NewStack(cbv.collectionsView, cbv.requestsView)
@@ -152,18 +170,18 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	return cbv
 }
 
-func (v *CollectionsBrowserView) ShowCollections() {
-	v.collectionNames = db.FetchCollectionNames()
-	v.collectionsList.Refresh()
+func (cbv *CollectionsBrowserView) ShowCollections() {
+	cbv.collectionNames = db.FetchCollectionNames()
+	cbv.collectionsList.Refresh()
 
-	v.requestsView.Hide()
-	v.collectionsView.Show()
+	cbv.requestsView.Hide()
+	cbv.collectionsView.Show()
 }
 
-func (v *CollectionsBrowserView) ShowRequests(collection string) {
-	v.requestNames = db.FetchRequestNames(collection)
-	v.requestsList.Refresh()
+func (cbv *CollectionsBrowserView) ShowRequests(collection string) {
+	cbv.requestNames = db.FetchRequestNames(collection)
+	cbv.requestsList.Refresh()
 
-	v.collectionsView.Hide()
-	v.requestsView.Show()
+	cbv.collectionsView.Hide()
+	cbv.requestsView.Show()
 }
