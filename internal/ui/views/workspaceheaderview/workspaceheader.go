@@ -13,7 +13,6 @@ type WorkspaceHeaderView struct {
 	TitleBinding binding.String
 	AddButton    *widget.Button
 	SaveButton   *widget.Button
-	LoadButton   *widget.Button
 }
 
 func ComposeWorkspaceHeaderView() WorkspaceHeaderView {
@@ -27,11 +26,8 @@ func ComposeWorkspaceHeaderView() WorkspaceHeaderView {
 	saveButton := widget.NewButtonWithIcon("", nil, nil)
 	saveButton.Icon = addButton.Theme().Icon(theme.IconNameDocumentSave)
 
-	loadButton := widget.NewButtonWithIcon("", nil, nil)
-	loadButton.Icon = addButton.Theme().Icon(theme.IconNameFolderOpen)
-
 	controlsLeft := container.NewHBox(addButton)
-	controlsRight := container.NewHBox(saveButton, loadButton)
+	controlsRight := container.NewHBox(saveButton)
 
 	ui := container.NewBorder(nil, nil, controlsLeft, controlsRight, titleEntry)
 	return WorkspaceHeaderView{
@@ -39,6 +35,5 @@ func ComposeWorkspaceHeaderView() WorkspaceHeaderView {
 		TitleBinding: titleBind,
 		AddButton:    addButton,
 		SaveButton:   saveButton,
-		LoadButton:   loadButton,
 	}
 }

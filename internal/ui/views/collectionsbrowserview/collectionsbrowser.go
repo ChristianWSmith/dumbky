@@ -73,7 +73,6 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	cbv.collectionsList.OnSelected = func(id widget.ListItemID) {
 		cbv.collectionsList.UnselectAll()
 		cbv.ShowRequests(cbv.collectionNames[id])
-		log.Info(cbv.collectionNames[id])
 	}
 
 	// ADD COLLECTION BUTTON
@@ -151,7 +150,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	cbv.requestsList.OnSelected = func(id widget.ListItemID) {
 		cbv.requestsList.UnselectAll()
 		err := cbv.SelectedRequestBinding.Set(cbv.requestNames[id])
-		log.Info(cbv.requestNames[id])
+		log.Debug(fmt.Sprintf("selected request %s", cbv.requestNames[id]))
 		if err != nil {
 			log.Error(err)
 		}
@@ -180,10 +179,12 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 
 func (cbv *CollectionsBrowserView) ShowCollections() {
 	err := cbv.SelectedCollectionBinding.Set("")
+	log.Debug("selected collection reset")
 	if err != nil {
 		log.Error(err)
 	}
 	err = cbv.SelectedRequestBinding.Set("")
+	log.Debug("selected request reset")
 	if err != nil {
 		log.Error(err)
 	}
@@ -196,6 +197,8 @@ func (cbv *CollectionsBrowserView) ShowCollections() {
 
 func (cbv *CollectionsBrowserView) ShowRequests(collection string) {
 	err := cbv.SelectedCollectionBinding.Set(collection)
+
+	log.Debug(fmt.Sprintf("selected collection %s", collection))
 	if err != nil {
 		log.Error(err)
 	}
@@ -204,4 +207,14 @@ func (cbv *CollectionsBrowserView) ShowRequests(collection string) {
 
 	cbv.collectionsView.Hide()
 	cbv.requestsView.Show()
+}
+
+func (cbv *CollectionsBrowserView) RefreshRequests() error {
+	collectionName, err := cbv.SelectedCollectionBinding.Get()
+	if err != nil {
+		log.Error(err)
+		return err
+	}
+	cbv.ShowRequests(collectionName)
+	return nil
 }

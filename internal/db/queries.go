@@ -86,7 +86,7 @@ func FetchRequestNames(collectionName string) []string {
 }
 
 func SaveRequest(request Request) error {
-	_, err := DB.Exec(`INSERT INTO requests (collection_name, name, payload) VALUES (?, ?, ?)`,
+	_, err := DB.Exec(`REPLACE INTO requests (collection_name, name, payload) VALUES (?, ?, ?)`,
 		request.CollectionName, request.Name, request.Payload)
 	if err != nil {
 		log.Error(err)

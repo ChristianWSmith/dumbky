@@ -17,7 +17,7 @@ import (
 
 type WorkspaceView struct {
 	UI              *fyne.Container
-	workspaceHeader workspaceheaderview.WorkspaceHeaderView
+	WorkspaceHeader workspaceheaderview.WorkspaceHeaderView
 	exchangeTabs    *container.DocTabs
 	tabMap          map[*container.TabItem]WorkspaceTab
 }
@@ -70,9 +70,10 @@ func formatTabText(collectionName, title string) string {
 	return fmt.Sprintf("%s / %s", collectionName, title)
 }
 
-func (wv WorkspaceView) openTab(document Document) {
+func (wv WorkspaceView) OpenTab(document Document) {
 	for fyneTab, workspaceTab := range wv.tabMap {
 		if workspaceTab.Title == document.Title && workspaceTab.CollectionName == document.CollectionName {
+			log.Debug("tab already exists, selecting")
 			wv.exchangeTabs.Select(fyneTab)
 			return
 		}
@@ -94,7 +95,22 @@ func (wv WorkspaceView) openTab(document Document) {
 	wv.exchangeTabs.Select(exchangeViewTab)
 }
 
-func saveTab(collectionName, title string, exchangeState exchangeview.ExchangeState) error {
+func (wv WorkspaceView) SaveTab(callback func()) error {
+	workspaceTab, ok := wv.tabMap[wv.exchangeTabs.Selected()]
+	if !ok {
+		err := errors.New("failed to locate selected tab")
+		log.Error(err)
+		return err
+	}
+	exchangeState, exchangeStateErr := workspaceTab.ExchangeView.ToState()
+	if exchangeStateErr != nil {
+		log.Error(exchangeStateErr)
+		return exchangeStateErr
+	}
+
+	collectionName := workspaceTab.CollectionName
+	title := workspaceTab.Title
+
 	document := Document{CollectionName: collectionName, Title: title, ExchangeState: exchangeState}
 	request, err := DocumentToRequest(document)
 	if err != nil {
@@ -106,10 +122,11 @@ func saveTab(collectionName, title string, exchangeState exchangeview.ExchangeSt
 		log.Error(saveRequestErr)
 		return err
 	}
+	callback()
 	return nil
 }
 
-func loadTab(collectionName, title string, workspaceView WorkspaceView) error {
+func (wv WorkspaceView) LoadTab(collectionName, title string) error {
 	request, err := db.LoadRequest(collectionName, title)
 	if err != nil {
 		log.Error(err)
@@ -121,7 +138,7 @@ func loadTab(collectionName, title string, workspaceView WorkspaceView) error {
 		return err
 	}
 	fyne.Do(func() {
-		workspaceView.openTab(document)
+		wv.OpenTab(document)
 	})
 	return nil
 }
@@ -134,7 +151,7 @@ func ComposeWorkspaceView() WorkspaceView {
 	ui := container.NewBorder(workspaceHeader.UI, nil, nil, nil, exchangeTabs)
 	wv := WorkspaceView{
 		UI:              ui,
-		workspaceHeader: workspaceHeader,
+		WorkspaceHeader: workspaceHeader,
 		exchangeTabs:    exchangeTabs,
 		tabMap:          make(map[*container.TabItem]WorkspaceTab),
 	}
@@ -152,40 +169,14 @@ func ComposeWorkspaceView() WorkspaceView {
 		}
 	}
 
-	workspaceHeader.AddButton.OnTapped = func() {
-		wv.openTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
-	}
-
-	workspaceHeader.SaveButton.OnTapped = func() {
-		workspaceTab, ok := wv.tabMap[wv.exchangeTabs.Selected()]
-		if !ok {
-			log.Error(errors.New("failed to locate selected tab"))
-			return
-		}
-		exchangeState, exchangeStateErr := workspaceTab.ExchangeView.ToState()
-		if exchangeStateErr != nil {
-			log.Error(exchangeStateErr)
-			return
-		}
-		go saveTab(workspaceTab.CollectionName, workspaceTab.Title, exchangeState) // TODO: pass collection name
-	}
-
-	workspaceHeader.LoadButton.OnTapped = func() {
-		title, titleErr := wv.workspaceHeader.TitleBinding.Get()
-		if titleErr != nil {
-			log.Error(titleErr)
-			return
-		}
-		go loadTab(constants.DB_DEFAULT_COLLECTION_NAME, title, wv) // TODO: remove empty string collection name
-	}
-
 	exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
+		delete(wv.tabMap, tabItem)
 		if len(exchangeTabs.Items) == 0 {
-			wv.openTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
+			wv.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
 		}
 	}
 
-	wv.openTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
+	wv.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
 
 	workspaceHeader.TitleBinding.AddListener(binding.NewDataListener(func() {
 		selectedTab := wv.exchangeTabs.Selected()
