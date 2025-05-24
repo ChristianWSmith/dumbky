@@ -155,7 +155,6 @@ func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) 
 			log.Error(bodyTypeGetErr)
 		}
 		if bodyType != constants.UI_BODY_TYPE_RAW && bodyTypeGetErr == nil {
-			log.Debug("Skipping autoformat for non-raw bodyType")
 			return
 		}
 		bodyRaw, bodyRawGetErr := ev.requestView.Body.BodyRawBinding.Get()

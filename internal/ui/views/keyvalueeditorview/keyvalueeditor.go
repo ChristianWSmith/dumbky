@@ -124,7 +124,6 @@ func (kve KeyValueEditorView) collectEnabled() []keyvalueview.KeyValueView {
 			continue
 		}
 		if !enabled {
-			log.Debug("Skipping disabled KeyValue")
 			continue
 		}
 		out = append(out, kv)

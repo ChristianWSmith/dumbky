@@ -34,7 +34,6 @@ func Init() error {
 	}
 
 	if err := CreateDefaultCollection(); err != nil {
-
 		log.Error(err)
 		return err
 	}

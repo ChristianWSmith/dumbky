@@ -62,7 +62,6 @@ func resolveURL(requestPayload RequestPayload) string {
 		url = "http://" + url
 	}
 	for key, value := range requestPayload.PathParams {
-		log.Debug(fmt.Sprintf("%s=%s", key, value))
 		url = strings.ReplaceAll(url, fmt.Sprintf(":%s:", key), value)
 	}
 	return url

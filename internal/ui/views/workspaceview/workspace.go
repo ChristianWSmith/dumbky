@@ -73,7 +73,6 @@ func formatTabText(collectionName, title string) string {
 func (wv WorkspaceView) OpenTab(document Document) {
 	for fyneTab, workspaceTab := range wv.tabMap {
 		if workspaceTab.Title == document.Title && workspaceTab.CollectionName == document.CollectionName {
-			log.Debug("tab already exists, selecting")
 			wv.exchangeTabs.Select(fyneTab)
 			return
 		}

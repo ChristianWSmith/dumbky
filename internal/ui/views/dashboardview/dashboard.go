@@ -5,7 +5,6 @@ import (
 	"dumbky/internal/log"
 	"dumbky/internal/ui/views/dashboardsidebarview"
 	"dumbky/internal/ui/views/workspaceview"
-	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -32,15 +31,12 @@ func ComposeDashboardView() DashboardView {
 			return
 		}
 		err = dashboardSidebarView.CollectionsBrowserView.SelectedRequestBinding.Set("")
-		log.Debug("selected request reset")
 		if err != nil {
 			log.Error(err)
 		}
 		if collectionName == "" || requestName == "" {
-			log.Debug("empty collection or request name for load")
 			return
 		}
-		log.Debug(fmt.Sprintf("loading tab %s %s", collectionName, requestName))
 		err = workspaceView.LoadTab(collectionName, requestName)
 		if err != nil {
 			log.Error(err)
