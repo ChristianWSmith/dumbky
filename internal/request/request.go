@@ -48,6 +48,9 @@ func resolveBody(requestPayload RequestPayload) (*strings.Reader, error) {
 
 func resolveURL(requestPayload RequestPayload) string {
 	url := requestPayload.URL
+	for key, value := range requestPayload.PathParams {
+		url = strings.ReplaceAll(url, fmt.Sprintf(":%s:", key), value)
+	}
 	if len(requestPayload.QueryParams) != 0 {
 		paramList := []string{}
 		for key, value := range requestPayload.QueryParams {
@@ -60,9 +63,6 @@ func resolveURL(requestPayload RequestPayload) string {
 			url = "https://" + url
 		}
 		url = "http://" + url
-	}
-	for key, value := range requestPayload.PathParams {
-		url = strings.ReplaceAll(url, fmt.Sprintf(":%s:", key), value)
 	}
 	return url
 }
