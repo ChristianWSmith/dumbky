@@ -68,7 +68,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	)
 	cbv.collectionsList.OnSelected = func(id widget.ListItemID) {
 		cbv.collectionsList.UnselectAll()
-		cbv.showRequests(cbv.collectionNames[id])
+		cbv.ShowRequests(cbv.collectionNames[id])
 		err := cbv.SelectedCollectionBinding.Set(cbv.collectionNames[id])
 		log.Info(cbv.collectionNames[id])
 		if err != nil {
@@ -133,7 +133,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 					dialog.ShowError(err, global.Window)
 					return
 				}
-				cbv.refresh()
+				cbv.ShowCollections()
 			}
 		}, global.Window)
 	})
@@ -152,12 +152,15 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	return cbv
 }
 
-func (v *CollectionsBrowserView) refresh() {
+func (v *CollectionsBrowserView) ShowCollections() {
 	v.collectionNames = db.FetchCollectionNames()
 	v.collectionsList.Refresh()
+
+	v.requestsView.Hide()
+	v.collectionsView.Show()
 }
 
-func (v *CollectionsBrowserView) showRequests(collection string) {
+func (v *CollectionsBrowserView) ShowRequests(collection string) {
 	v.requestNames = db.FetchRequestNames(collection)
 	v.requestsList.Refresh()
 
