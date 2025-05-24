@@ -172,21 +172,30 @@ func (cbv *CollectionsBrowserView) ShowCollections() {
 	cbv.SelectedCollectionBinding.Set("")
 	cbv.SelectedRequestBinding.Set("")
 	// update binding list
-	names := db.FetchCollectionNames()
-	cbv.collectionsBinding.Set(names)
+	go func() {
+		names := db.FetchCollectionNames()
+		fyne.Do(func() {
+			cbv.collectionsBinding.Set(names)
 
-	cbv.requestsView.Hide()
-	cbv.collectionsView.Show()
+			cbv.requestsView.Hide()
+			cbv.collectionsView.Show()
+		})
+	}()
 }
 
 func (cbv *CollectionsBrowserView) ShowRequests(collection string) {
 	cbv.SelectedCollectionBinding.Set(collection)
 	// update request names
-	names := db.FetchRequestNames(collection)
-	cbv.requestsBinding.Set(names)
+	go func() {
+		names := db.FetchRequestNames(collection)
 
-	cbv.collectionsView.Hide()
-	cbv.requestsView.Show()
+		fyne.Do(func() {
+			cbv.requestsBinding.Set(names)
+
+			cbv.collectionsView.Hide()
+			cbv.requestsView.Show()
+		})
+	}()
 }
 
 func (cbv *CollectionsBrowserView) RefreshRequests() error {

@@ -116,12 +116,13 @@ func (wv WorkspaceView) SaveTab(callback func()) error {
 		log.Error(err)
 		return err
 	}
-	saveRequestErr := db.SaveRequest(request)
-	if saveRequestErr != nil {
-		log.Error(saveRequestErr)
-		return err
-	}
-	callback()
+	go func() {
+		saveRequestErr := db.SaveRequest(request)
+		if saveRequestErr != nil {
+			log.Error(saveRequestErr)
+		}
+		callback()
+	}()
 	return nil
 }
 
