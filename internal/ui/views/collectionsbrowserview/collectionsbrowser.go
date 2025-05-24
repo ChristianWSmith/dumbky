@@ -19,28 +19,27 @@ type CollectionsBrowserView struct {
 	UI                        *fyne.Container
 	SelectedCollectionBinding binding.String
 	SelectedRequestBinding    binding.String
-	collectionNames           []string
-	collectionsList           *widget.List
-	requestsList              *widget.List
-	stack                     *fyne.Container
-	requestNames              []string
-	currentCollection         string
-	collectionsView           *fyne.Container
-	requestsView              *fyne.Container
+
+	collectionNames []string
+	requestNames    []string
+	collectionsList *widget.List
+	requestsList    *widget.List
+	collectionsView *fyne.Container
+	requestsView    *fyne.Container
 }
 
 func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	selectedRequestBinding := binding.NewString()
 	selectedCollectionBind := binding.NewString()
-	view := CollectionsBrowserView{
+	cbv := CollectionsBrowserView{
 		SelectedRequestBinding:    selectedRequestBinding,
 		SelectedCollectionBinding: selectedCollectionBind,
 		collectionNames:           db.FetchCollectionNames(),
 	}
 
 	// COLLECTIONS LIST
-	view.collectionsList = widget.NewList(
-		func() int { return len(view.collectionNames) },
+	cbv.collectionsList = widget.NewList(
+		func() int { return len(cbv.collectionNames) },
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
 			menuButton := widget.NewButtonWithIcon("", nil, nil)
@@ -51,7 +50,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 			c := o.(*fyne.Container)
 			label := c.Objects[0].(*widget.Label)
 			menuBtn := c.Objects[1].(*widget.Button)
-			name := view.collectionNames[i]
+			name := cbv.collectionNames[i]
 			label.SetText(name)
 
 			menuBtn.OnTapped = func() {
@@ -67,19 +66,19 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 			}
 		},
 	)
-	view.collectionsList.OnSelected = func(id widget.ListItemID) {
-		view.collectionsList.UnselectAll()
-		view.showRequests(view.collectionNames[id])
-		err := view.SelectedCollectionBinding.Set(view.collectionNames[id])
-		log.Info(view.collectionNames[id])
+	cbv.collectionsList.OnSelected = func(id widget.ListItemID) {
+		cbv.collectionsList.UnselectAll()
+		cbv.showRequests(cbv.collectionNames[id])
+		err := cbv.SelectedCollectionBinding.Set(cbv.collectionNames[id])
+		log.Info(cbv.collectionNames[id])
 		if err != nil {
 			log.Error(err)
 		}
 	}
 
 	// REQUESTS LIST (initially empty)
-	view.requestsList = widget.NewList(
-		func() int { return len(view.requestNames) },
+	cbv.requestsList = widget.NewList(
+		func() int { return len(cbv.requestNames) },
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
 			menuButton := widget.NewButtonWithIcon("", nil, nil)
@@ -90,7 +89,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 			c := o.(*fyne.Container)
 			label := c.Objects[0].(*widget.Label)
 			menuBtn := c.Objects[1].(*widget.Button)
-			name := view.requestNames[i]
+			name := cbv.requestNames[i]
 			label.SetText(name)
 
 			menuBtn.OnTapped = func() {
@@ -106,10 +105,10 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 			}
 		},
 	)
-	view.requestsList.OnSelected = func(id widget.ListItemID) {
-		view.requestsList.UnselectAll()
-		err := view.SelectedRequestBinding.Set(view.requestNames[id])
-		log.Info(view.requestNames[id])
+	cbv.requestsList.OnSelected = func(id widget.ListItemID) {
+		cbv.requestsList.UnselectAll()
+		err := cbv.SelectedRequestBinding.Set(cbv.requestNames[id])
+		log.Info(cbv.requestNames[id])
 		if err != nil {
 			log.Error(err)
 		}
@@ -117,7 +116,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 
 	// BACK BUTTON
 	backButton := widget.NewButtonWithIcon("Back", theme.NavigateBackIcon(), nil)
-	view.requestsView = container.NewBorder(backButton, nil, nil, nil, view.requestsList)
+	cbv.requestsView = container.NewBorder(backButton, nil, nil, nil, cbv.requestsList)
 
 	// STACKED VIEWS
 
@@ -134,23 +133,23 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 					dialog.ShowError(err, global.Window)
 					return
 				}
-				view.refresh()
+				cbv.refresh()
 			}
 		}, global.Window)
 	})
 
-	view.collectionsView = container.NewBorder(nil, addBtn, nil, nil, view.collectionsList)
-	view.requestsView = container.NewBorder(backButton, nil, nil, nil, view.requestsList)
-	view.requestsView.Hide()
+	cbv.collectionsView = container.NewBorder(nil, addBtn, nil, nil, cbv.collectionsList)
+	cbv.requestsView = container.NewBorder(nil, backButton, nil, nil, cbv.requestsList)
+	cbv.requestsView.Hide()
 
 	backButton.OnTapped = func() {
-		view.requestsView.Hide()
-		view.collectionsView.Show()
+		cbv.requestsView.Hide()
+		cbv.collectionsView.Show()
 	}
 
-	view.stack = container.NewStack(view.collectionsView, view.requestsView)
-	view.UI = container.NewBorder(nil, nil, nil, nil, view.stack)
-	return view
+	stack := container.NewStack(cbv.collectionsView, cbv.requestsView)
+	cbv.UI = container.NewBorder(nil, nil, nil, nil, stack)
+	return cbv
 }
 
 func (v *CollectionsBrowserView) refresh() {
@@ -159,7 +158,6 @@ func (v *CollectionsBrowserView) refresh() {
 }
 
 func (v *CollectionsBrowserView) showRequests(collection string) {
-	v.currentCollection = collection
 	v.requestNames = db.FetchRequestNames(collection)
 	v.requestsList.Refresh()
 
