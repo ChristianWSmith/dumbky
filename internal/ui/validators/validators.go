@@ -72,6 +72,17 @@ func ValidatePathParamKey(s string) error {
 	return nil
 }
 
+func ValidateCollectionName(s string) error {
+	match, err := regexp.MatchString("^[a-zA-Z_]+$", s)
+	if err != nil {
+		return err
+	}
+	if !match {
+		return errors.New("invalid collection name")
+	}
+	return nil
+}
+
 func ValidatePathParamValue(s string) error {
 	if _, err := url.QueryUnescape(s); err != nil {
 		return err
