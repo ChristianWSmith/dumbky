@@ -88,4 +88,8 @@ func (v *view) getUI() *fyne.Container {
 
 EOF
 
-touch "${SCRIPT_DIR}/${FEATURE_PATH}/${FEATURE_NAME}/${FEATURE_NAME}_test.go"
+cat > "${SCRIPT_DIR}/${FEATURE_PATH}/${FEATURE_NAME}/${FEATURE_NAME}_test.go" << EOF
+package ${FEATURE_NAME}
+
+EOF
+
