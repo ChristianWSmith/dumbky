@@ -2,7 +2,7 @@ package exchangeview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features/exchangeheaderview"
+	"dumbky/internal/features/exchangeheader"
 	"dumbky/internal/features/request"
 	"dumbky/internal/features/response"
 	"dumbky/internal/global"
@@ -13,28 +13,23 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 )
 
 type ExchangeView struct {
 	UI                 *fyne.Container
-	headerView         exchangeheaderview.ExchangeHeaderView
+	exchangeHeaderCtrl *exchangeheader.Controller
 	requestCtrl        *request.Controller
-	responseController *response.Controller
+	responseCtrl       *response.Controller
 }
 
 type ExchangeState struct {
-	Header  exchangeheaderview.ExchangeHeaderState `json:"header"`
-	Request request.RequestState                   `json:"request"`
+	Header  exchangeheader.ExchangeHeaderState `json:"header"`
+	Request request.RequestState               `json:"request"`
 }
 
 func (ev ExchangeView) ToState() (ExchangeState, error) {
-	header, headerErr := ev.headerView.ToState()
-	if headerErr != nil {
-		log.Error(headerErr)
-		return ExchangeState{}, headerErr
-	}
+	header := ev.exchangeHeaderCtrl.ToState()
 	request, requestErr := ev.requestCtrl.ToState()
 	if requestErr != nil {
 		log.Error(requestErr)
@@ -52,33 +47,20 @@ func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
 		log.Error(requestErr)
 		return requestErr
 	}
-	headerErr := ev.headerView.LoadState(exchangeState.Header)
-	if headerErr != nil {
-		log.Error(headerErr)
-		return headerErr
-	}
+	ev.exchangeHeaderCtrl.LoadState(exchangeState.Header)
 	return nil
 }
 
 func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
-	url, urlGetErr := ev.headerView.URLBinding.Get()
-	if urlGetErr != nil {
-		log.Error(urlGetErr)
-	}
-	urlValidateErr := ev.headerView.ValidateURL()
+	url := ev.exchangeHeaderCtrl.GetURL()
+	urlValidateErr := ev.exchangeHeaderCtrl.ValidateURL()
 	if urlValidateErr != nil {
 		log.Warn(urlValidateErr)
 	}
 
-	method, methodGetErr := ev.headerView.MethodBinding.Get()
-	if methodGetErr != nil {
-		log.Error(methodGetErr)
-	}
+	method := ev.exchangeHeaderCtrl.GetMethod()
 
-	useSSL, useSSLGetErr := ev.headerView.UseSSLBinding.Get()
-	if useSSLGetErr != nil {
-		log.Error(useSSLGetErr)
-	}
+	useSSL := ev.exchangeHeaderCtrl.GetUseSSL()
 
 	headers := ev.requestCtrl.GetHeadersMap()
 	headersValidatErr := ev.requestCtrl.ValidateHeaders()
@@ -127,8 +109,8 @@ func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
 
 func (ev ExchangeView) sendRequestWorker(requestPayload requesthelper.RequestPayload) {
 	defer fyne.Do(func() {
-		ev.responseController.SetLoading(false)
-		ev.headerView.SendButton.Enable()
+		ev.responseCtrl.SetLoading(false)
+		ev.exchangeHeaderCtrl.EnableSend()
 	})
 
 	fyne.Do(func() {
@@ -148,19 +130,19 @@ func (ev ExchangeView) sendRequestWorker(requestPayload requesthelper.RequestPay
 	}
 
 	fyne.Do(func() {
-		ev.responseController.SetStatus(responsePayload.Status)
-		ev.responseController.SetTime(responsePayload.Time)
-		ev.responseController.SetBody(utils.SmartFormat(responsePayload.Body))
+		ev.responseCtrl.SetStatus(responsePayload.Status)
+		ev.responseCtrl.SetTime(responsePayload.Time)
+		ev.responseCtrl.SetBody(utils.SmartFormat(responsePayload.Body))
 	})
 }
 
 func (ev ExchangeView) sendButtonHandler() {
-	ev.headerView.SendButton.Disable()
-	ev.responseController.SetLoading(true)
+	ev.exchangeHeaderCtrl.DisableSend()
+	ev.responseCtrl.SetLoading(true)
 
-	ev.responseController.SetStatus(constants.UI_LOADING_RESPONSE_STATUS)
-	ev.responseController.SetTime(constants.UI_LOADING_RESPONSE_TIME)
-	ev.responseController.SetBody(constants.UI_LOADING_RESPONSE_BODY)
+	ev.responseCtrl.SetStatus(constants.UI_LOADING_RESPONSE_STATUS)
+	ev.responseCtrl.SetTime(constants.UI_LOADING_RESPONSE_TIME)
+	ev.responseCtrl.SetBody(constants.UI_LOADING_RESPONSE_BODY)
 
 	requestPayload := ev.ToRequestPayload()
 
@@ -168,16 +150,12 @@ func (ev ExchangeView) sendButtonHandler() {
 }
 
 func ComposeExchangeView() ExchangeView {
-	headerView := exchangeheaderview.ComposeExchangeHeaderView()
+	exchangeHeaderCtrl := exchangeheader.NewController()
 	requestCtrl := request.NewController()
 	responseCtrl := response.NewController()
 
-	headerView.MethodBinding.AddListener(binding.NewDataListener(func() {
-		method, methodErr := headerView.MethodBinding.Get()
-		if methodErr != nil {
-			log.Error(methodErr)
-			return
-		}
+	exchangeHeaderCtrl.SetMethodListener(func() {
+		method := exchangeHeaderCtrl.GetMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
 			requestCtrl.SetRequestBodyType(constants.UI_BODY_TYPE_NONE)
@@ -191,21 +169,21 @@ func ComposeExchangeView() ExchangeView {
 		} else {
 			log.Error(errors.New("invalid http method"))
 		}
-	}))
+	})
 
 	requestResponseView := container.NewHSplit(requestCtrl.GetUI(), responseCtrl.GetUI())
-	ui := container.NewBorder(headerView.UI, nil, nil, nil, requestResponseView)
+	ui := container.NewBorder(exchangeHeaderCtrl.GetUI(), nil, nil, nil, requestResponseView)
 
 	ev := ExchangeView{
 		ui,
-		headerView,
+		exchangeHeaderCtrl,
 		requestCtrl,
 		responseCtrl,
 	}
 
-	headerView.SendButton.OnTapped = func() {
+	exchangeHeaderCtrl.SetSendHandler(func() {
 		ev.sendButtonHandler()
-	}
+	})
 
 	return ev
 }
