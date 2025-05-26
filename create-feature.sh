@@ -2,7 +2,7 @@
 
 set -e
 
-FEATURE_PATH="internal/ui/features"
+FEATURE_PATH="internal/features"
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
