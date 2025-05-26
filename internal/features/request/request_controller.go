@@ -101,7 +101,7 @@ func (c *Controller) GetRequestBodyType() string {
 	return c.Body.GetBodyType()
 }
 
-func (c *Controller) ToState() (RequestState, error) {
+func (c *Controller) ToState() RequestState {
 	queryParams := c.queryParamsKeyValueCtrl.ToState()
 	pathParams := c.pathParamsKeyValueCtrl.ToState()
 	headers := c.headersKeyValueCtrl.ToState()
@@ -111,13 +111,12 @@ func (c *Controller) ToState() (RequestState, error) {
 		PathParams:  pathParams,
 		Headers:     headers,
 		Body:        body,
-	}, nil
+	}
 }
 
-func (c *Controller) LoadState(requestState RequestState) error {
+func (c *Controller) LoadState(requestState RequestState) {
 	c.queryParamsKeyValueCtrl.LoadState(requestState.QueryParams)
 	c.pathParamsKeyValueCtrl.LoadState(requestState.PathParams)
 	c.headersKeyValueCtrl.LoadState(requestState.Headers)
 	c.Body.LoadState(requestState.Body)
-	return nil
 }

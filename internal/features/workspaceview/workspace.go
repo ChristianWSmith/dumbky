@@ -3,7 +3,7 @@ package workspaceview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/db"
-	"dumbky/internal/features/exchangeview"
+	"dumbky/internal/features/exchange"
 	"dumbky/internal/features/workspaceheaderview"
 	"dumbky/internal/log"
 	"encoding/json"
@@ -23,15 +23,15 @@ type WorkspaceView struct {
 }
 
 type Document struct {
-	CollectionName string                     `json:"collection_name"`
-	Title          string                     `json:"title"`
-	ExchangeState  exchangeview.ExchangeState `json:"exchange"`
+	CollectionName string                 `json:"collection_name"`
+	Title          string                 `json:"title"`
+	ExchangeState  exchange.ExchangeState `json:"exchange"`
 }
 
 type WorkspaceTab struct {
 	CollectionName string
 	Title          string
-	ExchangeView   exchangeview.ExchangeView
+	ExchangeView   *exchange.Controller
 }
 
 func DocumentToRequest(document Document) (db.Request, error) {
@@ -78,17 +78,13 @@ func (wv WorkspaceView) OpenTab(document Document) {
 		}
 	}
 
-	exchangeView := exchangeview.ComposeExchangeView()
-	err := exchangeView.LoadState(document.ExchangeState)
-	if err != nil {
-		log.Error(err)
-		return
-	}
-	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.Title), exchangeView.UI)
+	exchangeCtrl := exchange.NewController()
+	exchangeCtrl.LoadState(document.ExchangeState)
+	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.Title), exchangeCtrl.GetUI())
 	wv.tabMap[exchangeViewTab] = WorkspaceTab{
 		CollectionName: document.CollectionName,
 		Title:          document.Title,
-		ExchangeView:   exchangeView,
+		ExchangeView:   exchangeCtrl,
 	}
 	wv.exchangeTabs.Append(exchangeViewTab)
 	wv.exchangeTabs.Select(exchangeViewTab)
@@ -101,11 +97,7 @@ func (wv WorkspaceView) SaveTab(callback func()) error {
 		log.Error(err)
 		return err
 	}
-	exchangeState, exchangeStateErr := workspaceTab.ExchangeView.ToState()
-	if exchangeStateErr != nil {
-		log.Error(exchangeStateErr)
-		return exchangeStateErr
-	}
+	exchangeState := workspaceTab.ExchangeView.ToState()
 
 	collectionName := workspaceTab.CollectionName
 	title := workspaceTab.Title
