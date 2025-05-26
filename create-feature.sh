@@ -26,7 +26,7 @@ cat > "${SCRIPT_DIR}/${FEATURE_PATH}/${FEATURE_NAME}/${FEATURE_NAME}_controller.
 package ${FEATURE_NAME}
 
 import (
-	"dumbky/internal/ui/features"
+	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
 )

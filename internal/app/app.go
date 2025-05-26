@@ -1,9 +1,9 @@
 package app
 
 import (
+	"dumbky/internal/features/rootview"
 	"dumbky/internal/global"
-	"dumbky/internal/ui/features/rootview"
-	"dumbky/internal/ui/theme"
+	"dumbky/internal/theme"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"

@@ -1,4 +1,4 @@
-package request
+package requesthelper
 
 import (
 	"crypto/tls"

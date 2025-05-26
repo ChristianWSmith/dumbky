@@ -67,3 +67,15 @@ func (v *view) setEnabled(enabled bool) {
 		v.value.Disable()
 	}
 }
+
+func (v *view) setDestroyHandler(handler func()) {
+	v.destroy.OnTapped = handler
+}
+
+func (v *view) setKeyValidator(validator func(string) error) {
+	v.key.Validator = validator
+}
+
+func (v *view) setValueValidator(validator func(string) error) {
+	v.key.Validator = validator
+}

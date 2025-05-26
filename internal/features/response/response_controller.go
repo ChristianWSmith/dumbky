@@ -1,7 +1,7 @@
 package response
 
 import (
-	"dumbky/internal/ui/features"
+	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
 )
@@ -17,9 +17,9 @@ func NewController() *Controller {
 	model := newModel()
 	view := newView()
 
-	view.statusLabel.Bind(model.status)
-	view.timeLabel.Bind(model.time)
-	view.bodyLabel.Bind(model.body)
+	view.status.Bind(model.status)
+	view.time.Bind(model.time)
+	view.body.Bind(model.body)
 
 	return &Controller{
 		model: model,

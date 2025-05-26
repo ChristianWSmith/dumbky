@@ -2,10 +2,10 @@ package requestbodyview
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features/keyvalueeditorview"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/features/keyvalueeditorview"
-	"dumbky/internal/ui/validators"
 	"dumbky/internal/utils"
+	"dumbky/internal/validators"
 	"errors"
 
 	"fyne.io/fyne/v2"

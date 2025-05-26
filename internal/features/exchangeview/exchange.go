@@ -2,12 +2,12 @@ package exchangeview
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features/exchangeheaderview"
+	"dumbky/internal/features/requestview"
+	"dumbky/internal/features/response"
 	"dumbky/internal/global"
 	"dumbky/internal/log"
-	"dumbky/internal/request"
-	"dumbky/internal/ui/features/exchangeheaderview"
-	"dumbky/internal/ui/features/requestview"
-	"dumbky/internal/ui/features/response"
+	"dumbky/internal/requesthelper"
 	"dumbky/internal/utils"
 	"errors"
 
@@ -60,7 +60,7 @@ func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
 	return nil
 }
 
-func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
+func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
 	url, urlGetErr := ev.headerView.URLBinding.Get()
 	if urlGetErr != nil {
 		log.Error(urlGetErr)
@@ -130,7 +130,7 @@ func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
 		log.Warn(bodyFormValidateErr)
 	}
 
-	return request.RequestPayload{
+	return requesthelper.RequestPayload{
 		URL:         url,
 		Method:      method,
 		UseSSL:      useSSL,
@@ -143,7 +143,7 @@ func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
 	}
 }
 
-func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) {
+func (ev ExchangeView) sendRequestWorker(requestPayload requesthelper.RequestPayload) {
 	defer fyne.Do(func() {
 		ev.responseController.SetLoading(false)
 		ev.headerView.SendButton.Enable()
@@ -169,7 +169,7 @@ func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) 
 		}
 	})
 
-	responsePayload, err := request.SendRequest(requestPayload)
+	responsePayload, err := requesthelper.SendRequest(requestPayload)
 	if err != nil {
 		log.Warn(err)
 		dialog.ShowError(err, global.Window)

@@ -2,8 +2,8 @@ package keyvalueeditorview
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features/keyvalue"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/features/keyvalue"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -84,7 +84,7 @@ func (kve KeyValueEditorView) GetMap() (map[string]string, error) {
 func (kve KeyValueEditorView) addKeyValue(keyValueState keyvalue.KeyValueState) error {
 	keyValue := keyvalue.NewController(kve.keyValidator, kve.valueValidator)
 	keyValue.LoadState(keyValueState)
-	keyValue.SetDestroyOnTapped(func() {
+	keyValue.SetDestroyHandler(func() {
 		delete(kve.keyValues, keyValue)
 		fyne.Do(func() {
 			kve.keyValueBox.Remove(keyValue.GetUI())

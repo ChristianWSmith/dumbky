@@ -3,9 +3,9 @@ package workspaceview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/db"
+	"dumbky/internal/features/exchangeview"
+	"dumbky/internal/features/workspaceheaderview"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/features/exchangeview"
-	"dumbky/internal/ui/features/workspaceheaderview"
 	"encoding/json"
 	"errors"
 	"fmt"

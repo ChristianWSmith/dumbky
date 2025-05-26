@@ -12,7 +12,7 @@ import (
 	"dumbky/internal/db"
 	"dumbky/internal/global"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/validators"
+	"dumbky/internal/validators"
 )
 
 type CollectionsBrowserView struct {

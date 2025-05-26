@@ -1,7 +1,7 @@
 package keyvalue
 
 import (
-	"dumbky/internal/ui/features"
+	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
@@ -22,8 +22,8 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	view.value.Bind(model.value)
 	view.enabled.Bind(model.enabled)
 
-	view.key.Validator = keyValidator
-	view.value.Validator = valueValidator
+	view.setKeyValidator(keyValidator)
+	view.setValueValidator(valueValidator)
 
 	model.enabled.AddListener(binding.NewDataListener(func() {
 		enabled, _ := model.enabled.Get()
@@ -36,8 +36,8 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	}
 }
 
-func (c *Controller) SetDestroyOnTapped(onTapped func()) {
-	c.view.destroy.OnTapped = onTapped
+func (c *Controller) SetDestroyHandler(handler func()) {
+	c.view.setDestroyHandler(handler)
 }
 
 func (c *Controller) GetUI() *fyne.Container {

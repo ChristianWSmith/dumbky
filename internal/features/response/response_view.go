@@ -1,8 +1,8 @@
 package response
 
 import (
+	"dumbky/internal/components"
 	"dumbky/internal/constants"
-	"dumbky/internal/ui/components"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -10,9 +10,9 @@ import (
 )
 
 type view struct {
-	statusLabel *widget.Label
-	timeLabel   *widget.Label
-	bodyLabel   *widget.Label
+	status *widget.Label
+	time   *widget.Label
+	body   *widget.Label
 
 	ui              *fyne.Container
 	statusContainer *fyne.Container
@@ -43,9 +43,9 @@ func newView() *view {
 	ui := container.NewBorder(info, nil, nil, nil, container.NewVScroll(bodyContainer))
 
 	return &view{
-		statusLabel:     statusLabel,
-		timeLabel:       timeLabel,
-		bodyLabel:       bodyLabel,
+		status:          statusLabel,
+		time:            timeLabel,
+		body:            bodyLabel,
 		ui:              ui,
 		statusContainer: statusContainer,
 		loadingBar:      loadingBar,
