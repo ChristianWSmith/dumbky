@@ -3,7 +3,7 @@ package dashboardview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features/dashboardsidebarview"
-	"dumbky/internal/features/workspaceview"
+	"dumbky/internal/features/workspace"
 	"dumbky/internal/log"
 
 	"fyne.io/fyne/v2"
@@ -17,7 +17,7 @@ type DashboardView struct {
 
 func ComposeDashboardView() DashboardView {
 	dashboardSidebarView := dashboardsidebarview.ComposeDashboardSidebarView()
-	workspaceView := workspaceview.ComposeWorkspaceView()
+	workspaceCtrl := workspace.NewController()
 
 	dashboardSidebarView.CollectionsBrowserView.SelectedRequestBinding.AddListener(binding.NewDataListener(func() {
 		collectionName, err := dashboardSidebarView.CollectionsBrowserView.SelectedCollectionBinding.Get()
@@ -37,10 +37,10 @@ func ComposeDashboardView() DashboardView {
 		if collectionName == "" || requestName == "" {
 			return
 		}
-		workspaceView.LoadTab(collectionName, requestName)
+		workspaceCtrl.LoadTab(collectionName, requestName)
 	}))
 
-	workspaceView.WorkspaceHeader.SetAddHandler(func() {
+	workspaceCtrl.WorkspaceHeader.SetAddHandler(func() {
 		collectionName, err := dashboardSidebarView.CollectionsBrowserView.SelectedCollectionBinding.Get()
 		if err != nil {
 			log.Error(err)
@@ -49,13 +49,13 @@ func ComposeDashboardView() DashboardView {
 		if collectionName == "" {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
 		}
-		workspaceView.OpenTab(workspaceview.Document{
+		workspaceCtrl.OpenTab(workspace.Document{
 			CollectionName: collectionName,
 			Title:          constants.UI_PLACEHOLDER_UNTITLED})
 	})
 
-	workspaceView.WorkspaceHeader.SetSaveHandler(func() {
-		go workspaceView.SaveTab(func() {
+	workspaceCtrl.WorkspaceHeader.SetSaveHandler(func() {
+		go workspaceCtrl.SaveTab(func() {
 			fyne.Do(func() {
 				err := dashboardSidebarView.CollectionsBrowserView.RefreshRequests()
 				if err != nil {
@@ -65,7 +65,7 @@ func ComposeDashboardView() DashboardView {
 		})
 	})
 
-	split := container.NewHSplit(dashboardSidebarView.UI, workspaceView.UI)
+	split := container.NewHSplit(dashboardSidebarView.UI, workspaceCtrl.GetUI())
 	split.SetOffset(constants.UI_DASHBOARD_SIDEBAR_OFFSET)
 
 	ui := container.NewBorder(nil, nil, nil, nil, split)
