@@ -17,11 +17,9 @@ type view struct {
 func newView() *view {
 	titleEntry := widget.NewEntry()
 
-	addButton := widget.NewButtonWithIcon("", nil, nil)
-	addButton.Icon = addButton.Theme().Icon(theme.IconNameContentAdd)
+	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 
-	saveButton := widget.NewButtonWithIcon("", nil, nil)
-	saveButton.Icon = addButton.Theme().Icon(theme.IconNameDocumentSave)
+	saveButton := widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), nil)
 
 	controlsLeft := container.NewHBox(addButton)
 	controlsRight := container.NewHBox(saveButton)

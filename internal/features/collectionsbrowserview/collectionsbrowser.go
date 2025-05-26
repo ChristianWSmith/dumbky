@@ -55,8 +55,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 		collectionsBind,
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
-			menuBtn := widget.NewButtonWithIcon("", nil, nil)
-			menuBtn.Icon = menuBtn.Theme().Icon(theme.IconNameMoreVertical)
+			menuBtn := widget.NewButtonWithIcon("", theme.MoreVerticalIcon(), nil)
 			return container.NewBorder(nil, nil, nil, menuBtn, label)
 		},
 		func(item binding.DataItem, o fyne.CanvasObject) {
@@ -84,8 +83,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 	cbv.addCollectionEntry = widget.NewEntry()
 	cbv.addCollectionEntry.Bind(addCollectionBind)
 	cbv.addCollectionEntry.Validator = validators.ValidateCollectionName
-	addBtn := widget.NewButtonWithIcon("", nil, nil)
-	addBtn.Icon = addBtn.Theme().Icon(theme.IconNameContentAdd)
+	addBtn := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 	addBtn.OnTapped = func() {
 		err := cbv.addCollectionEntry.Validate()
 		if err != nil {
@@ -123,8 +121,7 @@ func ComposeCollectionsBrowserView() CollectionsBrowserView {
 		requestsBind,
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
-			menuBtn := widget.NewButtonWithIcon("", nil, nil)
-			menuBtn.Icon = menuBtn.Theme().Icon(theme.IconNameMoreVertical)
+			menuBtn := widget.NewButtonWithIcon("", theme.MoreVerticalIcon(), nil)
 			return container.NewBorder(nil, nil, nil, menuBtn, label)
 		},
 		func(item binding.DataItem, o fyne.CanvasObject) {
