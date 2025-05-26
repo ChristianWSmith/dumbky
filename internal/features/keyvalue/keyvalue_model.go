@@ -54,3 +54,7 @@ func (m *model) getValue() string {
 	value, _ := m.value.Get()
 	return value
 }
+
+func (m *model) setEnabledListener(handler func()) {
+	m.enabled.AddListener(binding.NewDataListener(handler))
+}

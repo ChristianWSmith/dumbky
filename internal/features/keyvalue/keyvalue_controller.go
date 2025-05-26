@@ -4,7 +4,6 @@ import (
 	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/data/binding"
 )
 
 type Controller struct {
@@ -30,9 +29,9 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	c.view.setKeyValidator(keyValidator)
 	c.view.setValueValidator(valueValidator)
 
-	c.model.enabled.AddListener(binding.NewDataListener(func() {
+	c.model.setEnabledListener(func() {
 		c.view.setEnabled(c.IsEnabled())
-	}))
+	})
 
 	return c
 }

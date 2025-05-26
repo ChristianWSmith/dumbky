@@ -59,12 +59,11 @@ func (c *Controller) ToState() KeyValueEditorState {
 	}
 }
 
-func (c *Controller) LoadState(keyValueEditorState KeyValueEditorState) error {
+func (c *Controller) LoadState(keyValueEditorState KeyValueEditorState) {
 	c.clear()
 	for _, keyValueState := range keyValueEditorState.KeyValueStates {
 		c.addKeyValue(keyValueState)
 	}
-	return nil
 }
 
 func (c *Controller) Validate() error {

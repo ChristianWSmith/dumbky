@@ -98,22 +98,16 @@ func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
 		log.Error(pathParamsValidatErr)
 	}
 
-	bodyType, bodyTypeGetErr := ev.requestView.Body.BodyTypeBinding.Get()
-	if bodyTypeGetErr != nil {
-		log.Error(bodyTypeGetErr)
-	}
+	bodyType := ev.requestView.Body.GetBodyType()
+	bodyRaw := ev.requestView.Body.GetBodyRaw()
 
-	bodyRaw, bodyRawGetErr := ev.requestView.Body.BodyRawBinding.Get()
-	if bodyRawGetErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
-		log.Error(bodyRawGetErr)
-	}
 	bodyRawValidateErr := ev.requestView.Body.ValidateBodyRaw()
 	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Warn(bodyRawValidateErr)
 	}
 
-	bodyForm := ev.requestView.Body.BodyKeyValueEditor.GetMap()
-	bodyFormValidateErr := ev.requestView.Body.BodyKeyValueEditor.Validate()
+	bodyForm := ev.requestView.Body.GetBodyFormMap()
+	bodyFormValidateErr := ev.requestView.Body.ValidateBodyForm()
 	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn(bodyFormValidateErr)
 	}
@@ -138,23 +132,12 @@ func (ev ExchangeView) sendRequestWorker(requestPayload requesthelper.RequestPay
 	})
 
 	fyne.Do(func() {
-		bodyType, bodyTypeGetErr := ev.requestView.Body.BodyTypeBinding.Get()
-		if bodyTypeGetErr != nil {
-			log.Error(bodyTypeGetErr)
-		}
-		if bodyType != constants.UI_BODY_TYPE_RAW && bodyTypeGetErr == nil {
+		bodyType := ev.requestView.Body.GetBodyType()
+		if bodyType != constants.UI_BODY_TYPE_RAW {
 			return
 		}
-		bodyRaw, bodyRawGetErr := ev.requestView.Body.BodyRawBinding.Get()
-		if bodyRawGetErr != nil {
-			log.Error(bodyRawGetErr)
-			return
-		}
-		bodyRawSetErr := ev.requestView.Body.BodyRawBinding.Set(utils.SmartFormat(bodyRaw))
-		if bodyRawSetErr != nil {
-			log.Error(bodyRawSetErr)
-			return
-		}
+		bodyRaw := ev.requestView.Body.GetBodyRaw()
+		ev.requestView.Body.SetBodyRaw(utils.SmartFormat(bodyRaw))
 	})
 
 	responsePayload, err := requesthelper.SendRequest(requestPayload)
@@ -197,10 +180,7 @@ func ComposeExchangeView() ExchangeView {
 		}
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
-			bodyTypeErr := requestView.Body.BodyTypeBinding.Set(constants.UI_BODY_TYPE_NONE)
-			if bodyTypeErr != nil {
-				log.Error(bodyTypeErr)
-			}
+			requestView.Body.SetBodyType(constants.UI_BODY_TYPE_NONE)
 			requestView.Body.DisableBodyTypeSelect()
 		} else if method == constants.HTTP_METHOD_DELETE ||
 			method == constants.HTTP_METHOD_OPTIONS ||
