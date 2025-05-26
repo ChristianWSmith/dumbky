@@ -3,8 +3,8 @@ package dashboardview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
-	"dumbky/internal/ui/views/dashboardsidebarview"
-	"dumbky/internal/ui/views/workspaceview"
+	"dumbky/internal/ui/features/dashboardsidebarview"
+	"dumbky/internal/ui/features/workspaceview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

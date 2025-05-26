@@ -1,7 +1,7 @@
 package rootview
 
 import (
-	"dumbky/internal/ui/views/dashboardview"
+	"dumbky/internal/ui/features/dashboardview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

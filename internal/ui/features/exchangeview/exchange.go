@@ -5,9 +5,9 @@ import (
 	"dumbky/internal/global"
 	"dumbky/internal/log"
 	"dumbky/internal/request"
-	"dumbky/internal/ui/views/exchangeheaderview"
-	"dumbky/internal/ui/views/requestview"
-	"dumbky/internal/ui/views/responseview"
+	"dumbky/internal/ui/features/exchangeheaderview"
+	"dumbky/internal/ui/features/requestview"
+	"dumbky/internal/ui/features/response"
 	"dumbky/internal/utils"
 	"errors"
 
@@ -18,10 +18,10 @@ import (
 )
 
 type ExchangeView struct {
-	UI           *fyne.Container
-	headerView   exchangeheaderview.ExchangeHeaderView
-	requestView  requestview.RequestView
-	responseView responseview.ResponseView
+	UI                 *fyne.Container
+	headerView         exchangeheaderview.ExchangeHeaderView
+	requestView        requestview.RequestView
+	responseController *response.Controller
 }
 
 type ExchangeState struct {
@@ -145,7 +145,7 @@ func (ev ExchangeView) ToRequestPayload() request.RequestPayload {
 
 func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) {
 	defer fyne.Do(func() {
-		ev.responseView.SetLoading(false)
+		ev.responseController.SetLoading(false)
 		ev.headerView.SendButton.Enable()
 	})
 
@@ -177,39 +177,19 @@ func (ev ExchangeView) sendRequestWorker(requestPayload request.RequestPayload) 
 	}
 
 	fyne.Do(func() {
-		statusErr := ev.responseView.StatusBinding.Set(responsePayload.Status)
-		if statusErr != nil {
-			log.Error(statusErr)
-		}
-
-		timeErr := ev.responseView.TimeBinding.Set(responsePayload.Time)
-		if timeErr != nil {
-			log.Error(timeErr)
-		}
-
-		bodyErr := ev.responseView.BodyBinding.Set(utils.SmartFormat(responsePayload.Body))
-		if bodyErr != nil {
-			log.Error(bodyErr)
-		}
+		ev.responseController.SetStatus(responsePayload.Status)
+		ev.responseController.SetTime(responsePayload.Time)
+		ev.responseController.SetBody(utils.SmartFormat(responsePayload.Body))
 	})
 }
 
 func (ev ExchangeView) sendButtonHandler() {
 	ev.headerView.SendButton.Disable()
-	ev.responseView.SetLoading(true)
+	ev.responseController.SetLoading(true)
 
-	statusErr := ev.responseView.StatusBinding.Set(constants.UI_LOADING_RESPONSE_STATUS)
-	if statusErr != nil {
-		log.Error(statusErr)
-	}
-	timeErr := ev.responseView.TimeBinding.Set(constants.UI_LOADING_RESPONSE_TIME)
-	if timeErr != nil {
-		log.Error(timeErr)
-	}
-	bodyErr := ev.responseView.BodyBinding.Set(constants.UI_LOADING_RESPONSE_BODY)
-	if bodyErr != nil {
-		log.Error(bodyErr)
-	}
+	ev.responseController.SetStatus(constants.UI_LOADING_RESPONSE_STATUS)
+	ev.responseController.SetTime(constants.UI_LOADING_RESPONSE_TIME)
+	ev.responseController.SetBody(constants.UI_LOADING_RESPONSE_BODY)
 
 	requestPayload := ev.ToRequestPayload()
 
@@ -219,7 +199,7 @@ func (ev ExchangeView) sendButtonHandler() {
 func ComposeExchangeView() ExchangeView {
 	headerView := exchangeheaderview.ComposeExchangeHeaderView()
 	requestView := requestview.ComposeRequestView()
-	responseView := responseview.ComposeResponseView()
+	responseController := response.NewController()
 
 	headerView.MethodBinding.AddListener(binding.NewDataListener(func() {
 		method, methodErr := headerView.MethodBinding.Get()
@@ -245,14 +225,14 @@ func ComposeExchangeView() ExchangeView {
 		}
 	}))
 
-	requestResponseView := container.NewHSplit(requestView.UI, responseView.UI)
+	requestResponseView := container.NewHSplit(requestView.UI, responseController.GetUI())
 	ui := container.NewBorder(headerView.UI, nil, nil, nil, requestResponseView)
 
 	ev := ExchangeView{
 		ui,
 		headerView,
 		requestView,
-		responseView,
+		responseController,
 	}
 
 	headerView.SendButton.OnTapped = func() {

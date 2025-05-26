@@ -1,7 +1,7 @@
 package dashboardsidebarview
 
 import (
-	"dumbky/internal/ui/views/collectionsbrowserview"
+	"dumbky/internal/ui/features/collectionsbrowserview"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"

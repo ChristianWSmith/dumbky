@@ -3,9 +3,9 @@ package requestview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
+	"dumbky/internal/ui/features/keyvalueeditorview"
+	"dumbky/internal/ui/features/requestbodyview"
 	"dumbky/internal/ui/validators"
-	"dumbky/internal/ui/views/keyvalueeditorview"
-	"dumbky/internal/ui/views/requestbodyview"
 
 	"fyne.io/fyne/v2/container"
 )

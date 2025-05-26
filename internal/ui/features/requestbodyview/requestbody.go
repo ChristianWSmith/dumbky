@@ -3,8 +3,8 @@ package requestbodyview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/log"
+	"dumbky/internal/ui/features/keyvalueeditorview"
 	"dumbky/internal/ui/validators"
-	"dumbky/internal/ui/views/keyvalueeditorview"
 	"dumbky/internal/utils"
 	"errors"
 
