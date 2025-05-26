@@ -80,28 +80,19 @@ func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
 		log.Error(useSSLGetErr)
 	}
 
-	headers, headersGetErr := ev.requestView.Headers.GetMap()
-	if headersGetErr != nil {
-		log.Error(headersGetErr)
-	}
+	headers := ev.requestView.Headers.GetMap()
 	headersValidatErr := ev.requestView.Headers.Validate()
 	if headersValidatErr != nil {
 		log.Error(headersValidatErr)
 	}
 
-	queryParams, queryParamsGetErr := ev.requestView.QueryParams.GetMap()
-	if queryParamsGetErr != nil {
-		log.Error(queryParamsGetErr)
-	}
+	queryParams := ev.requestView.QueryParams.GetMap()
 	queryParamsValidatErr := ev.requestView.QueryParams.Validate()
 	if queryParamsValidatErr != nil {
 		log.Error(queryParamsValidatErr)
 	}
 
-	pathParams, pathParamsGetErr := ev.requestView.PathParams.GetMap()
-	if pathParamsGetErr != nil {
-		log.Error(pathParamsGetErr)
-	}
+	pathParams := ev.requestView.PathParams.GetMap()
 	pathParamsValidatErr := ev.requestView.PathParams.Validate()
 	if pathParamsValidatErr != nil {
 		log.Error(pathParamsValidatErr)
@@ -121,10 +112,7 @@ func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
 		log.Warn(bodyRawValidateErr)
 	}
 
-	bodyForm, bodyFormGetErr := ev.requestView.Body.BodyKeyValueEditor.GetMap()
-	if bodyFormGetErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
-		log.Warn(bodyFormGetErr)
-	}
+	bodyForm := ev.requestView.Body.BodyKeyValueEditor.GetMap()
 	bodyFormValidateErr := ev.requestView.Body.BodyKeyValueEditor.Validate()
 	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn(bodyFormValidateErr)

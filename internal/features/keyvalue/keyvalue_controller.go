@@ -18,22 +18,23 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	model := newModel()
 	view := newView()
 
-	view.key.Bind(model.key)
-	view.value.Bind(model.value)
-	view.enabled.Bind(model.enabled)
-
-	view.setKeyValidator(keyValidator)
-	view.setValueValidator(valueValidator)
-
-	model.enabled.AddListener(binding.NewDataListener(func() {
-		enabled, _ := model.enabled.Get()
-		view.setEnabled(enabled)
-	}))
-
-	return &Controller{
+	c := &Controller{
 		model: model,
 		view:  view,
 	}
+
+	c.view.keyEntry.Bind(model.key)
+	c.view.valueEntry.Bind(model.value)
+	c.view.enabledCheck.Bind(model.enabled)
+
+	c.view.setKeyValidator(keyValidator)
+	c.view.setValueValidator(valueValidator)
+
+	c.model.enabled.AddListener(binding.NewDataListener(func() {
+		c.view.setEnabled(c.IsEnabled())
+	}))
+
+	return c
 }
 
 func (c *Controller) SetDestroyHandler(handler func()) {

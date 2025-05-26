@@ -2,45 +2,34 @@ package requestview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features/keyvalueeditorview"
+	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/features/requestbodyview"
 	"dumbky/internal/log"
 	"dumbky/internal/validators"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 )
 
 type RequestView struct {
-	UI          *container.AppTabs
-	QueryParams keyvalueeditorview.KeyValueEditorView
-	PathParams  keyvalueeditorview.KeyValueEditorView
-	Headers     keyvalueeditorview.KeyValueEditorView
+	UI          *fyne.Container
+	QueryParams *keyvalueeditor.Controller
+	PathParams  *keyvalueeditor.Controller
+	Headers     *keyvalueeditor.Controller
 	Body        requestbodyview.RequestBodyView
 }
 
 type RequestState struct {
-	QueryParams keyvalueeditorview.KeyValueEditorState `json:"queryParams"`
-	PathParams  keyvalueeditorview.KeyValueEditorState `json:"pathParams"`
-	Headers     keyvalueeditorview.KeyValueEditorState `json:"headers"`
-	Body        requestbodyview.RequestBodyState       `json:"body"`
+	QueryParams keyvalueeditor.KeyValueEditorState `json:"queryParams"`
+	PathParams  keyvalueeditor.KeyValueEditorState `json:"pathParams"`
+	Headers     keyvalueeditor.KeyValueEditorState `json:"headers"`
+	Body        requestbodyview.RequestBodyState   `json:"body"`
 }
 
 func (rv RequestView) ToState() (RequestState, error) {
-	queryParams, queryParamsErr := rv.QueryParams.ToState()
-	if queryParamsErr != nil {
-		log.Error(queryParamsErr)
-		return RequestState{}, queryParamsErr
-	}
-	pathParams, pathParamsErr := rv.PathParams.ToState()
-	if pathParamsErr != nil {
-		log.Error(pathParamsErr)
-		return RequestState{}, pathParamsErr
-	}
-	headers, headersErr := rv.Headers.ToState()
-	if headersErr != nil {
-		log.Error(headersErr)
-		return RequestState{}, headersErr
-	}
+	queryParams := rv.QueryParams.ToState()
+	pathParams := rv.PathParams.ToState()
+	headers := rv.Headers.ToState()
 	body, bodyErr := rv.Body.ToState()
 	if bodyErr != nil {
 		log.Error(bodyErr)
@@ -79,17 +68,18 @@ func (rv RequestView) LoadState(requestState RequestState) error {
 }
 
 func ComposeRequestView() RequestView {
-	queryParamsView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
-	pathParamsView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
-	headersView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
+	queryParamsView := keyvalueeditor.NewController(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
+	pathParamsView := keyvalueeditor.NewController(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
+	headersView := keyvalueeditor.NewController(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
 	bodyView := requestbodyview.ComposeRequestBodyView()
 
-	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsView.UI)
-	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsView.UI)
-	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersView.UI)
+	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsView.GetUI())
+	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsView.GetUI())
+	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersView.GetUI())
 	bodyTab := container.NewTabItem(constants.UI_LABEL_BODY, bodyView.UI)
 
-	ui := container.NewAppTabs(queryParamsTab, pathParamsTab, headersTab, bodyTab)
+	tabs := container.NewAppTabs(queryParamsTab, pathParamsTab, headersTab, bodyTab)
+	ui := container.NewBorder(nil, nil, nil, nil, tabs)
 
 	return RequestView{
 		ui,

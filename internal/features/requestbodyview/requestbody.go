@@ -2,7 +2,7 @@ package requestbodyview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features/keyvalueeditorview"
+	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/log"
 	"dumbky/internal/utils"
 	"dumbky/internal/validators"
@@ -16,7 +16,7 @@ import (
 
 type RequestBodyView struct {
 	UI                 *fyne.Container
-	BodyKeyValueEditor keyvalueeditorview.KeyValueEditorView
+	BodyKeyValueEditor *keyvalueeditor.Controller
 	BodyTypeBinding    binding.String
 	BodyRawBinding     binding.String
 
@@ -26,7 +26,7 @@ type RequestBodyView struct {
 
 type RequestBodyState struct {
 	BodyType string
-	BodyForm keyvalueeditorview.KeyValueEditorState
+	BodyForm keyvalueeditor.KeyValueEditorState
 	BodyRaw  string
 }
 
@@ -36,11 +36,7 @@ func (rbv RequestBodyView) ToState() (RequestBodyState, error) {
 		log.Error(bodyTypeErr)
 		return RequestBodyState{}, bodyTypeErr
 	}
-	bodyForm, bodyFormErr := rbv.BodyKeyValueEditor.ToState()
-	if bodyFormErr != nil {
-		log.Error(bodyFormErr)
-		return RequestBodyState{}, bodyFormErr
-	}
+	bodyForm := rbv.BodyKeyValueEditor.ToState()
 	bodyRaw, bodyRawErr := rbv.BodyRawBinding.Get()
 	if bodyRawErr != nil {
 		log.Error(bodyRawErr)
@@ -92,13 +88,13 @@ func ComposeRequestBodyView() RequestBodyView {
 	bodyTypeBind := binding.NewString()
 	bodyRawBind := binding.NewString()
 
-	bodyKeyValueEditorView := keyvalueeditorview.ComposeKeyValueEditorView(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
+	bodyKeyValueEditor := keyvalueeditor.NewController(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
 	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
 	bodyRawEntry.TextStyle.Monospace = true
 	bodyRawEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_BODY_TYPE_RAW)
 
-	bodyContentStack := container.NewStack(bodyKeyValueEditorView.UI, bodyRawEntry)
+	bodyContentStack := container.NewStack(bodyKeyValueEditor.GetUI(), bodyRawEntry)
 
 	bodyTypeSelect.SetSelected(constants.UI_BODY_TYPE_DEFAULT)
 	bodyTypeErr := bodyTypeBind.Set(constants.UI_BODY_TYPE_DEFAULT)
@@ -119,14 +115,14 @@ func ComposeRequestBodyView() RequestBodyView {
 		}
 		if bodyType == constants.UI_BODY_TYPE_FORM {
 			bodyRawEntry.Hide()
-			bodyKeyValueEditorView.UI.Show()
+			bodyKeyValueEditor.Show()
 			bodyContentStack.Refresh()
 		} else if bodyType == constants.UI_BODY_TYPE_RAW {
-			bodyKeyValueEditorView.UI.Hide()
+			bodyKeyValueEditor.Hide()
 			bodyRawEntry.Show()
 			bodyContentStack.Refresh()
 		} else if bodyType == constants.UI_BODY_TYPE_NONE {
-			bodyKeyValueEditorView.UI.Hide()
+			bodyKeyValueEditor.Hide()
 			bodyRawEntry.Hide()
 			bodyContentStack.Refresh()
 		} else {
@@ -138,7 +134,7 @@ func ComposeRequestBodyView() RequestBodyView {
 
 	return RequestBodyView{
 		ui,
-		bodyKeyValueEditorView,
+		bodyKeyValueEditor,
 		bodyTypeBind,
 		bodyRawBind,
 		bodyRawEntry,

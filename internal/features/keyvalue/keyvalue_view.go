@@ -12,37 +12,36 @@ import (
 type view struct {
 	ui *fyne.Container
 
-	destroy *widget.Button
-	enabled *widget.Check
-	key     *widget.Entry
-	value   *widget.Entry
+	destroyButton *widget.Button
+	enabledCheck  *widget.Check
+	keyEntry      *widget.Entry
+	valueEntry    *widget.Entry
 }
 
 func newView() *view {
 
-	key := widget.NewEntry()
-	key.SetPlaceHolder(constants.UI_PLACEHOLDER_KEY)
-	key.TextStyle.Monospace = true
+	keyEntry := widget.NewEntry()
+	keyEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_KEY)
+	keyEntry.TextStyle.Monospace = true
 
-	value := widget.NewEntry()
-	value.SetPlaceHolder(constants.UI_PLACEHOLDER_VALUE)
-	value.TextStyle.Monospace = true
+	valueEntry := widget.NewEntry()
+	valueEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_VALUE)
+	valueEntry.TextStyle.Monospace = true
 
-	enabled := widget.NewCheck(constants.UI_LABEL_KEY_VALUE_ENABLE, nil)
+	enabledCheck := widget.NewCheck(constants.UI_LABEL_KEY_VALUE_ENABLE, nil)
 
-	destroy := widget.NewButtonWithIcon("", nil, nil)
-	destroy.Icon = destroy.Theme().Icon(theme.IconNameContentClear)
+	destroyButton := widget.NewButtonWithIcon("", theme.ContentClearIcon(), nil)
 
-	grid := container.NewGridWithColumns(2, key, value)
+	grid := container.NewGridWithColumns(2, keyEntry, valueEntry)
 
-	ui := container.NewBorder(nil, nil, enabled, destroy, grid)
+	ui := container.NewBorder(nil, nil, enabledCheck, destroyButton, grid)
 
 	return &view{
-		ui:      ui,
-		destroy: destroy,
-		enabled: enabled,
-		key:     key,
-		value:   value,
+		ui:            ui,
+		destroyButton: destroyButton,
+		enabledCheck:  enabledCheck,
+		keyEntry:      keyEntry,
+		valueEntry:    valueEntry,
 	}
 }
 
@@ -51,31 +50,31 @@ func (v *view) getUI() *fyne.Container {
 }
 
 func (v *view) validateKey() error {
-	return v.key.Validate()
+	return v.keyEntry.Validate()
 }
 
 func (v *view) validateValue() error {
-	return v.value.Validate()
+	return v.valueEntry.Validate()
 }
 
 func (v *view) setEnabled(enabled bool) {
 	if enabled {
-		v.key.Enable()
-		v.value.Enable()
+		v.keyEntry.Enable()
+		v.valueEntry.Enable()
 	} else {
-		v.key.Disable()
-		v.value.Disable()
+		v.keyEntry.Disable()
+		v.valueEntry.Disable()
 	}
 }
 
 func (v *view) setDestroyHandler(handler func()) {
-	v.destroy.OnTapped = handler
+	v.destroyButton.OnTapped = handler
 }
 
 func (v *view) setKeyValidator(validator func(string) error) {
-	v.key.Validator = validator
+	v.keyEntry.Validator = validator
 }
 
 func (v *view) setValueValidator(validator func(string) error) {
-	v.key.Validator = validator
+	v.keyEntry.Validator = validator
 }

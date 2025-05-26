@@ -17,14 +17,16 @@ func NewController() *Controller {
 	model := newModel()
 	view := newView()
 
-	view.status.Bind(model.status)
-	view.time.Bind(model.time)
-	view.body.Bind(model.body)
-
-	return &Controller{
+	c := &Controller{
 		model: model,
 		view:  view,
 	}
+
+	c.view.status.Bind(c.model.status)
+	c.view.time.Bind(c.model.time)
+	c.view.body.Bind(c.model.body)
+
+	return c
 }
 
 func (c *Controller) GetUI() *fyne.Container {
