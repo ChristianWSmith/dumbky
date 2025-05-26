@@ -4,7 +4,7 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/db"
 	"dumbky/internal/features/exchange"
-	"dumbky/internal/features/workspaceheaderview"
+	"dumbky/internal/features/workspaceheader"
 	"dumbky/internal/log"
 	"encoding/json"
 	"errors"
@@ -12,12 +12,11 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 )
 
 type WorkspaceView struct {
 	UI              *fyne.Container
-	WorkspaceHeader workspaceheaderview.WorkspaceHeaderView
+	WorkspaceHeader *workspaceheader.Controller
 	exchangeTabs    *container.DocTabs
 	tabMap          map[*container.TabItem]WorkspaceTab
 }
@@ -135,11 +134,11 @@ func (wv WorkspaceView) LoadTab(collectionName, title string) {
 }
 
 func ComposeWorkspaceView() WorkspaceView {
-	workspaceHeader := workspaceheaderview.ComposeWorkspaceHeaderView()
+	workspaceHeader := workspaceheader.NewController()
 
 	exchangeTabs := container.NewDocTabs()
 
-	ui := container.NewBorder(workspaceHeader.UI, nil, nil, nil, exchangeTabs)
+	ui := container.NewBorder(workspaceHeader.GetUI(), nil, nil, nil, exchangeTabs)
 	wv := WorkspaceView{
 		UI:              ui,
 		WorkspaceHeader: workspaceHeader,
@@ -153,11 +152,7 @@ func ComposeWorkspaceView() WorkspaceView {
 			log.Error(errors.New("selected tab not in tabMap (OnSelected)"))
 			return
 		}
-		titleErr := workspaceHeader.TitleBinding.Set(workspaceTab.Title)
-		if titleErr != nil {
-			log.Error(titleErr)
-			return
-		}
+		workspaceHeader.SetTitle(workspaceTab.Title)
 	}
 
 	exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
@@ -169,7 +164,7 @@ func ComposeWorkspaceView() WorkspaceView {
 
 	wv.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
 
-	workspaceHeader.TitleBinding.AddListener(binding.NewDataListener(func() {
+	workspaceHeader.SetTitleListener(func() {
 		selectedTab := wv.exchangeTabs.Selected()
 		if selectedTab == nil {
 			log.Error(errors.New("no selected tab"))
@@ -180,11 +175,7 @@ func ComposeWorkspaceView() WorkspaceView {
 			log.Error(errors.New("selected tab not in tabMap"))
 			return
 		}
-		title, titleErr := workspaceHeader.TitleBinding.Get()
-		if titleErr != nil {
-			log.Error(titleErr)
-			return
-		}
+		title := workspaceHeader.GetTitle()
 		workspaceTab.Title = title
 		wv.tabMap[selectedTab] = workspaceTab
 		if workspaceTab.Title == "" {
@@ -194,7 +185,7 @@ func ComposeWorkspaceView() WorkspaceView {
 		}
 		exchangeTabs.Refresh()
 
-	}))
+	})
 
 	return wv
 }

@@ -1,24 +1,21 @@
-package workspaceheaderview
+package workspaceheader
 
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-type WorkspaceHeaderView struct {
-	UI           *fyne.Container
-	TitleBinding binding.String
-	AddButton    *widget.Button
-	SaveButton   *widget.Button
+type view struct {
+	ui         *fyne.Container
+	titleEntry *widget.Entry
+	addButton  *widget.Button
+	saveButton *widget.Button
 }
 
-func ComposeWorkspaceHeaderView() WorkspaceHeaderView {
-	titleBind := binding.NewString()
+func newView() *view {
 	titleEntry := widget.NewEntry()
-	titleEntry.Bind(titleBind)
 
 	addButton := widget.NewButtonWithIcon("", nil, nil)
 	addButton.Icon = addButton.Theme().Icon(theme.IconNameContentAdd)
@@ -30,10 +27,22 @@ func ComposeWorkspaceHeaderView() WorkspaceHeaderView {
 	controlsRight := container.NewHBox(saveButton)
 
 	ui := container.NewBorder(nil, nil, controlsLeft, controlsRight, titleEntry)
-	return WorkspaceHeaderView{
-		UI:           ui,
-		TitleBinding: titleBind,
-		AddButton:    addButton,
-		SaveButton:   saveButton,
+	return &view{
+		ui:         ui,
+		titleEntry: titleEntry,
+		addButton:  addButton,
+		saveButton: saveButton,
 	}
+}
+
+func (v *view) getUI() *fyne.Container {
+	return v.ui
+}
+
+func (v *view) setAddHandler(handler func()) {
+	v.addButton.OnTapped = handler
+}
+
+func (v *view) setSaveHandler(handler func()) {
+	v.saveButton.OnTapped = handler
 }

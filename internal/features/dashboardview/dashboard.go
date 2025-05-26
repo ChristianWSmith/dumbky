@@ -40,7 +40,7 @@ func ComposeDashboardView() DashboardView {
 		workspaceView.LoadTab(collectionName, requestName)
 	}))
 
-	workspaceView.WorkspaceHeader.AddButton.OnTapped = func() {
+	workspaceView.WorkspaceHeader.SetAddHandler(func() {
 		collectionName, err := dashboardSidebarView.CollectionsBrowserView.SelectedCollectionBinding.Get()
 		if err != nil {
 			log.Error(err)
@@ -52,9 +52,9 @@ func ComposeDashboardView() DashboardView {
 		workspaceView.OpenTab(workspaceview.Document{
 			CollectionName: collectionName,
 			Title:          constants.UI_PLACEHOLDER_UNTITLED})
-	}
+	})
 
-	workspaceView.WorkspaceHeader.SaveButton.OnTapped = func() {
+	workspaceView.WorkspaceHeader.SetSaveHandler(func() {
 		go workspaceView.SaveTab(func() {
 			fyne.Do(func() {
 				err := dashboardSidebarView.CollectionsBrowserView.RefreshRequests()
@@ -63,7 +63,7 @@ func ComposeDashboardView() DashboardView {
 				}
 			})
 		})
-	}
+	})
 
 	split := container.NewHSplit(dashboardSidebarView.UI, workspaceView.UI)
 	split.SetOffset(constants.UI_DASHBOARD_SIDEBAR_OFFSET)
