@@ -67,8 +67,3 @@ func (v *view) setEnabled(enabled bool) {
 		v.value.Disable()
 	}
 }
-
-func (v *view) setValidators(keyValidator, valueValidator func(val string) error) {
-	v.key.Validator = keyValidator
-	v.value.Validator = valueValidator
-}

@@ -22,7 +22,8 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	view.value.Bind(model.value)
 	view.enabled.Bind(model.enabled)
 
-	view.setValidators(keyValidator, valueValidator)
+	view.key.Validator = keyValidator
+	view.value.Validator = valueValidator
 
 	model.enabled.AddListener(binding.NewDataListener(func() {
 		enabled, _ := model.enabled.Get()
