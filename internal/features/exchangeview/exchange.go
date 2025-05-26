@@ -3,7 +3,7 @@ package exchangeview
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features/exchangeheaderview"
-	"dumbky/internal/features/requestview"
+	"dumbky/internal/features/request"
 	"dumbky/internal/features/response"
 	"dumbky/internal/global"
 	"dumbky/internal/log"
@@ -20,13 +20,13 @@ import (
 type ExchangeView struct {
 	UI                 *fyne.Container
 	headerView         exchangeheaderview.ExchangeHeaderView
-	requestView        requestview.RequestView
+	requestCtrl        *request.Controller
 	responseController *response.Controller
 }
 
 type ExchangeState struct {
 	Header  exchangeheaderview.ExchangeHeaderState `json:"header"`
-	Request requestview.RequestState               `json:"request"`
+	Request request.RequestState                   `json:"request"`
 }
 
 func (ev ExchangeView) ToState() (ExchangeState, error) {
@@ -35,7 +35,7 @@ func (ev ExchangeView) ToState() (ExchangeState, error) {
 		log.Error(headerErr)
 		return ExchangeState{}, headerErr
 	}
-	request, requestErr := ev.requestView.ToState()
+	request, requestErr := ev.requestCtrl.ToState()
 	if requestErr != nil {
 		log.Error(requestErr)
 		return ExchangeState{}, requestErr
@@ -47,7 +47,7 @@ func (ev ExchangeView) ToState() (ExchangeState, error) {
 }
 
 func (ev ExchangeView) LoadState(exchangeState ExchangeState) error {
-	requestErr := ev.requestView.LoadState(exchangeState.Request)
+	requestErr := ev.requestCtrl.LoadState(exchangeState.Request)
 	if requestErr != nil {
 		log.Error(requestErr)
 		return requestErr
@@ -80,34 +80,34 @@ func (ev ExchangeView) ToRequestPayload() requesthelper.RequestPayload {
 		log.Error(useSSLGetErr)
 	}
 
-	headers := ev.requestView.Headers.GetMap()
-	headersValidatErr := ev.requestView.Headers.Validate()
+	headers := ev.requestCtrl.GetHeadersMap()
+	headersValidatErr := ev.requestCtrl.ValidateHeaders()
 	if headersValidatErr != nil {
 		log.Error(headersValidatErr)
 	}
 
-	queryParams := ev.requestView.QueryParams.GetMap()
-	queryParamsValidatErr := ev.requestView.QueryParams.Validate()
+	queryParams := ev.requestCtrl.GetQueryParamsMap()
+	queryParamsValidatErr := ev.requestCtrl.ValidateQueryParams()
 	if queryParamsValidatErr != nil {
 		log.Error(queryParamsValidatErr)
 	}
 
-	pathParams := ev.requestView.PathParams.GetMap()
-	pathParamsValidatErr := ev.requestView.PathParams.Validate()
+	pathParams := ev.requestCtrl.GetPathParamsMap()
+	pathParamsValidatErr := ev.requestCtrl.ValidatePathParams()
 	if pathParamsValidatErr != nil {
 		log.Error(pathParamsValidatErr)
 	}
 
-	bodyType := ev.requestView.Body.GetBodyType()
-	bodyRaw := ev.requestView.Body.GetBodyRaw()
+	bodyType := ev.requestCtrl.GetRequestBodyType()
+	bodyRaw := ev.requestCtrl.GetRequestBodyRaw()
 
-	bodyRawValidateErr := ev.requestView.Body.ValidateBodyRaw()
+	bodyRawValidateErr := ev.requestCtrl.ValidateRequestBodyRaw()
 	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Warn(bodyRawValidateErr)
 	}
 
-	bodyForm := ev.requestView.Body.GetBodyFormMap()
-	bodyFormValidateErr := ev.requestView.Body.ValidateBodyForm()
+	bodyForm := ev.requestCtrl.GetRequestBodyFormMap()
+	bodyFormValidateErr := ev.requestCtrl.ValidateRequestBodyForm()
 	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn(bodyFormValidateErr)
 	}
@@ -132,12 +132,12 @@ func (ev ExchangeView) sendRequestWorker(requestPayload requesthelper.RequestPay
 	})
 
 	fyne.Do(func() {
-		bodyType := ev.requestView.Body.GetBodyType()
+		bodyType := ev.requestCtrl.GetRequestBodyType()
 		if bodyType != constants.UI_BODY_TYPE_RAW {
 			return
 		}
-		bodyRaw := ev.requestView.Body.GetBodyRaw()
-		ev.requestView.Body.SetBodyRaw(utils.SmartFormat(bodyRaw))
+		bodyRaw := ev.requestCtrl.GetRequestBodyRaw()
+		ev.requestCtrl.SetRequestBodyRaw(utils.SmartFormat(bodyRaw))
 	})
 
 	responsePayload, err := requesthelper.SendRequest(requestPayload)
@@ -169,8 +169,8 @@ func (ev ExchangeView) sendButtonHandler() {
 
 func ComposeExchangeView() ExchangeView {
 	headerView := exchangeheaderview.ComposeExchangeHeaderView()
-	requestView := requestview.ComposeRequestView()
-	responseController := response.NewController()
+	requestCtrl := request.NewController()
+	responseCtrl := response.NewController()
 
 	headerView.MethodBinding.AddListener(binding.NewDataListener(func() {
 		method, methodErr := headerView.MethodBinding.Get()
@@ -180,27 +180,27 @@ func ComposeExchangeView() ExchangeView {
 		}
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
-			requestView.Body.SetBodyType(constants.UI_BODY_TYPE_NONE)
-			requestView.Body.DisableBodyTypeSelect()
+			requestCtrl.SetRequestBodyType(constants.UI_BODY_TYPE_NONE)
+			requestCtrl.DisableRequestBodyTypeSelect()
 		} else if method == constants.HTTP_METHOD_DELETE ||
 			method == constants.HTTP_METHOD_OPTIONS ||
 			method == constants.HTTP_METHOD_PATCH ||
 			method == constants.HTTP_METHOD_POST ||
 			method == constants.HTTP_METHOD_PUT {
-			requestView.Body.EnableBodyTypeSelect()
+			requestCtrl.EnableRequestBodyTypeSelect()
 		} else {
 			log.Error(errors.New("invalid http method"))
 		}
 	}))
 
-	requestResponseView := container.NewHSplit(requestView.UI, responseController.GetUI())
+	requestResponseView := container.NewHSplit(requestCtrl.GetUI(), responseCtrl.GetUI())
 	ui := container.NewBorder(headerView.UI, nil, nil, nil, requestResponseView)
 
 	ev := ExchangeView{
 		ui,
 		headerView,
-		requestView,
-		responseController,
+		requestCtrl,
+		responseCtrl,
 	}
 
 	headerView.SendButton.OnTapped = func() {
