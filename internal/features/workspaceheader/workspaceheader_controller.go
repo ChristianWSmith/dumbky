@@ -17,7 +17,7 @@ func NewController() *Controller {
 	model := newModel()
 	view := newView()
 
-	view.titleEntry.Bind(model.titleBinding)
+	view.requestNameEntry.Bind(model.requestNameBinding)
 
 	return &Controller{
 		model: model,
@@ -29,15 +29,15 @@ func (c *Controller) GetUI() *fyne.Container {
 	return c.view.getUI()
 }
 
-func (c *Controller) GetTitle() string {
-	return c.model.getTitle()
+func (c *Controller) GetRequestName() string {
+	return c.model.getRequestName()
 }
-func (c *Controller) SetTitle(title string) {
-	c.model.setTitle(title)
+func (c *Controller) SetRequestName(requestName string) {
+	c.model.setRequestName(requestName)
 }
 
-func (c *Controller) SetTitleListener(handler func()) {
-	c.model.setTitleListener(handler)
+func (c *Controller) SetRequestNameListener(handler func()) {
+	c.model.setRequestNameListener(handler)
 }
 
 func (c *Controller) SetAddHandler(handler func()) {

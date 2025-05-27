@@ -49,9 +49,9 @@ func ComposeDashboardView() DashboardView {
 		if collectionName == "" {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
 		}
-		workspaceCtrl.OpenTab(workspace.Document{
+		workspaceCtrl.OpenTab(workspace.DocumentState{
 			CollectionName: collectionName,
-			Title:          constants.UI_PLACEHOLDER_UNTITLED})
+			RequestName:    constants.UI_PLACEHOLDER_UNTITLED})
 	})
 
 	workspaceCtrl.SetSaveHandler(func() {

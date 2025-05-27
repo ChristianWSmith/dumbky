@@ -6,9 +6,9 @@ import (
 )
 
 type view struct {
-	ui           *fyne.Container
-	exchangeTabs *container.DocTabs
-	tabMap       map[*container.TabItem]string
+	ui              *fyne.Container
+	exchangeTabs    *container.DocTabs
+	documentViewMap map[*container.TabItem]string
 }
 
 func newView(workspaceHeaderUI *fyne.Container) *view {
@@ -17,9 +17,9 @@ func newView(workspaceHeaderUI *fyne.Container) *view {
 
 	ui := container.NewBorder(workspaceHeaderUI, nil, nil, nil, exchangeTabs)
 	return &view{
-		ui:           ui,
-		exchangeTabs: exchangeTabs,
-		tabMap:       make(map[*container.TabItem]string),
+		ui:              ui,
+		exchangeTabs:    exchangeTabs,
+		documentViewMap: make(map[*container.TabItem]string),
 	}
 }
 

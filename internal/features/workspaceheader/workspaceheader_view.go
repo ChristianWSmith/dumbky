@@ -8,14 +8,14 @@ import (
 )
 
 type view struct {
-	ui         *fyne.Container
-	titleEntry *widget.Entry
-	addButton  *widget.Button
-	saveButton *widget.Button
+	ui               *fyne.Container
+	requestNameEntry *widget.Entry
+	addButton        *widget.Button
+	saveButton       *widget.Button
 }
 
 func newView() *view {
-	titleEntry := widget.NewEntry()
+	requestNameEntry := widget.NewEntry()
 
 	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 
@@ -24,12 +24,12 @@ func newView() *view {
 	controlsLeft := container.NewHBox(addButton)
 	controlsRight := container.NewHBox(saveButton)
 
-	ui := container.NewBorder(nil, nil, controlsLeft, controlsRight, titleEntry)
+	ui := container.NewBorder(nil, nil, controlsLeft, controlsRight, requestNameEntry)
 	return &view{
-		ui:         ui,
-		titleEntry: titleEntry,
-		addButton:  addButton,
-		saveButton: saveButton,
+		ui:               ui,
+		requestNameEntry: requestNameEntry,
+		addButton:        addButton,
+		saveButton:       saveButton,
 	}
 }
 

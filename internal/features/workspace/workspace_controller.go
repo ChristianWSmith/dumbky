@@ -19,6 +19,7 @@ type Controller struct {
 	model               *model
 	view                *view
 	workspaceHeaderCtrl *workspaceheader.Controller
+	documentSessionMap  map[string]*exchange.Controller
 }
 
 var _ features.Controller = (*Controller)(nil)
@@ -32,40 +33,42 @@ func NewController() *Controller {
 		model:               model,
 		view:                view,
 		workspaceHeaderCtrl: workspaceHeader,
+		documentSessionMap:  make(map[string]*exchange.Controller),
 	}
 
 	c.view.exchangeTabs.OnSelected = func(tabItem *container.TabItem) {
-		tabId, _ := c.view.tabMap[tabItem]
-		workspaceTab, _ := c.model.tabMap[tabId]
-		workspaceHeader.SetTitle(workspaceTab.Title)
+		tabId := c.view.documentViewMap[tabItem]
+		documentData := c.model.documentDataMap[tabId]
+		workspaceHeader.SetRequestName(documentData.RequestName)
 	}
 
 	c.view.exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
-		tabId, _ := c.view.tabMap[tabItem]
-		delete(c.view.tabMap, tabItem)
-		delete(c.model.tabMap, tabId)
+		tabId := c.view.documentViewMap[tabItem]
+		delete(c.view.documentViewMap, tabItem)
+		delete(c.documentSessionMap, tabId)
+		delete(c.model.documentDataMap, tabId)
 		if len(c.view.exchangeTabs.Items) == 0 {
-			c.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
+			c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 		}
 	}
 
-	c.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
+	c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 
-	workspaceHeader.SetTitleListener(func() {
+	workspaceHeader.SetRequestNameListener(func() {
 		selectedTab := c.view.exchangeTabs.Selected()
 		if selectedTab == nil {
 			log.Error(errors.New("no selected tab"))
 			return
 		}
-		tabId, _ := c.view.tabMap[selectedTab]
-		workspaceTab, _ := c.model.tabMap[tabId]
-		title := workspaceHeader.GetTitle()
-		workspaceTab.Title = title
-		c.model.tabMap[tabId] = workspaceTab
-		if workspaceTab.Title == "" {
-			c.view.exchangeTabs.Selected().Text = formatTabText(workspaceTab.CollectionName, constants.UI_PLACEHOLDER_UNTITLED)
+		tabId := c.view.documentViewMap[selectedTab]
+		documentData := c.model.documentDataMap[tabId]
+		requestName := workspaceHeader.GetRequestName()
+		documentData.RequestName = requestName
+		c.model.documentDataMap[tabId] = documentData
+		if documentData.RequestName == "" {
+			c.view.exchangeTabs.Selected().Text = formatTabText(documentData.CollectionName, constants.UI_PLACEHOLDER_UNTITLED)
 		} else {
-			c.view.exchangeTabs.Selected().Text = formatTabText(workspaceTab.CollectionName, workspaceTab.Title)
+			c.view.exchangeTabs.Selected().Text = formatTabText(documentData.CollectionName, documentData.RequestName)
 		}
 		c.view.exchangeTabs.Refresh()
 
@@ -86,38 +89,40 @@ func (c *Controller) SetSaveHandler(handler func()) {
 	c.workspaceHeaderCtrl.SetSaveHandler(handler)
 }
 
-func (c *Controller) OpenTab(document Document) {
-	for fyneTab, tabId := range c.view.tabMap {
-		workspaceTab, _ := c.model.tabMap[tabId]
-		if workspaceTab.Title == document.Title && workspaceTab.CollectionName == document.CollectionName {
-			c.view.exchangeTabs.Select(fyneTab)
+func (c *Controller) OpenTab(document DocumentState) {
+	for tabItem, tabId := range c.view.documentViewMap {
+		documentData := c.model.documentDataMap[tabId]
+		if documentData.RequestName == document.RequestName && documentData.CollectionName == document.CollectionName {
+			c.view.exchangeTabs.Select(tabItem)
 			return
 		}
 	}
 
 	exchangeCtrl := exchange.NewController()
 	exchangeCtrl.LoadState(document.ExchangeState)
-	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.Title), exchangeCtrl.GetUI())
-	tabId, _ := c.view.tabMap[exchangeViewTab]
-	c.model.tabMap[tabId] = WorkspaceTab{
+	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.RequestName), exchangeCtrl.GetUI())
+	tabId := fmt.Sprintf("%s / %s", document.CollectionName, document.RequestName)
+	c.view.documentViewMap[exchangeViewTab] = tabId
+	c.model.documentDataMap[tabId] = documentData{
 		CollectionName: document.CollectionName,
-		Title:          document.Title,
-		ExchangeView:   exchangeCtrl,
+		RequestName:    document.RequestName,
 	}
+	c.documentSessionMap[tabId] = exchangeCtrl
 	c.view.exchangeTabs.Append(exchangeViewTab)
 	c.view.exchangeTabs.Select(exchangeViewTab)
 }
 
 func (c *Controller) SaveTab(callback func()) error {
-	tabId, _ := c.view.tabMap[c.view.exchangeTabs.Selected()]
-	workspaceTab, _ := c.model.tabMap[tabId]
-	exchangeState := workspaceTab.ExchangeView.ToState()
+	tabId := c.view.documentViewMap[c.view.exchangeTabs.Selected()]
+	documentSession := c.documentSessionMap[tabId]
+	documentData := c.model.documentDataMap[tabId]
+	exchangeState := documentSession.ToState()
 
-	collectionName := workspaceTab.CollectionName
-	title := workspaceTab.Title
+	collectionName := documentData.CollectionName
+	requestName := documentData.RequestName
 
-	document := Document{CollectionName: collectionName, Title: title, ExchangeState: exchangeState}
-	request, err := documentToRequest(document)
+	document := DocumentState{CollectionName: collectionName, RequestName: requestName, ExchangeState: exchangeState}
+	request, err := documentStateToRequest(document)
 	if err != nil {
 		log.Error(err)
 		return err
@@ -132,13 +137,13 @@ func (c *Controller) SaveTab(callback func()) error {
 	return nil
 }
 
-func (c *Controller) LoadTab(collectionName, title string) {
+func (c *Controller) LoadTab(collectionName, requestName string) {
 	go func() {
-		request, err := db.LoadRequest(collectionName, title)
+		request, err := db.LoadRequest(collectionName, requestName)
 		if err != nil {
 			log.Error(err)
 		}
-		document, err := requestToDocument(request)
+		document, err := requestToDocumentState(request)
 		if err != nil {
 			log.Error(err)
 		}
@@ -148,12 +153,12 @@ func (c *Controller) LoadTab(collectionName, title string) {
 	}()
 }
 
-func documentToRequest(document Document) (db.Request, error) {
-	if document.Title == "" {
-		document.Title = constants.UI_PLACEHOLDER_UNTITLED
+func documentStateToRequest(documentState DocumentState) (db.Request, error) {
+	if documentState.RequestName == "" {
+		documentState.RequestName = constants.UI_PLACEHOLDER_UNTITLED
 	}
 
-	jsonData, err := json.Marshal(document)
+	jsonData, err := json.Marshal(documentState)
 	if err != nil {
 		log.Error(err)
 		return db.Request{}, err
@@ -162,24 +167,24 @@ func documentToRequest(document Document) (db.Request, error) {
 	jsonString := string(jsonData)
 
 	return db.Request{
-		CollectionName: document.CollectionName,
-		Name:           document.Title,
+		CollectionName: documentState.CollectionName,
+		Name:           documentState.RequestName,
 		Payload:        jsonString,
 	}, nil
 }
 
-func requestToDocument(request db.Request) (Document, error) {
+func requestToDocumentState(request db.Request) (DocumentState, error) {
 	log.Info(fmt.Sprintf("%v", request))
-	document := Document{}
-	unmarshalErr := json.Unmarshal([]byte(request.Payload), &document)
-	if unmarshalErr != nil {
-		log.Error(unmarshalErr)
-		return Document{}, unmarshalErr
+	document := DocumentState{}
+	err := json.Unmarshal([]byte(request.Payload), &document)
+	if err != nil {
+		log.Error(err)
+		return DocumentState{}, err
 	}
 
 	return document, nil
 }
 
-func formatTabText(collectionName, title string) string {
-	return fmt.Sprintf("%s / %s", collectionName, title)
+func formatTabText(collectionName, requestName string) string {
+	return fmt.Sprintf("%s / %s", collectionName, requestName)
 }

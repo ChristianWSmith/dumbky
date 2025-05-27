@@ -5,23 +5,22 @@ import (
 )
 
 type model struct {
-	tabMap map[string]WorkspaceTab
+	documentDataMap map[string]documentData
 }
 
 func newModel() *model {
 	return &model{
-		tabMap: make(map[string]WorkspaceTab),
+		documentDataMap: make(map[string]documentData),
 	}
 }
 
-type Document struct {
+type DocumentState struct {
 	CollectionName string                 `json:"collection_name"`
-	Title          string                 `json:"title"`
+	RequestName    string                 `json:"request_name"`
 	ExchangeState  exchange.ExchangeState `json:"exchange"`
 }
 
-type WorkspaceTab struct {
+type documentData struct {
 	CollectionName string
-	Title          string
-	ExchangeView   *exchange.Controller
+	RequestName    string
 }
