@@ -1,7 +1,12 @@
 package workspace
 
 import (
+	"dumbky/internal/constants"
+	"dumbky/internal/db"
 	"dumbky/internal/features/exchange"
+	"dumbky/internal/log"
+	"encoding/json"
+	"fmt"
 )
 
 type model struct {
@@ -21,8 +26,8 @@ type DocumentState struct {
 }
 
 type documentData struct {
-	CollectionName string
-	RequestName    string
+	collectionName string
+	requestName    string
 }
 
 func (m *model) destroyDocumentData(id documentId) {
@@ -43,6 +48,38 @@ func (m *model) setDocumentData(id documentId, data documentData) {
 
 func (m *model) updateRequestName(id documentId, requestName string) {
 	documentData := m.documentDataMap[id]
-	documentData.RequestName = requestName
+	documentData.requestName = requestName
 	m.documentDataMap[id] = documentData
+}
+
+func documentStateToRequest(documentState DocumentState) (db.Request, error) {
+	if documentState.RequestName == "" {
+		documentState.RequestName = constants.UI_PLACEHOLDER_UNTITLED
+	}
+
+	jsonData, err := json.Marshal(documentState)
+	if err != nil {
+		log.Error(err)
+		return db.Request{}, err
+	}
+
+	jsonString := string(jsonData)
+
+	return db.Request{
+		CollectionName: documentState.CollectionName,
+		Name:           documentState.RequestName,
+		Payload:        jsonString,
+	}, nil
+}
+
+func requestToDocumentState(request db.Request) (DocumentState, error) {
+	log.Info(fmt.Sprintf("%v", request))
+	document := DocumentState{}
+	err := json.Unmarshal([]byte(request.Payload), &document)
+	if err != nil {
+		log.Error(err)
+		return DocumentState{}, err
+	}
+
+	return document, nil
 }

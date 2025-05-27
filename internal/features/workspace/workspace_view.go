@@ -1,6 +1,8 @@
 package workspace
 
 import (
+	"fmt"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 )
@@ -36,8 +38,8 @@ func (v *view) getSelectedDocumentId() documentId {
 	return v.documentViewMap[selectedTab]
 }
 
-func (v *view) setSelectedDocumentText(text string) {
-	v.exchangeTabs.Selected().Text = text
+func (v *view) setSelectedDocumentText(collectionName, requestName string) {
+	v.exchangeTabs.Selected().Text = formatTabText(collectionName, requestName)
 }
 
 func (v *view) destroyDocumentTab(tabItem *container.TabItem) {
@@ -54,4 +56,25 @@ func (v *view) setDocumentSelectedHandler(handler func(*container.TabItem)) {
 
 func (v *view) refreshTabs() {
 	v.exchangeTabs.Refresh()
+}
+
+func (v *view) selectDocumentTabOnCondition(handler func(documentId) bool) bool {
+	for tabItem, tabId := range v.documentViewMap {
+		if handler(tabId) {
+			v.exchangeTabs.Select(tabItem)
+			return true
+		}
+	}
+	return false
+}
+
+func (v *view) addDocumentTab(id documentId, collectionName, requestName string, ui *fyne.Container) {
+	exchangeViewTab := container.NewTabItem(formatTabText(collectionName, requestName), ui)
+	v.documentViewMap[exchangeViewTab] = id
+	v.exchangeTabs.Append(exchangeViewTab)
+	v.exchangeTabs.Select(exchangeViewTab)
+}
+
+func formatTabText(collectionName, requestName string) string {
+	return fmt.Sprintf("%s / %s", collectionName, requestName)
 }

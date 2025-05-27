@@ -7,11 +7,10 @@ import (
 	"dumbky/internal/features/exchange"
 	"dumbky/internal/features/workspaceheader"
 	"dumbky/internal/log"
-	"encoding/json"
-	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"github.com/google/uuid"
 )
 
 type Controller struct {
@@ -40,7 +39,7 @@ func NewController() *Controller {
 	c.view.setDocumentSelectedHandler(func(tabItem *container.TabItem) {
 		tabId := c.view.getDocumentId(tabItem)
 		documentData := c.model.getDocumentData(tabId)
-		c.workspaceHeaderCtrl.SetRequestName(documentData.RequestName)
+		c.workspaceHeaderCtrl.SetRequestName(documentData.requestName)
 	})
 
 	c.view.setDocumentClosedHandler(func(tabItem *container.TabItem) {
@@ -59,10 +58,10 @@ func NewController() *Controller {
 		id := c.view.getSelectedDocumentId()
 		c.model.updateRequestName(id, workspaceHeaderCtrl.GetRequestName())
 		documentData := c.model.getDocumentData(id)
-		if documentData.RequestName == "" {
-			c.view.setSelectedDocumentText(formatTabText(documentData.CollectionName, constants.UI_PLACEHOLDER_UNTITLED))
+		if documentData.requestName == "" {
+			c.view.setSelectedDocumentText(documentData.collectionName, constants.UI_PLACEHOLDER_UNTITLED)
 		} else {
-			c.view.setSelectedDocumentText(formatTabText(documentData.CollectionName, documentData.RequestName))
+			c.view.setSelectedDocumentText(documentData.collectionName, documentData.requestName)
 		}
 		c.view.refreshTabs()
 
@@ -84,38 +83,36 @@ func (c *Controller) SetSaveHandler(handler func()) {
 }
 
 func (c *Controller) OpenTab(document DocumentState) {
-	for tabItem, tabId := range c.view.documentViewMap {
-		documentData := c.model.getDocumentData(tabId)
-		if documentData.RequestName == document.RequestName && documentData.CollectionName == document.CollectionName {
-			c.view.exchangeTabs.Select(tabItem)
-			return
-		}
+	if c.view.selectDocumentTabOnCondition(func(id documentId) bool {
+		documentData := c.model.getDocumentData(id)
+		return documentData.requestName == document.RequestName && documentData.collectionName == document.CollectionName
+	}) {
+		return
 	}
+
+	id := documentId(uuid.New().String())
 
 	exchangeCtrl := exchange.NewController()
 	exchangeCtrl.LoadState(document.ExchangeState)
-	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.RequestName), exchangeCtrl.GetUI())
-	id := documentId(fmt.Sprintf("%s / %s", document.CollectionName, document.RequestName)) // TODO: uuid?
-	c.view.documentViewMap[exchangeViewTab] = id
-	c.model.documentDataMap[id] = documentData{
-		CollectionName: document.CollectionName,
-		RequestName:    document.RequestName,
-	}
 	c.exchangeCtrlMap[id] = exchangeCtrl
-	c.view.exchangeTabs.Append(exchangeViewTab)
-	c.view.exchangeTabs.Select(exchangeViewTab)
+
+	c.model.setDocumentData(id, documentData{
+		collectionName: document.CollectionName,
+		requestName:    document.RequestName,
+	})
+
+	c.view.addDocumentTab(id, document.CollectionName, document.RequestName, exchangeCtrl.GetUI())
 }
 
 func (c *Controller) SaveTab(callback func()) error {
-	tabId := c.view.documentViewMap[c.view.exchangeTabs.Selected()]
-	documentSession := c.exchangeCtrlMap[tabId]
-	documentData := c.model.getDocumentData(tabId)
-	exchangeState := documentSession.ToState()
+	id := c.view.getSelectedDocumentId()
+	documentData := c.model.getDocumentData(id)
+	exchangeState := c.exchangeCtrlMap[id].ToState()
 
-	collectionName := documentData.CollectionName
-	requestName := documentData.RequestName
-
-	document := DocumentState{CollectionName: collectionName, RequestName: requestName, ExchangeState: exchangeState}
+	document := DocumentState{
+		CollectionName: documentData.collectionName,
+		RequestName:    documentData.requestName,
+		ExchangeState:  exchangeState}
 	request, err := documentStateToRequest(document)
 	if err != nil {
 		log.Error(err)
@@ -145,40 +142,4 @@ func (c *Controller) LoadTab(collectionName, requestName string) {
 			c.OpenTab(document)
 		})
 	}()
-}
-
-func documentStateToRequest(documentState DocumentState) (db.Request, error) {
-	if documentState.RequestName == "" {
-		documentState.RequestName = constants.UI_PLACEHOLDER_UNTITLED
-	}
-
-	jsonData, err := json.Marshal(documentState)
-	if err != nil {
-		log.Error(err)
-		return db.Request{}, err
-	}
-
-	jsonString := string(jsonData)
-
-	return db.Request{
-		CollectionName: documentState.CollectionName,
-		Name:           documentState.RequestName,
-		Payload:        jsonString,
-	}, nil
-}
-
-func requestToDocumentState(request db.Request) (DocumentState, error) {
-	log.Info(fmt.Sprintf("%v", request))
-	document := DocumentState{}
-	err := json.Unmarshal([]byte(request.Payload), &document)
-	if err != nil {
-		log.Error(err)
-		return DocumentState{}, err
-	}
-
-	return document, nil
-}
-
-func formatTabText(collectionName, requestName string) string {
-	return fmt.Sprintf("%s / %s", collectionName, requestName)
 }
