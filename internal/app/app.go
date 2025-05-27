@@ -1,7 +1,7 @@
 package app
 
 import (
-	"dumbky/internal/features/rootview"
+	"dumbky/internal/features/root"
 	"dumbky/internal/global"
 	"dumbky/internal/theme"
 
@@ -32,8 +32,8 @@ func Run() {
 	w := a.NewWindow("Dumbky")
 	global.Window = w
 
-	rootView := rootview.ComposeRootView()
-	w.SetContent(rootView.UI)
+	rootView := root.NewController()
+	w.SetContent(rootView.GetUI())
 
 	width, height := getWindowSize()
 	w.Resize(fyne.NewSize(width, height))
