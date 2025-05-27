@@ -94,3 +94,51 @@ func newView(requestsListBinding, collectionsListBinding binding.StringList, req
 func (v *view) getUI() *fyne.Container {
 	return v.ui
 }
+
+func (v *view) setBackHandler(handler func()) {
+	v.backButton.OnTapped = handler
+}
+
+func (v *view) setRequestSelectedCallback(callback func(int)) {
+	v.requestsList.OnSelected = func(id widget.ListItemID) {
+		v.requestsList.UnselectAll()
+		callback(id)
+	}
+}
+
+func (v *view) setCollectionSelectedCallback(callback func(int)) {
+	v.collectionsList.OnSelected = func(id widget.ListItemID) {
+		v.collectionsList.UnselectAll()
+		callback(id)
+	}
+}
+
+func (v *view) showRequests() {
+	v.requestsContainer.Show()
+	v.collectionsContainer.Hide()
+}
+
+func (v *view) showCollections() {
+	v.collectionsContainer.Show()
+	v.requestsContainer.Hide()
+}
+
+func (v *view) showingRequests() bool {
+	return !v.requestsContainer.Hidden
+}
+
+func (v *view) showingCollections() bool {
+	return !v.collectionsContainer.Hidden
+}
+
+func (v *view) setAddCollectionValidator(validator func(string) error) {
+	v.addCollectionEntry.Validator = validator
+}
+
+func (v *view) validateAddCollection() error {
+	return v.addCollectionEntry.Validate()
+}
+
+func (v *view) setAddCollectionHandler(handler func()) {
+	v.addButton.OnTapped = handler
+}

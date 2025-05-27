@@ -4,7 +4,6 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features/dashboardsidebarview"
 	"dumbky/internal/features/workspace"
-	"dumbky/internal/log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -43,10 +42,12 @@ func ComposeDashboardView() DashboardView {
 	workspaceCtrl.SetSaveHandler(func() {
 		go workspaceCtrl.SaveTab(func() {
 			fyne.Do(func() {
-				err := dashboardSidebarView.CollectionsBrowserCtrl.RefreshRequests()
-				if err != nil {
-					log.Error(err)
-				}
+				// TODO: the idea here is that the user might have a request open from
+				// collection A before deleting collection A.  if they're on the
+				// collections view in the browser at that time, they should see
+				// the updated collections list.  this is an edge case and maybe
+				// shouldn't even be addressed.
+				dashboardSidebarView.CollectionsBrowserCtrl.LazyRefreshAndShowRequests()
 			})
 		})
 	})

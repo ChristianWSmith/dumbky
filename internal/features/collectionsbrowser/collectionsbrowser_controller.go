@@ -8,7 +8,6 @@ import (
 	"dumbky/internal/validators"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
@@ -44,52 +43,44 @@ func NewController() *Controller {
 	c.model = newModel()
 	c.view = newView(c.model.requestsListBinding, c.model.collectionsListBinding, requestsMenu, collectionsMenu)
 
-	c.view.collectionsList.OnSelected = func(id widget.ListItemID) {
-		c.view.collectionsList.UnselectAll()
-		name, _ := c.model.collectionsListBinding.GetValue(id)
-		c.ShowRequests(name)
-	}
+	c.view.addCollectionEntry.Bind(c.model.addCollectionBinding)
+	c.view.selectedCollectionLabel.Bind(c.model.selectedCollectionBinding)
 
-	c.view.addCollectionEntry.Validator = validators.ValidateCollectionName
-	c.view.addButton.OnTapped = func() {
-		err := c.view.addCollectionEntry.Validate()
+	c.view.setAddCollectionValidator(validators.ValidateCollectionName)
+	c.view.setAddCollectionHandler(func() {
+		err := c.view.validateAddCollection()
 		if err != nil {
 			log.Error(err)
 			return
 		}
-		name, err := c.model.addCollectionBinding.Get()
-		if err != nil {
-			log.Error(err)
-		}
-		err = c.model.addCollectionBinding.Set("")
-		if err != nil {
-			log.Error(err)
-		}
-		if name == "" {
+		collectionName := c.model.getAddCollection()
+		c.model.setAddCollection("")
+		if collectionName == "" {
 			return
 		}
 		go func() {
-			err := db.CreateCollection(name)
+			err := db.CreateCollection(collectionName)
 			if err != nil {
 				dialog.ShowError(err, global.Window)
 				return
 			}
-			fyne.Do(func() { c.ShowCollections() })
+			fyne.Do(func() { c.refreshAndShowCollections() })
 		}()
-	}
+	})
 
-	c.view.requestsList.OnSelected = func(id widget.ListItemID) {
-		c.view.requestsList.UnselectAll()
-		name, _ := c.model.requestsListBinding.GetValue(id)
-		c.model.selectedRequestBinding.Set(name)
-	}
+	c.view.setRequestSelectedCallback(func(id int) {
+		name := c.model.getRequestNameById(id)
+		c.model.setSelectedRequest(name)
+	})
 
-	c.view.backButton.OnTapped = func() { c.ShowCollections() }
+	c.view.setCollectionSelectedCallback(func(id int) {
+		name := c.model.getCollectionNameById(id)
+		c.refreshAndShowRequests(name)
+	})
 
-	c.view.addCollectionEntry.Bind(c.model.addCollectionBinding)
-	c.view.selectedCollectionLabel.Bind(c.model.selectedCollectionBinding)
+	c.view.setBackHandler(func() { c.refreshAndShowCollections() })
 
-	c.ShowCollections()
+	c.refreshAndShowCollections()
 	return c
 }
 
@@ -98,37 +89,31 @@ func (c *Controller) GetUI() *fyne.Container {
 }
 
 func (c *Controller) GetSelectedCollection() string {
-	selectedCollection, _ := c.model.selectedCollectionBinding.Get()
-	return selectedCollection
+	return c.model.getSelectedCollection()
 }
 
 func (c *Controller) GetSelectedRequest() string {
-	selectedRequest, _ := c.model.selectedRequestBinding.Get()
-	return selectedRequest
+	return c.model.getSelectedRequest()
 }
 
 func (c *Controller) SetSelectedRequest(requestName string) {
-	c.model.selectedRequestBinding.Set(requestName)
+	c.model.setSelectedRequest(requestName)
 }
 
 func (c *Controller) SetSelectedRequestListener(handler func()) {
-	c.model.selectedRequestBinding.AddListener(binding.NewDataListener(handler))
+	c.model.setSelectedRequestListener(handler)
 }
 
 func (c *Controller) deleteRequest(name string) {
-	collectionName, err := c.model.selectedCollectionBinding.Get()
-	if err != nil {
-		log.Error(err)
-		return
-	}
+	collectionName := c.model.getSelectedCollection()
 	go func() {
-		err = db.DeleteRequest(collectionName, name)
+		err := db.DeleteRequest(collectionName, name)
 		if err != nil {
 			log.Error(err)
 			return
 		}
 		fyne.Do(func() {
-			c.RefreshRequests()
+			c.LazyRefreshAndShowRequests()
 		})
 	}()
 }
@@ -140,54 +125,45 @@ func (c *Controller) deleteCollection(name string) {
 			log.Error(err)
 		}
 		fyne.Do(func() {
-			c.RefreshCollections()
+			c.lazyRefreshAndShowCollections()
 		})
 	}()
 }
 
-func (c *Controller) ShowCollections() {
-	c.model.selectedCollectionBinding.Set("")
-	c.model.selectedRequestBinding.Set("")
-	// update binding list
+func (c *Controller) refreshAndShowCollections() {
+	c.model.setSelectedCollection("")
+	c.model.setSelectedRequest("")
+
 	go func() {
-		names := db.FetchCollectionNames()
+		collectionNames := db.FetchCollectionNames()
 		fyne.Do(func() {
-			c.model.collectionsListBinding.Set(names)
-
-			c.view.requestsContainer.Hide()
-			c.view.collectionsContainer.Show()
+			c.model.setCollectionsList(collectionNames)
+			c.view.showCollections()
 		})
 	}()
 }
 
-func (c *Controller) ShowRequests(collection string) {
-	c.model.selectedCollectionBinding.Set(collection)
-	// update request names
+func (c *Controller) refreshAndShowRequests(collectionName string) {
+	c.model.setSelectedCollection(collectionName)
+
 	go func() {
-		names := db.FetchRequestNames(collection)
-
+		requestNames := db.FetchRequestNames(collectionName)
 		fyne.Do(func() {
-			c.model.requestsListBinding.Set(names)
-
-			c.view.collectionsContainer.Hide()
-			c.view.requestsContainer.Show()
+			c.model.setRequestsList(requestNames)
+			c.view.showRequests()
 		})
 	}()
 }
 
-func (c *Controller) RefreshCollections() {
-	if !c.view.collectionsContainer.Hidden {
-		c.ShowCollections()
+func (c *Controller) lazyRefreshAndShowCollections() {
+	if c.view.showingCollections() {
+		c.refreshAndShowCollections()
 	}
 }
 
-func (c *Controller) RefreshRequests() error {
-	if !c.view.requestsContainer.Hidden {
-		collection, err := c.model.selectedCollectionBinding.Get()
-		if err != nil {
-			return err
-		}
-		c.ShowRequests(collection)
+func (c *Controller) LazyRefreshAndShowRequests() {
+	if c.view.showingRequests() {
+		collectionName := c.model.getSelectedCollection()
+		c.refreshAndShowRequests(collectionName)
 	}
-	return nil
 }
