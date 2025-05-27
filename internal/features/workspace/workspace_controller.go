@@ -27,7 +27,7 @@ type documentId string
 func NewController() *Controller {
 	model := newModel()
 	workspaceHeaderCtrl := workspaceheader.NewController()
-	view := newView(workspaceHeaderCtrl.GetUI())
+	view := newView(workspaceHeaderCtrl.CanvasObject())
 
 	c := &Controller{
 		model:               model,
@@ -70,8 +70,8 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) SetAddHandler(handler func()) {
@@ -101,7 +101,7 @@ func (c *Controller) OpenTab(document DocumentState) {
 		requestName:    document.RequestName,
 	})
 
-	c.view.addDocumentTab(id, document.CollectionName, document.RequestName, exchangeCtrl.GetUI())
+	c.view.addDocumentTab(id, document.CollectionName, document.RequestName, exchangeCtrl.CanvasObject())
 }
 
 func (c *Controller) SaveTab(callback func()) error {

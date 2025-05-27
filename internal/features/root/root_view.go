@@ -6,10 +6,10 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 }
 
-func newView(dashboardUI *fyne.Container) *view {
+func newView(dashboardUI fyne.CanvasObject) *view {
 	ui := container.NewBorder(nil, nil, nil, nil, dashboardUI)
 
 	return &view{
@@ -17,6 +17,6 @@ func newView(dashboardUI *fyne.Container) *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }

@@ -8,10 +8,10 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 }
 
-func newView(queryParamsUI, pathParamsUI, headersUI, bodyUI *fyne.Container) *view {
+func newView(queryParamsUI, pathParamsUI, headersUI, bodyUI fyne.CanvasObject) *view {
 
 	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsUI)
 	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsUI)
@@ -26,6 +26,6 @@ func newView(queryParamsUI, pathParamsUI, headersUI, bodyUI *fyne.Container) *vi
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }

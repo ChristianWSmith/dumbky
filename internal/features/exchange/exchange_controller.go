@@ -34,7 +34,7 @@ func NewController() *Controller {
 
 	c := &Controller{
 		model:              newModel(),
-		view:               newView(exchangeHeaderCtrl.GetUI(), requestCtrl.GetUI(), responseCtrl.GetUI()),
+		view:               newView(exchangeHeaderCtrl.CanvasObject(), requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
 		exchangeHeaderCtrl: exchangeHeaderCtrl,
 		requestCtrl:        requestCtrl,
 		responseCtrl:       responseCtrl,
@@ -64,8 +64,8 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) ToState() ExchangeState {

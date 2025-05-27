@@ -6,10 +6,10 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 }
 
-func newView(headerUI, requestUI, responseUI *fyne.Container) *view {
+func newView(headerUI, requestUI, responseUI fyne.CanvasObject) *view {
 	requestResponseView := container.NewHSplit(requestUI, responseUI)
 	ui := container.NewBorder(headerUI, nil, nil, nil, requestResponseView)
 	return &view{
@@ -17,6 +17,6 @@ func newView(headerUI, requestUI, responseUI *fyne.Container) *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }

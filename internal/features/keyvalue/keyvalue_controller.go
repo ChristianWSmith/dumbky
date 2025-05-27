@@ -40,8 +40,8 @@ func (c *Controller) SetDestroyHandler(handler func()) {
 	c.view.setDestroyHandler(handler)
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) ToState() KeyValueState {

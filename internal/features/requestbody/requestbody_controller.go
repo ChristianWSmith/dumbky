@@ -25,7 +25,7 @@ func NewController() *Controller {
 
 	c := &Controller{
 		model:                newModel(),
-		view:                 newView(bodyFormKeyValueCtrl.GetUI()),
+		view:                 newView(bodyFormKeyValueCtrl.CanvasObject()),
 		bodyFormKeyValueCtrl: bodyFormKeyValueCtrl,
 	}
 
@@ -61,8 +61,8 @@ func (c *Controller) showBodyType() {
 	}
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) ToState() RequestBodyState {

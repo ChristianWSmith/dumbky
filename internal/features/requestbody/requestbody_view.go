@@ -10,14 +10,14 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 
 	bodyRawEntry     *widget.Entry
 	bodyTypeSelect   *widget.Select
 	bodyContentStack *fyne.Container
 }
 
-func newView(bodyFormUI *fyne.Container) *view {
+func newView(bodyFormUI fyne.CanvasObject) *view {
 	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
 	bodyRawEntry.TextStyle.Monospace = true
@@ -39,7 +39,7 @@ func newView(bodyFormUI *fyne.Container) *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }
 

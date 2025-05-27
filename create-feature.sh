@@ -47,8 +47,8 @@ func NewController() *Controller {
 	}
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 EOF
@@ -73,7 +73,7 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 }
 
 func newView() *view {
@@ -82,7 +82,7 @@ func newView() *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }
 

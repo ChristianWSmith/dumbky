@@ -18,7 +18,7 @@ var _ features.Controller = (*Controller)(nil)
 func NewController() *Controller {
 	dashboardController := dashboard.NewController()
 	model := newModel()
-	view := newView(dashboardController.GetUI())
+	view := newView(dashboardController.CanvasObject())
 
 	return &Controller{
 		model:               model,
@@ -27,6 +27,6 @@ func NewController() *Controller {
 	}
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }

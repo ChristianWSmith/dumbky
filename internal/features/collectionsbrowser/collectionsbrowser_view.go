@@ -110,7 +110,7 @@ func newView(requestsListBinding, collectionsListBinding binding.StringList, onD
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }
 

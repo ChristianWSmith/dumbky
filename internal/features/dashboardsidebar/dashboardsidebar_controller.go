@@ -18,7 +18,7 @@ var _ features.Controller = (*Controller)(nil)
 func NewController() *Controller {
 	collectionsBrowserCtrl := collectionsbrowser.NewController()
 	model := newModel()
-	view := newView(collectionsBrowserCtrl.GetUI())
+	view := newView(collectionsBrowserCtrl.CanvasObject())
 	return &Controller{
 		model:                  model,
 		view:                   view,
@@ -26,8 +26,8 @@ func NewController() *Controller {
 	}
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) SetSelectedRequestListener(handler func()) {

@@ -6,16 +6,16 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 }
 
-func newView(collectionsBrowserUI *fyne.Container) *view {
+func newView(collectionsBrowserUI fyne.CanvasObject) *view {
 	ui := container.NewBorder(nil, nil, nil, nil, collectionsBrowserUI)
 	return &view{
 		ui: ui,
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }

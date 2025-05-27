@@ -23,7 +23,7 @@ func NewController() *Controller {
 	dashboardSidebarCtrl := dashboardsidebar.NewController()
 	workspaceCtrl := workspace.NewController()
 	model := newModel()
-	view := newView(dashboardSidebarCtrl.GetUI(), workspaceCtrl.GetUI())
+	view := newView(dashboardSidebarCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
 
 	c := &Controller{
 		model:                model,
@@ -70,6 +70,6 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }

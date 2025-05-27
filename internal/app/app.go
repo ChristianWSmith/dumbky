@@ -34,7 +34,7 @@ func Run() {
 	global.Window = w
 
 	rootCtrl := root.NewController()
-	w.SetContent(rootCtrl.GetUI())
+	w.SetContent(rootCtrl.CanvasObject())
 
 	width, height := getWindowSize()
 	w.Resize(fyne.NewSize(width, height))

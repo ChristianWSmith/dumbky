@@ -8,10 +8,10 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 }
 
-func newView(dashboardSidebarUI, workspaceUI *fyne.Container) *view {
+func newView(dashboardSidebarUI, workspaceUI fyne.CanvasObject) *view {
 
 	split := container.NewHSplit(dashboardSidebarUI, workspaceUI)
 	split.SetOffset(constants.UI_DASHBOARD_SIDEBAR_OFFSET)
@@ -22,6 +22,6 @@ func newView(dashboardSidebarUI, workspaceUI *fyne.Container) *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }

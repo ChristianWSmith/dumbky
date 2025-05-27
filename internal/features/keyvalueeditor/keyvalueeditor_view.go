@@ -32,7 +32,7 @@ func newView() *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
@@ -53,12 +53,12 @@ func (v *view) clear() {
 	v.keyValueContainer.Refresh()
 }
 
-func (v *view) add(ui *fyne.Container) {
+func (v *view) add(ui fyne.CanvasObject) {
 	v.keyValueContainer.Add(ui)
 	v.keyValueContainer.Refresh()
 }
 
-func (v *view) remove(ui *fyne.Container) {
+func (v *view) remove(ui fyne.CanvasObject) {
 	v.keyValueContainer.Remove(ui)
 	v.keyValueContainer.Refresh()
 }

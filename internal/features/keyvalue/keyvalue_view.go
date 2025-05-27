@@ -10,7 +10,7 @@ import (
 )
 
 type view struct {
-	ui *fyne.Container
+	ui fyne.CanvasObject
 
 	destroyButton *widget.Button
 	enabledCheck  *widget.Check
@@ -45,7 +45,7 @@ func newView() *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }
 

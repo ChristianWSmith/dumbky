@@ -13,7 +13,7 @@ type view struct {
 	documentViewMap map[*container.TabItem]documentId
 }
 
-func newView(workspaceHeaderUI *fyne.Container) *view {
+func newView(workspaceHeaderUI fyne.CanvasObject) *view {
 
 	exchangeTabs := container.NewDocTabs()
 
@@ -25,7 +25,7 @@ func newView(workspaceHeaderUI *fyne.Container) *view {
 	}
 }
 
-func (v *view) getUI() *fyne.Container {
+func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
@@ -68,7 +68,7 @@ func (v *view) selectDocumentTabOnCondition(handler func(documentId) bool) bool 
 	return false
 }
 
-func (v *view) addDocumentTab(id documentId, collectionName, requestName string, ui *fyne.Container) {
+func (v *view) addDocumentTab(id documentId, collectionName, requestName string, ui fyne.CanvasObject) {
 	exchangeViewTab := container.NewTabItem(formatTabText(collectionName, requestName), ui)
 	v.documentViewMap[exchangeViewTab] = id
 	v.exchangeTabs.Append(exchangeViewTab)

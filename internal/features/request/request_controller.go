@@ -29,7 +29,7 @@ func NewController() *Controller {
 
 	return &Controller{
 		model:                   newModel(),
-		view:                    newView(queryParamsKeyValueCtrl.GetUI(), pathParamsKeyValueCtrl.GetUI(), headersKeyValueCtrl.GetUI(), bodyKeyValueCtrl.GetUI()),
+		view:                    newView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyKeyValueCtrl.CanvasObject()),
 		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
 		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
 		headersKeyValueCtrl:     headersKeyValueCtrl,
@@ -37,8 +37,8 @@ func NewController() *Controller {
 	}
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) GetQueryParamsMap() map[string]string {

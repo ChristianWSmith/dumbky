@@ -36,8 +36,8 @@ func NewController(keyValidator, valueValidator func(string) error) *Controller 
 	return c
 }
 
-func (c *Controller) GetUI() *fyne.Container {
-	return c.view.getUI()
+func (c *Controller) CanvasObject() fyne.CanvasObject {
+	return c.view.canvasObject()
 }
 
 func (c *Controller) Hide() {
@@ -102,10 +102,10 @@ func (c *Controller) addKeyValue(keyValueState keyvalue.KeyValueState) {
 	keyValueCtrl.LoadState(keyValueState)
 	keyValueCtrl.SetDestroyHandler(func() {
 		delete(c.keyValueCtrls, keyValueCtrl)
-		c.view.remove(keyValueCtrl.GetUI())
+		c.view.remove(keyValueCtrl.CanvasObject())
 	})
 	c.keyValueCtrls[keyValueCtrl] = true
-	c.view.add(keyValueCtrl.GetUI())
+	c.view.add(keyValueCtrl.CanvasObject())
 }
 
 func (c *Controller) collectEnabled() []*keyvalue.Controller {
