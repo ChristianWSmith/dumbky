@@ -40,7 +40,7 @@ func ComposeDashboardView() DashboardView {
 		workspaceCtrl.LoadTab(collectionName, requestName)
 	}))
 
-	workspaceCtrl.WorkspaceHeader.SetAddHandler(func() {
+	workspaceCtrl.SetAddHandler(func() {
 		collectionName, err := dashboardSidebarView.CollectionsBrowserView.SelectedCollectionBinding.Get()
 		if err != nil {
 			log.Error(err)
@@ -54,7 +54,7 @@ func ComposeDashboardView() DashboardView {
 			Title:          constants.UI_PLACEHOLDER_UNTITLED})
 	})
 
-	workspaceCtrl.WorkspaceHeader.SetSaveHandler(func() {
+	workspaceCtrl.SetSaveHandler(func() {
 		go workspaceCtrl.SaveTab(func() {
 			fyne.Do(func() {
 				err := dashboardSidebarView.CollectionsBrowserView.RefreshRequests()

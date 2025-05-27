@@ -1,12 +1,17 @@
 package workspace
 
-import "dumbky/internal/features/exchange"
+import (
+	"dumbky/internal/features/exchange"
+)
 
 type model struct {
+	tabMap map[string]WorkspaceTab
 }
 
 func newModel() *model {
-	return &model{}
+	return &model{
+		tabMap: make(map[string]WorkspaceTab),
+	}
 }
 
 type Document struct {

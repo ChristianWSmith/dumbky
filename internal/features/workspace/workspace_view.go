@@ -8,6 +8,7 @@ import (
 type view struct {
 	ui           *fyne.Container
 	exchangeTabs *container.DocTabs
+	tabMap       map[*container.TabItem]string
 }
 
 func newView(workspaceHeaderUI *fyne.Container) *view {
@@ -18,6 +19,7 @@ func newView(workspaceHeaderUI *fyne.Container) *view {
 	return &view{
 		ui:           ui,
 		exchangeTabs: exchangeTabs,
+		tabMap:       make(map[*container.TabItem]string),
 	}
 }
 

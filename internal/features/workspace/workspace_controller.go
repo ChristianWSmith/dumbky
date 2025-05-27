@@ -16,10 +16,9 @@ import (
 )
 
 type Controller struct {
-	model           *model
-	view            *view
-	WorkspaceHeader *workspaceheader.Controller
-	tabMap          map[*container.TabItem]WorkspaceTab
+	model               *model
+	view                *view
+	workspaceHeaderCtrl *workspaceheader.Controller
 }
 
 var _ features.Controller = (*Controller)(nil)
@@ -30,23 +29,21 @@ func NewController() *Controller {
 	view := newView(workspaceHeader.GetUI())
 
 	c := &Controller{
-		model:           model,
-		view:            view,
-		WorkspaceHeader: workspaceHeader,
-		tabMap:          make(map[*container.TabItem]WorkspaceTab),
+		model:               model,
+		view:                view,
+		workspaceHeaderCtrl: workspaceHeader,
 	}
 
 	c.view.exchangeTabs.OnSelected = func(tabItem *container.TabItem) {
-		workspaceTab, ok := c.tabMap[tabItem]
-		if !ok {
-			log.Error(errors.New("selected tab not in tabMap (OnSelected)"))
-			return
-		}
+		tabId, _ := c.view.tabMap[tabItem]
+		workspaceTab, _ := c.model.tabMap[tabId]
 		workspaceHeader.SetTitle(workspaceTab.Title)
 	}
 
 	c.view.exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
-		delete(c.tabMap, tabItem)
+		tabId, _ := c.view.tabMap[tabItem]
+		delete(c.view.tabMap, tabItem)
+		delete(c.model.tabMap, tabId)
 		if len(c.view.exchangeTabs.Items) == 0 {
 			c.OpenTab(Document{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, Title: constants.UI_PLACEHOLDER_UNTITLED})
 		}
@@ -60,14 +57,11 @@ func NewController() *Controller {
 			log.Error(errors.New("no selected tab"))
 			return
 		}
-		workspaceTab, ok := c.tabMap[selectedTab]
-		if !ok {
-			log.Error(errors.New("selected tab not in tabMap"))
-			return
-		}
+		tabId, _ := c.view.tabMap[selectedTab]
+		workspaceTab, _ := c.model.tabMap[tabId]
 		title := workspaceHeader.GetTitle()
 		workspaceTab.Title = title
-		c.tabMap[selectedTab] = workspaceTab
+		c.model.tabMap[tabId] = workspaceTab
 		if workspaceTab.Title == "" {
 			c.view.exchangeTabs.Selected().Text = formatTabText(workspaceTab.CollectionName, constants.UI_PLACEHOLDER_UNTITLED)
 		} else {
@@ -84,8 +78,17 @@ func (c *Controller) GetUI() *fyne.Container {
 	return c.view.getUI()
 }
 
+func (c *Controller) SetAddHandler(handler func()) {
+	c.workspaceHeaderCtrl.SetAddHandler(handler)
+}
+
+func (c *Controller) SetSaveHandler(handler func()) {
+	c.workspaceHeaderCtrl.SetSaveHandler(handler)
+}
+
 func (c *Controller) OpenTab(document Document) {
-	for fyneTab, workspaceTab := range c.tabMap {
+	for fyneTab, tabId := range c.view.tabMap {
+		workspaceTab, _ := c.model.tabMap[tabId]
 		if workspaceTab.Title == document.Title && workspaceTab.CollectionName == document.CollectionName {
 			c.view.exchangeTabs.Select(fyneTab)
 			return
@@ -95,7 +98,8 @@ func (c *Controller) OpenTab(document Document) {
 	exchangeCtrl := exchange.NewController()
 	exchangeCtrl.LoadState(document.ExchangeState)
 	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.Title), exchangeCtrl.GetUI())
-	c.tabMap[exchangeViewTab] = WorkspaceTab{
+	tabId, _ := c.view.tabMap[exchangeViewTab]
+	c.model.tabMap[tabId] = WorkspaceTab{
 		CollectionName: document.CollectionName,
 		Title:          document.Title,
 		ExchangeView:   exchangeCtrl,
@@ -105,12 +109,8 @@ func (c *Controller) OpenTab(document Document) {
 }
 
 func (c *Controller) SaveTab(callback func()) error {
-	workspaceTab, ok := c.tabMap[c.view.exchangeTabs.Selected()]
-	if !ok {
-		err := errors.New("failed to locate selected tab")
-		log.Error(err)
-		return err
-	}
+	tabId, _ := c.view.tabMap[c.view.exchangeTabs.Selected()]
+	workspaceTab, _ := c.model.tabMap[tabId]
 	exchangeState := workspaceTab.ExchangeView.ToState()
 
 	collectionName := workspaceTab.CollectionName
