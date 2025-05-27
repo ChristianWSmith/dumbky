@@ -124,9 +124,9 @@ func (c *Controller) sendRequestWorker(requestPayload requesthelper.RequestPaylo
 
 func (c *Controller) ToRequestPayload() requesthelper.RequestPayload {
 	url := c.exchangeHeaderCtrl.GetURL()
-	urlValidateErr := c.exchangeHeaderCtrl.ValidateURL()
-	if urlValidateErr != nil {
-		log.Warn(urlValidateErr)
+	err := c.exchangeHeaderCtrl.ValidateURL()
+	if err != nil {
+		log.Warn(err)
 	}
 
 	method := c.exchangeHeaderCtrl.GetMethod()
@@ -134,35 +134,36 @@ func (c *Controller) ToRequestPayload() requesthelper.RequestPayload {
 	useSSL := c.exchangeHeaderCtrl.GetUseSSL()
 
 	headers := c.requestCtrl.GetHeadersMap()
-	headersValidatErr := c.requestCtrl.ValidateHeaders()
-	if headersValidatErr != nil {
-		log.Error(headersValidatErr)
+
+	err = c.requestCtrl.ValidateHeaders()
+	if err != nil {
+		log.Error(err)
 	}
 
 	queryParams := c.requestCtrl.GetQueryParamsMap()
-	queryParamsValidatErr := c.requestCtrl.ValidateQueryParams()
-	if queryParamsValidatErr != nil {
-		log.Error(queryParamsValidatErr)
+	err = c.requestCtrl.ValidateQueryParams()
+	if err != nil {
+		log.Error(err)
 	}
 
 	pathParams := c.requestCtrl.GetPathParamsMap()
-	pathParamsValidatErr := c.requestCtrl.ValidatePathParams()
-	if pathParamsValidatErr != nil {
-		log.Error(pathParamsValidatErr)
+	err = c.requestCtrl.ValidatePathParams()
+	if err != nil {
+		log.Error(err)
 	}
 
 	bodyType := c.requestCtrl.GetRequestBodyType()
 	bodyRaw := c.requestCtrl.GetRequestBodyRaw()
 
-	bodyRawValidateErr := c.requestCtrl.ValidateRequestBodyRaw()
-	if bodyRawValidateErr != nil && bodyType == constants.UI_BODY_TYPE_RAW {
-		log.Warn(bodyRawValidateErr)
+	err = c.requestCtrl.ValidateRequestBodyRaw()
+	if err != nil && bodyType == constants.UI_BODY_TYPE_RAW {
+		log.Warn(err)
 	}
 
 	bodyForm := c.requestCtrl.GetRequestBodyFormMap()
-	bodyFormValidateErr := c.requestCtrl.ValidateRequestBodyForm()
-	if bodyFormValidateErr != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
-		log.Warn(bodyFormValidateErr)
+	err = c.requestCtrl.ValidateRequestBodyForm()
+	if err != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
+		log.Warn(err)
 	}
 
 	return requesthelper.RequestPayload{

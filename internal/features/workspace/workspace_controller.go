@@ -119,9 +119,9 @@ func (c *Controller) SaveTab(callback func()) error {
 		return err
 	}
 	go func() {
-		saveRequestErr := db.SaveRequest(request)
-		if saveRequestErr != nil {
-			log.Error(saveRequestErr)
+		err := db.SaveRequest(request)
+		if err != nil {
+			log.Error(err)
 		}
 		callback()
 	}()
