@@ -2,7 +2,7 @@ package dashboardview
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features/dashboardsidebarview"
+	"dumbky/internal/features/dashboardsidebar"
 	"dumbky/internal/features/workspace"
 
 	"fyne.io/fyne/v2"
@@ -14,14 +14,14 @@ type DashboardView struct {
 }
 
 func ComposeDashboardView() DashboardView {
-	dashboardSidebarView := dashboardsidebarview.ComposeDashboardSidebarView()
+	dashboardSidebarCtrl := dashboardsidebar.NewController()
 	workspaceCtrl := workspace.NewController()
 
-	dashboardSidebarView.CollectionsBrowserCtrl.SetSelectedRequestListener(func() {
-		collectionName := dashboardSidebarView.CollectionsBrowserCtrl.GetSelectedCollection()
+	dashboardSidebarCtrl.SetSelectedRequestListener(func() {
+		collectionName := dashboardSidebarCtrl.GetSelectedCollection()
 
-		requestName := dashboardSidebarView.CollectionsBrowserCtrl.GetSelectedRequest()
-		dashboardSidebarView.CollectionsBrowserCtrl.SetSelectedRequest("")
+		requestName := dashboardSidebarCtrl.GetSelectedRequest()
+		dashboardSidebarCtrl.SetSelectedRequest("")
 		if collectionName == "" || requestName == "" {
 			return
 		}
@@ -29,7 +29,7 @@ func ComposeDashboardView() DashboardView {
 	})
 
 	workspaceCtrl.SetAddHandler(func() {
-		collectionName := dashboardSidebarView.CollectionsBrowserCtrl.GetSelectedCollection()
+		collectionName := dashboardSidebarCtrl.GetSelectedCollection()
 
 		if collectionName == "" {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
@@ -47,12 +47,12 @@ func ComposeDashboardView() DashboardView {
 				// collections view in the browser at that time, they should see
 				// the updated collections list.  this is an edge case and maybe
 				// shouldn't even be addressed.
-				dashboardSidebarView.CollectionsBrowserCtrl.LazyRefreshAndShowRequests()
+				dashboardSidebarCtrl.LazyRefreshAndShowRequests()
 			})
 		})
 	})
 
-	split := container.NewHSplit(dashboardSidebarView.UI, workspaceCtrl.GetUI())
+	split := container.NewHSplit(dashboardSidebarCtrl.GetUI(), workspaceCtrl.GetUI())
 	split.SetOffset(constants.UI_DASHBOARD_SIDEBAR_OFFSET)
 
 	ui := container.NewBorder(nil, nil, nil, nil, split)
