@@ -8,7 +8,6 @@ import (
 	"dumbky/internal/features/workspaceheader"
 	"dumbky/internal/log"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"fyne.io/fyne/v2"
@@ -19,58 +18,53 @@ type Controller struct {
 	model               *model
 	view                *view
 	workspaceHeaderCtrl *workspaceheader.Controller
-	documentSessionMap  map[string]*exchange.Controller
+	exchangeCtrlMap     map[documentId]*exchange.Controller
 }
 
 var _ features.Controller = (*Controller)(nil)
 
+type documentId string
+
 func NewController() *Controller {
 	model := newModel()
-	workspaceHeader := workspaceheader.NewController()
-	view := newView(workspaceHeader.GetUI())
+	workspaceHeaderCtrl := workspaceheader.NewController()
+	view := newView(workspaceHeaderCtrl.GetUI())
 
 	c := &Controller{
 		model:               model,
 		view:                view,
-		workspaceHeaderCtrl: workspaceHeader,
-		documentSessionMap:  make(map[string]*exchange.Controller),
+		workspaceHeaderCtrl: workspaceHeaderCtrl,
+		exchangeCtrlMap:     make(map[documentId]*exchange.Controller),
 	}
 
-	c.view.exchangeTabs.OnSelected = func(tabItem *container.TabItem) {
-		tabId := c.view.documentViewMap[tabItem]
-		documentData := c.model.documentDataMap[tabId]
-		workspaceHeader.SetRequestName(documentData.RequestName)
-	}
+	c.view.setDocumentSelectedHandler(func(tabItem *container.TabItem) {
+		tabId := c.view.getDocumentId(tabItem)
+		documentData := c.model.getDocumentData(tabId)
+		c.workspaceHeaderCtrl.SetRequestName(documentData.RequestName)
+	})
 
-	c.view.exchangeTabs.OnClosed = func(tabItem *container.TabItem) {
-		tabId := c.view.documentViewMap[tabItem]
-		delete(c.view.documentViewMap, tabItem)
-		delete(c.documentSessionMap, tabId)
-		delete(c.model.documentDataMap, tabId)
-		if len(c.view.exchangeTabs.Items) == 0 {
+	c.view.setDocumentClosedHandler(func(tabItem *container.TabItem) {
+		id := c.view.getDocumentId(tabItem)
+		c.view.destroyDocumentTab(tabItem)
+		c.model.destroyDocumentData(id)
+		delete(c.exchangeCtrlMap, id)
+		if c.model.documentCount() == 0 {
 			c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 		}
-	}
+	})
 
 	c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 
-	workspaceHeader.SetRequestNameListener(func() {
-		selectedTab := c.view.exchangeTabs.Selected()
-		if selectedTab == nil {
-			log.Error(errors.New("no selected tab"))
-			return
-		}
-		tabId := c.view.documentViewMap[selectedTab]
-		documentData := c.model.documentDataMap[tabId]
-		requestName := workspaceHeader.GetRequestName()
-		documentData.RequestName = requestName
-		c.model.documentDataMap[tabId] = documentData
+	c.workspaceHeaderCtrl.SetRequestNameListener(func() {
+		id := c.view.getSelectedDocumentId()
+		c.model.updateRequestName(id, workspaceHeaderCtrl.GetRequestName())
+		documentData := c.model.getDocumentData(id)
 		if documentData.RequestName == "" {
-			c.view.exchangeTabs.Selected().Text = formatTabText(documentData.CollectionName, constants.UI_PLACEHOLDER_UNTITLED)
+			c.view.setSelectedDocumentText(formatTabText(documentData.CollectionName, constants.UI_PLACEHOLDER_UNTITLED))
 		} else {
-			c.view.exchangeTabs.Selected().Text = formatTabText(documentData.CollectionName, documentData.RequestName)
+			c.view.setSelectedDocumentText(formatTabText(documentData.CollectionName, documentData.RequestName))
 		}
-		c.view.exchangeTabs.Refresh()
+		c.view.refreshTabs()
 
 	})
 
@@ -91,7 +85,7 @@ func (c *Controller) SetSaveHandler(handler func()) {
 
 func (c *Controller) OpenTab(document DocumentState) {
 	for tabItem, tabId := range c.view.documentViewMap {
-		documentData := c.model.documentDataMap[tabId]
+		documentData := c.model.getDocumentData(tabId)
 		if documentData.RequestName == document.RequestName && documentData.CollectionName == document.CollectionName {
 			c.view.exchangeTabs.Select(tabItem)
 			return
@@ -101,21 +95,21 @@ func (c *Controller) OpenTab(document DocumentState) {
 	exchangeCtrl := exchange.NewController()
 	exchangeCtrl.LoadState(document.ExchangeState)
 	exchangeViewTab := container.NewTabItem(formatTabText(document.CollectionName, document.RequestName), exchangeCtrl.GetUI())
-	tabId := fmt.Sprintf("%s / %s", document.CollectionName, document.RequestName)
-	c.view.documentViewMap[exchangeViewTab] = tabId
-	c.model.documentDataMap[tabId] = documentData{
+	id := documentId(fmt.Sprintf("%s / %s", document.CollectionName, document.RequestName)) // TODO: uuid?
+	c.view.documentViewMap[exchangeViewTab] = id
+	c.model.documentDataMap[id] = documentData{
 		CollectionName: document.CollectionName,
 		RequestName:    document.RequestName,
 	}
-	c.documentSessionMap[tabId] = exchangeCtrl
+	c.exchangeCtrlMap[id] = exchangeCtrl
 	c.view.exchangeTabs.Append(exchangeViewTab)
 	c.view.exchangeTabs.Select(exchangeViewTab)
 }
 
 func (c *Controller) SaveTab(callback func()) error {
 	tabId := c.view.documentViewMap[c.view.exchangeTabs.Selected()]
-	documentSession := c.documentSessionMap[tabId]
-	documentData := c.model.documentDataMap[tabId]
+	documentSession := c.exchangeCtrlMap[tabId]
+	documentData := c.model.getDocumentData(tabId)
 	exchangeState := documentSession.ToState()
 
 	collectionName := documentData.CollectionName

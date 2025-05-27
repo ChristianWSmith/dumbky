@@ -5,12 +5,12 @@ import (
 )
 
 type model struct {
-	documentDataMap map[string]documentData
+	documentDataMap map[documentId]documentData
 }
 
 func newModel() *model {
 	return &model{
-		documentDataMap: make(map[string]documentData),
+		documentDataMap: make(map[documentId]documentData),
 	}
 }
 
@@ -23,4 +23,26 @@ type DocumentState struct {
 type documentData struct {
 	CollectionName string
 	RequestName    string
+}
+
+func (m *model) destroyDocumentData(id documentId) {
+	delete(m.documentDataMap, id)
+}
+
+func (m *model) documentCount() int {
+	return len(m.documentDataMap)
+}
+
+func (m *model) getDocumentData(id documentId) documentData {
+	return m.documentDataMap[id]
+}
+
+func (m *model) setDocumentData(id documentId, data documentData) {
+	m.documentDataMap[id] = data
+}
+
+func (m *model) updateRequestName(id documentId, requestName string) {
+	documentData := m.documentDataMap[id]
+	documentData.RequestName = requestName
+	m.documentDataMap[id] = documentData
 }
