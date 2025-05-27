@@ -1,6 +1,7 @@
 package app
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/features/root"
 	"dumbky/internal/global"
 	"dumbky/internal/theme"
@@ -27,20 +28,20 @@ func getWindowSize() (float32, float32) {
 }
 
 func Run() {
-	a := app.NewWithID("com.christianwsmith.dumbky")
-	a.Settings().SetTheme(theme.DumbkyTheme{})
+	a := app.NewWithID(constants.APP_ID)
+	a.Settings().SetTheme(theme.AppTheme{})
 	w := a.NewWindow("Dumbky")
 	global.Window = w
 
-	rootView := root.NewController()
-	w.SetContent(rootView.GetUI())
+	rootCtrl := root.NewController()
+	w.SetContent(rootCtrl.GetUI())
 
 	width, height := getWindowSize()
 	w.Resize(fyne.NewSize(width, height))
 
 	// TODO: remove?
 	// defer glfw.Terminate()
-	// w.Canvas().Refresh(rootView.UI)
+	// w.Canvas().Refresh(rootCtrl.UI)
 
 	w.ShowAndRun()
 }

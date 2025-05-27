@@ -9,9 +9,9 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-type DumbkyTheme struct{}
+type AppTheme struct{}
 
-func (DumbkyTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+func (AppTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch name {
 	// Colors
 	case theme.ColorNameHyperlink:
@@ -82,14 +82,14 @@ func (DumbkyTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) co
 	}
 }
 
-func (DumbkyTheme) Font(style fyne.TextStyle) fyne.Resource {
+func (AppTheme) Font(style fyne.TextStyle) fyne.Resource {
 	return theme.DefaultTheme().Font(style)
 }
 
-func (DumbkyTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
+func (AppTheme) Icon(name fyne.ThemeIconName) fyne.Resource {
 	return theme.DefaultTheme().Icon(name)
 }
 
-func (DumbkyTheme) Size(name fyne.ThemeSizeName) float32 {
+func (AppTheme) Size(name fyne.ThemeSizeName) float32 {
 	return theme.DefaultTheme().Size(name)
 }
