@@ -8,7 +8,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/data/binding"
 )
 
 type DashboardView struct {
@@ -19,33 +18,20 @@ func ComposeDashboardView() DashboardView {
 	dashboardSidebarView := dashboardsidebarview.ComposeDashboardSidebarView()
 	workspaceCtrl := workspace.NewController()
 
-	dashboardSidebarView.CollectionsBrowserView.SelectedRequestBinding.AddListener(binding.NewDataListener(func() {
-		collectionName, err := dashboardSidebarView.CollectionsBrowserView.SelectedCollectionBinding.Get()
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		requestName, err := dashboardSidebarView.CollectionsBrowserView.SelectedRequestBinding.Get()
-		if err != nil {
-			log.Error(err)
-			return
-		}
-		err = dashboardSidebarView.CollectionsBrowserView.SelectedRequestBinding.Set("")
-		if err != nil {
-			log.Error(err)
-		}
+	dashboardSidebarView.CollectionsBrowserCtrl.SetSelectedRequestListener(func() {
+		collectionName := dashboardSidebarView.CollectionsBrowserCtrl.GetSelectedCollection()
+
+		requestName := dashboardSidebarView.CollectionsBrowserCtrl.GetSelectedRequest()
+		dashboardSidebarView.CollectionsBrowserCtrl.SetSelectedRequest("")
 		if collectionName == "" || requestName == "" {
 			return
 		}
 		workspaceCtrl.LoadTab(collectionName, requestName)
-	}))
+	})
 
 	workspaceCtrl.SetAddHandler(func() {
-		collectionName, err := dashboardSidebarView.CollectionsBrowserView.SelectedCollectionBinding.Get()
-		if err != nil {
-			log.Error(err)
-			return
-		}
+		collectionName := dashboardSidebarView.CollectionsBrowserCtrl.GetSelectedCollection()
+
 		if collectionName == "" {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
 		}
@@ -57,7 +43,7 @@ func ComposeDashboardView() DashboardView {
 	workspaceCtrl.SetSaveHandler(func() {
 		go workspaceCtrl.SaveTab(func() {
 			fyne.Do(func() {
-				err := dashboardSidebarView.CollectionsBrowserView.RefreshRequests()
+				err := dashboardSidebarView.CollectionsBrowserCtrl.RefreshRequests()
 				if err != nil {
 					log.Error(err)
 				}

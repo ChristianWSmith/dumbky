@@ -1,7 +1,7 @@
 package dashboardsidebarview
 
 import (
-	"dumbky/internal/features/collectionsbrowserview"
+	"dumbky/internal/features/collectionsbrowser"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -9,15 +9,15 @@ import (
 
 type DashboardSidebarView struct {
 	UI                     *fyne.Container
-	CollectionsBrowserView collectionsbrowserview.CollectionsBrowserView
+	CollectionsBrowserCtrl *collectionsbrowser.Controller
 }
 
 func ComposeDashboardSidebarView() DashboardSidebarView {
-	collectionsBrowserView := collectionsbrowserview.ComposeCollectionsBrowserView()
+	collectionsbrowserCtrl := collectionsbrowser.NewController()
 
-	ui := container.NewBorder(nil, nil, nil, nil, collectionsBrowserView.UI)
+	ui := container.NewBorder(nil, nil, nil, nil, collectionsbrowserCtrl.GetUI())
 	return DashboardSidebarView{
 		UI:                     ui,
-		CollectionsBrowserView: collectionsBrowserView,
+		CollectionsBrowserCtrl: collectionsbrowserCtrl,
 	}
 }
