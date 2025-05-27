@@ -58,11 +58,11 @@ func resolveURL(requestPayload RequestPayload) string {
 		}
 		url = url + "?" + strings.Join(paramList, "&")
 	}
-	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+	if !strings.HasPrefix(url, constants.PROTOCOL_HTTP) && !strings.HasPrefix(url, constants.PROTOCOL_HTTPS) {
 		if requestPayload.UseSSL {
-			url = "https://" + url
+			url = constants.PROTOCOL_HTTPS + url
 		}
-		url = "http://" + url
+		url = constants.PROTOCOL_HTTP + url
 	}
 	return url
 }
