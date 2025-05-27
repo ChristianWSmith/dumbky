@@ -22,6 +22,7 @@ const UI_LABEL_BODY string = "Body"
 const UI_LABEL_KEY_VALUE_ADD string = ""
 const UI_LABEL_KEY_VALUE_ENABLE string = ""
 const UI_LABEL_COLLECTIONS string = "Collections"
+const UI_LABEL_DELETE string = "Delete"
 
 const UI_BODY_TYPE_RAW string = "Raw"
 const UI_BODY_TYPE_FORM string = "Form"

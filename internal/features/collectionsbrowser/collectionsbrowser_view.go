@@ -2,6 +2,7 @@ package collectionsbrowser
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/global"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -22,25 +23,43 @@ type view struct {
 	selectedCollectionLabel *widget.Label
 }
 
-func newView(requestsListBinding, collectionsListBinding binding.StringList, requestsMenu, collectionsMenu func(fyne.Position, fyne.CanvasObject, string)) *view {
+func newView(requestsListBinding, collectionsListBinding binding.StringList, onDeleteRequest, onDeleteCollection func(string)) *view {
 	addCollectionEntry := widget.NewEntry()
+
+	requestsMenu := func(position fyne.Position, parent fyne.CanvasObject, requestName string) {
+		pop := fyne.NewMenu("",
+			fyne.NewMenuItem(constants.UI_LABEL_DELETE, func() {
+				onDeleteRequest(requestName)
+			}),
+		)
+		widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), position, parent)
+	}
+
+	collectionsMenu := func(position fyne.Position, parent fyne.CanvasObject, collectionName string) {
+		pop := fyne.NewMenu("",
+			fyne.NewMenuItem(constants.UI_LABEL_DELETE, func() {
+				onDeleteCollection(collectionName)
+			}),
+		)
+		widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), position, parent)
+	}
 
 	requestsList := widget.NewListWithData(
 		requestsListBinding,
 		func() fyne.CanvasObject {
 			label := widget.NewLabel("")
-			menuBtn := widget.NewButtonWithIcon("", theme.MoreVerticalIcon(), nil)
-			return container.NewBorder(nil, nil, nil, menuBtn, label)
+			menuButton := widget.NewButtonWithIcon("", theme.MoreVerticalIcon(), nil)
+			return container.NewBorder(nil, nil, nil, menuButton, label)
 		},
 		func(item binding.DataItem, o fyne.CanvasObject) {
-			name, _ := item.(binding.String).Get()
+			requestName, _ := item.(binding.String).Get()
 			c := o.(*fyne.Container)
 			label := c.Objects[0].(*widget.Label)
-			menuBtn := c.Objects[1].(*widget.Button)
-			label.SetText(name)
+			menuButton := c.Objects[1].(*widget.Button)
+			label.SetText(requestName)
 
-			menuBtn.OnTapped = func() {
-				requestsMenu(menuBtn.Position(), o, name)
+			menuButton.OnTapped = func() {
+				requestsMenu(menuButton.Position(), o, requestName)
 			}
 		},
 	)
@@ -53,14 +72,14 @@ func newView(requestsListBinding, collectionsListBinding binding.StringList, req
 			return container.NewBorder(nil, nil, nil, menuBtn, label)
 		},
 		func(item binding.DataItem, o fyne.CanvasObject) {
-			name, _ := item.(binding.String).Get()
+			collectionName, _ := item.(binding.String).Get()
 			c := o.(*fyne.Container)
 			label := c.Objects[0].(*widget.Label)
 			menuBtn := c.Objects[1].(*widget.Button)
-			label.SetText(name)
+			label.SetText(collectionName)
 
 			menuBtn.OnTapped = func() {
-				collectionsMenu(menuBtn.Position(), o, name)
+				collectionsMenu(menuBtn.Position(), o, collectionName)
 			}
 		},
 	)

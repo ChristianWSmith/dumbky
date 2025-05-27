@@ -9,7 +9,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/widget"
 )
 
 type Controller struct {
@@ -22,26 +21,8 @@ var _ features.Controller = (*Controller)(nil)
 func NewController() *Controller {
 	c := &Controller{}
 
-	requestsMenu := func(position fyne.Position, parent fyne.CanvasObject, name string) {
-		pop := fyne.NewMenu("",
-			fyne.NewMenuItem("Delete", func() {
-				c.deleteRequest(name)
-			}),
-		)
-		widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), position, parent)
-	}
-
-	collectionsMenu := func(position fyne.Position, parent fyne.CanvasObject, name string) {
-		pop := fyne.NewMenu("",
-			fyne.NewMenuItem("Delete", func() {
-				c.deleteCollection(name)
-			}),
-		)
-		widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), position, parent)
-	}
-
 	c.model = newModel()
-	c.view = newView(c.model.requestsListBinding, c.model.collectionsListBinding, requestsMenu, collectionsMenu)
+	c.view = newView(c.model.requestsListBinding, c.model.collectionsListBinding, c.deleteRequest, c.deleteCollection)
 
 	c.view.addCollectionEntry.Bind(c.model.addCollectionBinding)
 	c.view.selectedCollectionLabel.Bind(c.model.selectedCollectionBinding)
