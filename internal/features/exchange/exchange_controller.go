@@ -80,20 +80,23 @@ func (c *Controller) LoadState(exchangeState ExchangeState) {
 	c.exchangeHeaderCtrl.LoadState(exchangeState.Header)
 }
 
-func (c *Controller) sendButtonHandler() {
-	c.exchangeHeaderCtrl.DisableSend()
-	c.responseCtrl.SetLoading(true)
+func (c *Controller) setLoading(loading bool) {
+	if loading {
+		c.exchangeHeaderCtrl.DisableSend()
+	} else {
+		c.exchangeHeaderCtrl.EnableSend()
+	}
+	c.responseCtrl.SetLoading(loading)
+}
 
-	c.responseCtrl.SetStatus(constants.UI_LOADING_RESPONSE_STATUS)
-	c.responseCtrl.SetTime(constants.UI_LOADING_RESPONSE_TIME)
-	c.responseCtrl.SetBody(constants.UI_LOADING_RESPONSE_BODY)
+func (c *Controller) sendButtonHandler() {
+	c.setLoading(true)
 
 	requestPayload, err := c.renderRequestConfig()
 	if err != nil {
 		// TODO: error feedback
 		log.Error(err)
-		c.exchangeHeaderCtrl.EnableSend()
-		c.responseCtrl.SetLoading(false)
+		c.setLoading(false)
 		return
 	}
 
@@ -102,8 +105,7 @@ func (c *Controller) sendButtonHandler() {
 
 func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig) {
 	defer fyne.Do(func() {
-		c.responseCtrl.SetLoading(false)
-		c.exchangeHeaderCtrl.EnableSend()
+		c.setLoading(false)
 	})
 
 	fyne.Do(func() {
@@ -123,9 +125,10 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 	}
 
 	fyne.Do(func() {
-		c.responseCtrl.SetStatus(responsePayload.Status)
-		c.responseCtrl.SetTime(responsePayload.Time)
-		c.responseCtrl.SetBody(utils.SmartFormat(responsePayload.Body))
+		c.responseCtrl.SetResponse(
+			responsePayload.Status,
+			responsePayload.Time,
+			utils.SmartFormat(responsePayload.Body))
 	})
 }
 

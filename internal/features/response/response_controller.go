@@ -1,6 +1,7 @@
 package response
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
@@ -47,6 +48,11 @@ func (c *Controller) SetBody(s string) {
 
 func (c *Controller) SetLoading(loading bool) {
 	c.view.setLoading(loading)
+	if loading {
+		c.model.setResponse(constants.UI_LOADING_RESPONSE_STATUS,
+			constants.UI_LOADING_RESPONSE_TIME,
+			constants.UI_LOADING_RESPONSE_BODY)
+	}
 }
 
 func (c *Controller) SetResponse(status, time, body string) {
