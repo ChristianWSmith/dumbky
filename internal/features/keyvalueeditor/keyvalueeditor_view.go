@@ -1,6 +1,7 @@
 package keyvalueeditor
 
 import (
+	"dumbky/internal/components"
 	"dumbky/internal/constants"
 
 	"fyne.io/fyne/v2"
@@ -23,7 +24,8 @@ func newView() *view {
 	keyValueAddContainer := container.NewVBox(keyValueBox, addButton)
 
 	scroll := container.NewVScroll(keyValueAddContainer)
-	ui := container.NewBorder(nil, nil, nil, nil, scroll)
+	scrollStack := container.NewStack(scroll, components.NewScrollInterceptor(scroll))
+	ui := container.NewBorder(nil, nil, nil, nil, scrollStack)
 
 	return &view{
 		ui:                ui,
