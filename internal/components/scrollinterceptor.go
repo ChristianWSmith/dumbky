@@ -14,6 +14,11 @@ type ScrollInterceptor struct {
 	target *container.Scroll
 }
 
+func NewScrollInterceptorWrapper(canvasObject fyne.CanvasObject) fyne.CanvasObject {
+	scroll := container.NewVScroll(canvasObject)
+	return container.NewStack(scroll, NewScrollInterceptor(scroll))
+}
+
 func NewScrollInterceptor(target *container.Scroll) *ScrollInterceptor {
 	s := &ScrollInterceptor{target: target}
 	s.ExtendBaseWidget(s)

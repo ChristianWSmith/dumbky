@@ -39,7 +39,9 @@ func newView() *view {
 
 	statusStack := container.NewVBox(loadingBar, statusEntry)
 	info := container.NewVBox(statusStack, timeEntry)
-	ui := container.NewBorder(info, nil, nil, nil, container.NewVScroll(bodyEntry))
+	scroll := components.NewScrollInterceptorWrapper(bodyEntry)
+
+	ui := container.NewBorder(info, nil, nil, nil, scroll)
 
 	return &view{
 		status:      statusEntry,

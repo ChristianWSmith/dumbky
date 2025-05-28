@@ -1,24 +1,24 @@
 package components
 
 import (
-	"image/color"
-
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 type ReadOnlyEntry struct {
 	widget.BaseWidget
 	label *widget.Label
+	entry *widget.Entry
 }
 
 func NewReadOnlyEntry(text string) *ReadOnlyEntry {
+	entry := widget.NewEntry()
+	entry.Disable()
 	r := &ReadOnlyEntry{
 		label: widget.NewLabel(text),
+		entry: entry,
 	}
 	r.ExtendBaseWidget(r)
 	return r
@@ -41,22 +41,13 @@ func (r *ReadOnlyEntry) SetTextStyle(textStyle fyne.TextStyle) {
 }
 
 func (r *ReadOnlyEntry) CreateRenderer() fyne.WidgetRenderer {
-	th := r.label.Theme()
-	v := fyne.CurrentApp().Settings().ThemeVariant()
-	box := canvas.NewRectangle(th.Color(theme.ColorNameInputBackground, v))
-	box.CornerRadius = th.Size(theme.SizeNameInputRadius)
-	border := canvas.NewRectangle(color.Transparent)
-	border.StrokeWidth = th.Size(theme.SizeNameInputBorder)
-	border.StrokeColor = th.Color(theme.ColorNameInputBorder, v)
-	border.CornerRadius = th.Size(theme.SizeNameInputRadius)
 
-	stack := container.NewStack(box, border, r.label)
+	stack := container.NewStack(r.entry, r.label)
 
 	return &readOnlyEntryRenderer{
-		box:    box,
-		border: border,
-		stack:  stack,
-		label:  r.label,
+		stack: stack,
+		label: r.label,
+		entry: r.entry,
 	}
 }
 
@@ -69,10 +60,9 @@ func (r *ReadOnlyEntry) GetText() string {
 }
 
 type readOnlyEntryRenderer struct {
-	box    *canvas.Rectangle
-	border *canvas.Rectangle
-	stack  *fyne.Container
-	label  *widget.Label
+	stack *fyne.Container
+	label *widget.Label
+	entry *widget.Entry
 }
 
 func (r *readOnlyEntryRenderer) Layout(size fyne.Size) {
@@ -80,7 +70,9 @@ func (r *readOnlyEntryRenderer) Layout(size fyne.Size) {
 }
 
 func (r *readOnlyEntryRenderer) MinSize() fyne.Size {
-	return r.label.MinSize()
+	return fyne.NewSize(
+		fyne.Max(r.label.MinSize().Width, r.entry.MinSize().Width),
+		fyne.Max(r.label.MinSize().Height, r.entry.MinSize().Height))
 }
 
 func (r *readOnlyEntryRenderer) Refresh() {

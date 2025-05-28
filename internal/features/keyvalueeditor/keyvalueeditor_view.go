@@ -23,9 +23,8 @@ func newView() *view {
 
 	keyValueAddContainer := container.NewVBox(keyValueBox, addButton)
 
-	scroll := container.NewVScroll(keyValueAddContainer)
-	scrollStack := container.NewStack(scroll, components.NewScrollInterceptor(scroll))
-	ui := container.NewBorder(nil, nil, nil, nil, scrollStack)
+	scroll := components.NewScrollInterceptorWrapper(keyValueAddContainer)
+	ui := container.NewBorder(nil, nil, nil, nil, scroll)
 
 	return &view{
 		ui:                ui,
