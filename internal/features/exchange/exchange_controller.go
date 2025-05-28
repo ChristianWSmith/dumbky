@@ -88,7 +88,14 @@ func (c *Controller) sendButtonHandler() {
 	c.responseCtrl.SetTime(constants.UI_LOADING_RESPONSE_TIME)
 	c.responseCtrl.SetBody(constants.UI_LOADING_RESPONSE_BODY)
 
-	requestPayload := c.renderRequestConfig()
+	requestPayload, err := c.renderRequestConfig()
+	if err != nil {
+		// TODO: error feedback
+		log.Error(err)
+		c.exchangeHeaderCtrl.EnableSend()
+		c.responseCtrl.SetLoading(false)
+		return
+	}
 
 	go c.sendRequestWorker(requestPayload)
 }
@@ -122,11 +129,12 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 	})
 }
 
-func (c *Controller) renderRequestConfig() requesthelper.RequestConfig {
+func (c *Controller) renderRequestConfig() (requesthelper.RequestConfig, error) {
 	url := c.exchangeHeaderCtrl.GetURL()
 	err := c.exchangeHeaderCtrl.ValidateURL()
 	if err != nil {
 		log.Warn(err)
+		return requesthelper.RequestConfig{}, err
 	}
 
 	method := c.exchangeHeaderCtrl.GetMethod()
@@ -138,18 +146,21 @@ func (c *Controller) renderRequestConfig() requesthelper.RequestConfig {
 	err = c.requestCtrl.ValidateHeaders()
 	if err != nil {
 		log.Error(err)
+		return requesthelper.RequestConfig{}, err
 	}
 
 	queryParams := c.requestCtrl.GetQueryParamsMap()
 	err = c.requestCtrl.ValidateQueryParams()
 	if err != nil {
 		log.Error(err)
+		return requesthelper.RequestConfig{}, err
 	}
 
 	pathParams := c.requestCtrl.GetPathParamsMap()
 	err = c.requestCtrl.ValidatePathParams()
 	if err != nil {
 		log.Error(err)
+		return requesthelper.RequestConfig{}, err
 	}
 
 	bodyType := c.requestCtrl.GetRequestBodyType()
@@ -158,12 +169,14 @@ func (c *Controller) renderRequestConfig() requesthelper.RequestConfig {
 	err = c.requestCtrl.ValidateRequestBodyRaw()
 	if err != nil && bodyType == constants.UI_BODY_TYPE_RAW {
 		log.Warn(err)
+		return requesthelper.RequestConfig{}, err
 	}
 
 	bodyForm := c.requestCtrl.GetRequestBodyFormMap()
 	err = c.requestCtrl.ValidateRequestBodyForm()
 	if err != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
 		log.Warn(err)
+		return requesthelper.RequestConfig{}, err
 	}
 
 	return requesthelper.RequestConfig{
@@ -176,5 +189,5 @@ func (c *Controller) renderRequestConfig() requesthelper.RequestConfig {
 		BodyType:    bodyType,
 		BodyRaw:     bodyRaw,
 		BodyForm:    bodyForm,
-	}
+	}, nil
 }
