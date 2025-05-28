@@ -10,46 +10,44 @@ import (
 )
 
 type view struct {
-	status *widget.Label
-	time   *widget.Label
-	body   *widget.Label
+	status *components.ReadOnlyEntry
+	time   *components.ReadOnlyEntry
+	body   *components.ReadOnlyEntry
 
-	ui              *fyne.Container
-	statusContainer *fyne.Container
-	loadingBar      *widget.ProgressBarInfinite
-	statusStack     *fyne.Container
+	ui          *fyne.Container
+	loadingBar  *widget.ProgressBarInfinite
+	statusStack *fyne.Container
 }
 
-func styleLabel(label *widget.Label) {
-	label.Selectable = true
-	label.Wrapping = fyne.TextWrapWord
-	label.TextStyle.Monospace = true
+func styleEntry(entry *components.ReadOnlyEntry) {
+	entry.SetSelectable(true)
+	entry.SetWrapping(fyne.TextWrapWord)
+	entry.SetTextStyle(fyne.TextStyle{Monospace: true})
 }
 
 func newView() *view {
-	statusContainer, statusLabel := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
-	timeContainer, timeLabel := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
-	bodyContainer, bodyLabel := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
+	statusEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
+	timeEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
+	bodyEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
 
-	styleLabel(statusLabel)
-	styleLabel(timeLabel)
-	styleLabel(bodyLabel)
+	styleEntry(statusEntry)
+	styleEntry(timeEntry)
+	styleEntry(bodyEntry)
 
 	loadingBar := widget.NewProgressBarInfinite()
 	loadingBar.Hide()
 
-	statusStack := container.NewVBox(loadingBar, statusContainer)
-	info := container.NewVBox(statusStack, timeContainer)
-	ui := container.NewBorder(info, nil, nil, nil, container.NewVScroll(bodyContainer))
+	statusStack := container.NewVBox(loadingBar, statusEntry)
+	info := container.NewVBox(statusStack, timeEntry)
+	ui := container.NewBorder(info, nil, nil, nil, container.NewVScroll(bodyEntry))
 
 	return &view{
-		status:          statusLabel,
-		time:            timeLabel,
-		body:            bodyLabel,
-		ui:              ui,
-		statusContainer: statusContainer,
-		loadingBar:      loadingBar,
-		statusStack:     statusStack,
+		status:      statusEntry,
+		time:        timeEntry,
+		body:        bodyEntry,
+		ui:          ui,
+		loadingBar:  loadingBar,
+		statusStack: statusStack,
 	}
 }
 
@@ -59,13 +57,13 @@ func (v *view) canvasObject() fyne.CanvasObject {
 
 func (v *view) setLoading(loading bool) {
 	if loading {
-		v.statusContainer.Hide()
+		v.status.Hide()
 		v.loadingBar.Start()
 		v.loadingBar.Show()
 	} else {
 		v.loadingBar.Stop()
 		v.loadingBar.Hide()
-		v.statusContainer.Show()
+		v.status.Show()
 	}
 	v.statusStack.Refresh()
 }
