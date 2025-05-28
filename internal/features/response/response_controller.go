@@ -3,6 +3,8 @@ package response
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
+	"dumbky/internal/requesthelper"
+	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
 )
@@ -55,6 +57,9 @@ func (c *Controller) SetLoading(loading bool) {
 	}
 }
 
-func (c *Controller) SetResponse(status, time, body string) {
-	c.model.setResponse(status, time, body)
+func (c *Controller) SetResponse(responsePayload requesthelper.ResponsePayload) {
+	c.model.setResponse(
+		responsePayload.Status,
+		responsePayload.Time,
+		utils.SmartFormat(responsePayload.Body))
 }

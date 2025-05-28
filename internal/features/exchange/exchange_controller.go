@@ -108,14 +108,16 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 		c.setLoading(false)
 	})
 
-	fyne.Do(func() {
-		bodyType := c.requestCtrl.GetRequestBodyType()
-		if bodyType != constants.UI_BODY_TYPE_RAW {
-			return
-		}
-		bodyRaw := c.requestCtrl.GetRequestBodyRaw()
-		c.requestCtrl.SetRequestBodyRaw(utils.SmartFormat(bodyRaw))
-	})
+	go func() {
+		fyne.Do(func() {
+			bodyType := c.requestCtrl.GetRequestBodyType()
+			if bodyType != constants.UI_BODY_TYPE_RAW {
+				return
+			}
+			bodyRaw := c.requestCtrl.GetRequestBodyRaw()
+			c.requestCtrl.SetRequestBodyRaw(utils.SmartFormat(bodyRaw))
+		})
+	}()
 
 	responsePayload, err := requesthelper.SendRequest(requestConfig)
 	if err != nil {
@@ -125,10 +127,7 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 	}
 
 	fyne.Do(func() {
-		c.responseCtrl.SetResponse(
-			responsePayload.Status,
-			responsePayload.Time,
-			utils.SmartFormat(responsePayload.Body))
+		c.responseCtrl.SetResponse(responsePayload)
 	})
 }
 
