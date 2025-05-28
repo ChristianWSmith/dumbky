@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-type RequestPayload struct {
+type RequestConfig struct {
 	URL         string
 	Method      string
 	UseSSL      bool
@@ -30,7 +30,7 @@ type ResponsePayload struct {
 	Body   string
 }
 
-func resolveBody(requestPayload RequestPayload) (*strings.Reader, error) {
+func resolveBody(requestPayload RequestConfig) (*strings.Reader, error) {
 	if requestPayload.BodyType == constants.UI_BODY_TYPE_FORM {
 		pairs := []string{}
 		for key, value := range requestPayload.BodyForm {
@@ -46,7 +46,7 @@ func resolveBody(requestPayload RequestPayload) (*strings.Reader, error) {
 	return strings.NewReader(""), errors.New("invalid body type")
 }
 
-func resolveURL(requestPayload RequestPayload) string {
+func resolveURL(requestPayload RequestConfig) string {
 	url := requestPayload.URL
 	for key, value := range requestPayload.PathParams {
 		url = strings.ReplaceAll(url, fmt.Sprintf(":%s:", key), value)
@@ -73,10 +73,10 @@ func resolveHeaders(request http.Request, headers map[string]string) {
 	}
 }
 
-func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
+func SendRequest(requestConfig RequestConfig) (ResponsePayload, error) {
 	var client *http.Client
 
-	if requestPayload.UseSSL {
+	if requestConfig.UseSSL {
 		client = &http.Client{}
 	} else {
 		client = &http.Client{
@@ -86,20 +86,20 @@ func SendRequest(requestPayload RequestPayload) (ResponsePayload, error) {
 		}
 	}
 
-	body, err := resolveBody(requestPayload)
+	body, err := resolveBody(requestConfig)
 	if err != nil {
 		log.Error(err)
 		return ResponsePayload{}, err
 	}
 
-	url := resolveURL(requestPayload)
+	url := resolveURL(requestConfig)
 
-	request, err := http.NewRequest(requestPayload.Method, url, body)
+	request, err := http.NewRequest(requestConfig.Method, url, body)
 	if err != nil {
 		log.Error(err)
 		return ResponsePayload{}, err
 	}
-	resolveHeaders(*request, requestPayload.Headers)
+	resolveHeaders(*request, requestConfig.Headers)
 
 	log.Info("Sending request")
 	start := time.Now()

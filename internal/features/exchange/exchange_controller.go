@@ -88,12 +88,12 @@ func (c *Controller) sendButtonHandler() {
 	c.responseCtrl.SetTime(constants.UI_LOADING_RESPONSE_TIME)
 	c.responseCtrl.SetBody(constants.UI_LOADING_RESPONSE_BODY)
 
-	requestPayload := c.ToRequestPayload()
+	requestPayload := c.renderRequestConfig()
 
 	go c.sendRequestWorker(requestPayload)
 }
 
-func (c *Controller) sendRequestWorker(requestPayload requesthelper.RequestPayload) {
+func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig) {
 	defer fyne.Do(func() {
 		c.responseCtrl.SetLoading(false)
 		c.exchangeHeaderCtrl.EnableSend()
@@ -108,7 +108,7 @@ func (c *Controller) sendRequestWorker(requestPayload requesthelper.RequestPaylo
 		c.requestCtrl.SetRequestBodyRaw(utils.SmartFormat(bodyRaw))
 	})
 
-	responsePayload, err := requesthelper.SendRequest(requestPayload)
+	responsePayload, err := requesthelper.SendRequest(requestConfig)
 	if err != nil {
 		log.Warn(err)
 		dialog.ShowError(err, global.Window)
@@ -122,7 +122,7 @@ func (c *Controller) sendRequestWorker(requestPayload requesthelper.RequestPaylo
 	})
 }
 
-func (c *Controller) ToRequestPayload() requesthelper.RequestPayload {
+func (c *Controller) renderRequestConfig() requesthelper.RequestConfig {
 	url := c.exchangeHeaderCtrl.GetURL()
 	err := c.exchangeHeaderCtrl.ValidateURL()
 	if err != nil {
@@ -166,7 +166,7 @@ func (c *Controller) ToRequestPayload() requesthelper.RequestPayload {
 		log.Warn(err)
 	}
 
-	return requesthelper.RequestPayload{
+	return requesthelper.RequestConfig{
 		URL:         url,
 		Method:      method,
 		UseSSL:      useSSL,
