@@ -2,6 +2,7 @@ package keyvalue
 
 import (
 	"dumbky/internal/features"
+	"dumbky/internal/state"
 
 	"fyne.io/fyne/v2"
 )
@@ -17,8 +18,8 @@ type KeyValueController interface {
 	Validate() error
 	IsEnabled() bool
 	SetDestroyHandler(handler func())
-	LoadState(state KeyValueState)
-	ToState() KeyValueState
+	LoadState(state state.KeyValueState)
+	ToState() state.KeyValueState
 }
 
 var _ KeyValueController = (*controller)(nil)
@@ -54,11 +55,11 @@ func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *controller) ToState() KeyValueState {
+func (c *controller) ToState() state.KeyValueState {
 	return c.model.toState()
 }
 
-func (c *controller) LoadState(state KeyValueState) {
+func (c *controller) LoadState(state state.KeyValueState) {
 	c.model.loadState(state)
 }
 

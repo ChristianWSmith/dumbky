@@ -1,17 +1,15 @@
 package keyvalue
 
-import "fyne.io/fyne/v2/data/binding"
+import (
+	"dumbky/internal/state"
+
+	"fyne.io/fyne/v2/data/binding"
+)
 
 type model struct {
 	enabled binding.Bool
 	key     binding.String
 	value   binding.String
-}
-
-type KeyValueState struct {
-	Enabled bool   `json:"enabled"`
-	Key     string `json:"key"`
-	Value   string `json:"value"`
 }
 
 func newModel() *model {
@@ -23,18 +21,18 @@ func newModel() *model {
 		value:   binding.NewString(),
 	}
 }
-func (m *model) toState() KeyValueState {
+func (m *model) toState() state.KeyValueState {
 	enabled, _ := m.enabled.Get()
 	key, _ := m.key.Get()
 	value, _ := m.value.Get()
-	return KeyValueState{
+	return state.KeyValueState{
 		Enabled: enabled,
 		Key:     key,
 		Value:   value,
 	}
 }
 
-func (m *model) loadState(kvs KeyValueState) {
+func (m *model) loadState(kvs state.KeyValueState) {
 	m.enabled.Set(kvs.Enabled)
 	m.key.Set(kvs.Key)
 	m.value.Set(kvs.Value)

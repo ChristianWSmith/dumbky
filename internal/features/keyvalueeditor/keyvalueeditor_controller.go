@@ -4,6 +4,7 @@ import (
 	"dumbky/internal/features"
 	"dumbky/internal/features/keyvalue"
 	"dumbky/internal/log"
+	"dumbky/internal/state"
 
 	"fyne.io/fyne/v2"
 )
@@ -19,8 +20,8 @@ type controller struct {
 
 type KeyValueEditorController interface {
 	features.Controller
-	ToState() KeyValueEditorState
-	LoadState(keyValueEditorState KeyValueEditorState)
+	ToState() state.KeyValueEditorState
+	LoadState(keyValueEditorState state.KeyValueEditorState)
 	SetVisible(visible bool)
 	Validate() error
 	Get() map[string]string
@@ -44,7 +45,7 @@ func newController(keyValidator, valueValidator func(string) error) *controller 
 		valueValidator: valueValidator,
 	}
 	view.setAddHandler(func() {
-		c.addKeyValue(keyvalue.KeyValueState{Enabled: true, Key: "", Value: ""})
+		c.addKeyValue(state.KeyValueState{Enabled: true, Key: "", Value: ""})
 	})
 	return c
 }
@@ -53,18 +54,18 @@ func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *controller) ToState() KeyValueEditorState {
-	keyValueStates := []keyvalue.KeyValueState{}
+func (c *controller) ToState() state.KeyValueEditorState {
+	keyValueStates := []state.KeyValueState{}
 	for keyValue := range c.keyValueCtrls {
 		keyValueState := keyValue.ToState()
 		keyValueStates = append(keyValueStates, keyValueState)
 	}
-	return KeyValueEditorState{
+	return state.KeyValueEditorState{
 		KeyValueStates: keyValueStates,
 	}
 }
 
-func (c *controller) LoadState(keyValueEditorState KeyValueEditorState) {
+func (c *controller) LoadState(keyValueEditorState state.KeyValueEditorState) {
 	c.clear()
 	for _, keyValueState := range keyValueEditorState.KeyValueStates {
 		c.addKeyValue(keyValueState)
@@ -104,7 +105,7 @@ func (c *controller) clear() {
 	c.view.clear()
 }
 
-func (c *controller) addKeyValue(keyValueState keyvalue.KeyValueState) {
+func (c *controller) addKeyValue(keyValueState state.KeyValueState) {
 	keyValueCtrl := keyvalue.New(c.keyValidator, c.valueValidator)
 	keyValueCtrl.LoadState(keyValueState)
 	keyValueCtrl.SetDestroyHandler(func() {

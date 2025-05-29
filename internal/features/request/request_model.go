@@ -2,7 +2,6 @@ package request
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2/data/binding"
@@ -20,15 +19,6 @@ func newModel() *model {
 		bodyTypeBinding: bodyTypeBind,
 		bodyRawBinding:  binding.NewString(),
 	}
-}
-
-type RequestState struct {
-	QueryParams keyvalueeditor.KeyValueEditorState `json:"queryParams"`
-	PathParams  keyvalueeditor.KeyValueEditorState `json:"pathParams"`
-	Headers     keyvalueeditor.KeyValueEditorState `json:"headers"`
-	BodyType    string                             `json:"bodyType"`
-	BodyForm    keyvalueeditor.KeyValueEditorState `json:"bodyForm"`
-	BodyRaw     string                             `json:"bodyRaw"`
 }
 
 func (m *model) setBodyTypeListener(handler func()) {

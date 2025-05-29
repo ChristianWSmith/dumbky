@@ -6,6 +6,7 @@ import (
 	"dumbky/internal/features/dashboard/model"
 	"dumbky/internal/features/dashboard/view"
 	"dumbky/internal/features/workspace"
+	"dumbky/internal/state"
 
 	"fyne.io/fyne/v2"
 )
@@ -43,7 +44,7 @@ func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 		if collectionName == "" {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
 		}
-		c.workspaceCtrl.OpenTab(workspace.DocumentState{
+		c.workspaceCtrl.OpenTab(state.DocumentState{
 			CollectionName: collectionName,
 			RequestName:    constants.UI_PLACEHOLDER_UNTITLED})
 	})

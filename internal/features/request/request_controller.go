@@ -5,6 +5,7 @@ import (
 	"dumbky/internal/features"
 	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/log"
+	"dumbky/internal/state"
 	"dumbky/internal/utils"
 	"dumbky/internal/validators"
 	"errors"
@@ -27,8 +28,8 @@ type RequestController interface {
 	GetQueryParamsMap() map[string]string
 	GetPathParamsMap() map[string]string
 	GetHeadersMap() map[string]string
-	ToState() RequestState
-	LoadState(requestState RequestState)
+	ToState() state.RequestState
+	LoadState(requestState state.RequestState)
 	Validate() error
 	SetBodyTypeSelectEnabled(enabled bool)
 	FormatBodyRaw()
@@ -85,8 +86,8 @@ func (c *controller) GetHeadersMap() map[string]string {
 	return c.headersKeyValueCtrl.Get()
 }
 
-func (c *controller) ToState() RequestState {
-	return RequestState{
+func (c *controller) ToState() state.RequestState {
+	return state.RequestState{
 		QueryParams: c.queryParamsKeyValueCtrl.ToState(),
 		PathParams:  c.pathParamsKeyValueCtrl.ToState(),
 		Headers:     c.headersKeyValueCtrl.ToState(),
@@ -96,7 +97,7 @@ func (c *controller) ToState() RequestState {
 	}
 }
 
-func (c *controller) LoadState(requestState RequestState) {
+func (c *controller) LoadState(requestState state.RequestState) {
 	c.queryParamsKeyValueCtrl.LoadState(requestState.QueryParams)
 	c.pathParamsKeyValueCtrl.LoadState(requestState.PathParams)
 	c.headersKeyValueCtrl.LoadState(requestState.Headers)

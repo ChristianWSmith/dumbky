@@ -6,6 +6,7 @@ import (
 	"dumbky/internal/features"
 	"dumbky/internal/features/exchange"
 	"dumbky/internal/log"
+	"dumbky/internal/state"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -22,7 +23,7 @@ type WorkspaceController interface {
 	features.Controller
 	SetAddHandler(handler func())
 	SetSaveHandler(handler func())
-	OpenTab(document DocumentState)
+	OpenTab(document state.DocumentState)
 	SaveTab(callback func()) error
 	LoadTab(collectionName, requestName string)
 }
@@ -59,11 +60,11 @@ func newController() *controller {
 		c.model.destroyDocumentData(id)
 		delete(c.exchangeCtrlMap, id)
 		if c.model.documentCount() == 0 {
-			c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
+			c.OpenTab(state.DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 		}
 	})
 
-	c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
+	c.OpenTab(state.DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 
 	c.model.setRequestNameListener(func() {
 		id := c.view.getSelectedDocumentId()
@@ -85,7 +86,7 @@ func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *controller) OpenTab(document DocumentState) {
+func (c *controller) OpenTab(document state.DocumentState) {
 	if c.view.selectDocumentTabOnCondition(func(id documentId) bool {
 		documentData := c.model.getDocumentData(id)
 		return documentData.requestName == document.RequestName && documentData.collectionName == document.CollectionName
@@ -112,7 +113,7 @@ func (c *controller) SaveTab(callback func()) error {
 	documentData := c.model.getDocumentData(id)
 	exchangeState := c.exchangeCtrlMap[id].ToState()
 
-	document := DocumentState{
+	document := state.DocumentState{
 		CollectionName: documentData.collectionName,
 		RequestName:    documentData.requestName,
 		ExchangeState:  exchangeState}

@@ -23,12 +23,6 @@ func newModel() *model {
 	}
 }
 
-type DocumentState struct {
-	CollectionName string              `json:"collection_name"`
-	RequestName    string              `json:"request_name"`
-	ExchangeState  state.ExchangeState `json:"exchange"`
-}
-
 type documentData struct {
 	collectionName string
 	requestName    string
@@ -56,7 +50,7 @@ func (m *model) updateRequestName(id documentId, requestName string) {
 	m.documentDataMap[id] = documentData
 }
 
-func documentStateToRequest(documentState DocumentState) (db.Request, error) {
+func documentStateToRequest(documentState state.DocumentState) (db.Request, error) {
 	if documentState.RequestName == "" {
 		documentState.RequestName = constants.UI_PLACEHOLDER_UNTITLED
 	}
@@ -76,13 +70,13 @@ func documentStateToRequest(documentState DocumentState) (db.Request, error) {
 	}, nil
 }
 
-func requestToDocumentState(request db.Request) (DocumentState, error) {
+func requestToDocumentState(request db.Request) (state.DocumentState, error) {
 	log.Info(fmt.Sprintf("%v", request))
-	document := DocumentState{}
+	document := state.DocumentState{}
 	err := json.Unmarshal([]byte(request.Payload), &document)
 	if err != nil {
 		log.Error(err)
-		return DocumentState{}, err
+		return state.DocumentState{}, err
 	}
 
 	return document, nil
