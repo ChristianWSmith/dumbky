@@ -1,13 +1,15 @@
-package exchange
+package controller
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features"
+	"dumbky/internal/features/exchange/model"
+	"dumbky/internal/features/exchange/view"
 	"dumbky/internal/features/request"
 	"dumbky/internal/features/response"
 	"dumbky/internal/global"
 	"dumbky/internal/log"
 	"dumbky/internal/requesthelper"
+	"dumbky/internal/state"
 	"dumbky/internal/utils"
 	"dumbky/internal/validators"
 	"fmt"
@@ -17,47 +19,34 @@ import (
 )
 
 type controller struct {
-	model *model
-	view  *view
+	model model.Model
+	view  view.View
 
 	requestCtrl  request.RequestController
 	responseCtrl response.ResponseController
 }
 
-type ExchangeController interface {
-	features.Controller
-	ToState() ExchangeState
-	LoadState(exchangeState ExchangeState)
-	Validate() error
-}
-
-var _ ExchangeController = (*controller)(nil)
-
-func New() ExchangeController {
-	requestCtrl := request.New()
-	responseCtrl := response.New()
-	return newController(requestCtrl, responseCtrl)
-}
-
-func newController(
+func NewController(
 	requestCtrl request.RequestController,
 	responseCtrl response.ResponseController) *controller {
 
 	c := &controller{
-		model:        newModel(),
-		view:         newView(requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
+		model:        model.NewModel(),
+		view:         view.NewView(requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
 		requestCtrl:  requestCtrl,
 		responseCtrl: responseCtrl,
 	}
 
-	c.view.methodSelect.Bind(c.model.methodBinding)
-	c.view.urlEntry.Bind(c.model.urlBinding)
-	c.view.sslCheck.Bind(c.model.useSSLBinding)
+	methodBinding, urlBinding, sslBinding := c.model.GetBindings()
+	method, url, ssl := c.view.GetBindables()
+	method.Bind(methodBinding)
+	url.Bind(urlBinding)
+	ssl.Bind(sslBinding)
 
-	c.view.setUrlValidator(validators.ValidateURL)
+	c.view.SetUrlValidator(validators.ValidateURL)
 
-	c.model.setMethodListener(func() {
-		method := c.model.getMethod()
+	c.model.SetMethodListener(func() {
+		method := c.model.GetMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
 			requestCtrl.SetBodyTypeSelectEnabled(false)
@@ -72,7 +61,7 @@ func newController(
 		}
 	})
 
-	c.view.setSendHandler(func() {
+	c.view.SetSendHandler(func() {
 		c.sendButtonHandler()
 	})
 
@@ -80,26 +69,26 @@ func newController(
 }
 
 func (c *controller) CanvasObject() fyne.CanvasObject {
-	return c.view.canvasObject()
+	return c.view.CanvasObject()
 }
 
-func (c *controller) ToState() ExchangeState {
-	return ExchangeState{
-		Method:  c.model.getMethod(),
-		URL:     c.model.getURL(),
-		UseSSL:  c.model.getUseSSL(),
+func (c *controller) ToState() state.ExchangeState {
+	return state.ExchangeState{
+		Method:  c.model.GetMethod(),
+		URL:     c.model.GetURL(),
+		UseSSL:  c.model.GetUseSSL(),
 		Request: c.requestCtrl.ToState(),
 	}
 }
 
-func (c *controller) LoadState(exchangeState ExchangeState) {
+func (c *controller) LoadState(exchangeState state.ExchangeState) {
 	method := exchangeState.Method
 	if !utils.ElementInSlice(constants.HttpMethods(), method) {
 		method = constants.HTTP_METHOD_DEFAULT
 	}
-	c.model.setMethod(method)
-	c.model.setURL(exchangeState.URL)
-	c.model.setUseSSL(exchangeState.UseSSL)
+	c.model.SetMethod(method)
+	c.model.SetURL(exchangeState.URL)
+	c.model.SetUseSSL(exchangeState.UseSSL)
 	c.requestCtrl.LoadState(exchangeState.Request)
 }
 
@@ -108,14 +97,14 @@ func (c *controller) Validate() error {
 	if err != nil {
 		return err
 	}
-	return c.view.validateURL()
+	return c.view.ValidateURL()
 }
 
 func (c *controller) setSendEnabled(enabled bool) {
 	if enabled {
-		c.view.enableSend()
+		c.view.EnableSend()
 	} else {
-		c.view.disableSend()
+		c.view.DisableSend()
 	}
 }
 
@@ -172,9 +161,9 @@ func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) 
 		return requesthelper.RequestConfig{}, err
 	}
 
-	url := c.model.getURL()
-	method := c.model.getMethod()
-	useSSL := c.model.getUseSSL()
+	url := c.model.GetURL()
+	method := c.model.GetMethod()
+	useSSL := c.model.GetUseSSL()
 
 	headers := c.requestCtrl.GetHeadersMap()
 	queryParams := c.requestCtrl.GetQueryParamsMap()

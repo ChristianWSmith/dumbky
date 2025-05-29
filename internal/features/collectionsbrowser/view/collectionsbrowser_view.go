@@ -1,7 +1,8 @@
-package collectionsbrowser
+package view
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features"
 	"dumbky/internal/global"
 
 	"fyne.io/fyne/v2"
@@ -11,7 +12,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type view struct {
+type viewImpl struct {
 	ui                      *fyne.Container
 	addCollectionEntry      *widget.Entry
 	collectionsList         *widget.List
@@ -23,7 +24,22 @@ type view struct {
 	selectedCollectionLabel *widget.Label
 }
 
-func newView(requestsListBinding, collectionsListBinding binding.StringList, onDeleteRequest, onDeleteCollection func(string)) *view {
+type View interface {
+	CanvasObject() fyne.CanvasObject
+	GetBindables() (addCollectionEntry, selectedCollectionLabel features.StringBindable)
+	SetBackHandler(handler func())
+	SetRequestSelectedCallback(callback func(int))
+	SetCollectionSelectedCallback(callback func(int))
+	ShowRequests()
+	ShowCollections()
+	ShowingRequests() bool
+	ShowingCollections() bool
+	SetAddCollectionValidator(validator func(string) error)
+	ValidateAddCollection() error
+	SetAddCollectionHandler(handler func())
+}
+
+func NewView(requestsListBinding, collectionsListBinding binding.StringList, onDeleteRequest, onDeleteCollection func(string)) View {
 	addCollectionEntry := widget.NewEntry()
 
 	requestsMenu := func(position fyne.Position, parent fyne.CanvasObject, requestName string) {
@@ -97,7 +113,7 @@ func newView(requestsListBinding, collectionsListBinding binding.StringList, onD
 
 	ui := container.NewBorder(nil, nil, nil, nil, stack)
 
-	return &view{
+	return &viewImpl{
 		ui:                      ui,
 		addCollectionEntry:      addCollectionEntry,
 		collectionsList:         collectionsList,
@@ -110,54 +126,58 @@ func newView(requestsListBinding, collectionsListBinding binding.StringList, onD
 	}
 }
 
-func (v *view) canvasObject() fyne.CanvasObject {
+func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *view) setBackHandler(handler func()) {
+func (v *viewImpl) GetBindables() (addCollectionEntry, selectedCollectionLabel features.StringBindable) {
+	return v.addCollectionEntry, v.selectedCollectionLabel
+}
+
+func (v *viewImpl) SetBackHandler(handler func()) {
 	v.backButton.OnTapped = handler
 }
 
-func (v *view) setRequestSelectedCallback(callback func(int)) {
+func (v *viewImpl) SetRequestSelectedCallback(callback func(int)) {
 	v.requestsList.OnSelected = func(id widget.ListItemID) {
 		v.requestsList.UnselectAll()
 		callback(id)
 	}
 }
 
-func (v *view) setCollectionSelectedCallback(callback func(int)) {
+func (v *viewImpl) SetCollectionSelectedCallback(callback func(int)) {
 	v.collectionsList.OnSelected = func(id widget.ListItemID) {
 		v.collectionsList.UnselectAll()
 		callback(id)
 	}
 }
 
-func (v *view) showRequests() {
+func (v *viewImpl) ShowRequests() {
 	v.requestsContainer.Show()
 	v.collectionsContainer.Hide()
 }
 
-func (v *view) showCollections() {
+func (v *viewImpl) ShowCollections() {
 	v.collectionsContainer.Show()
 	v.requestsContainer.Hide()
 }
 
-func (v *view) showingRequests() bool {
+func (v *viewImpl) ShowingRequests() bool {
 	return !v.requestsContainer.Hidden
 }
 
-func (v *view) showingCollections() bool {
+func (v *viewImpl) ShowingCollections() bool {
 	return !v.collectionsContainer.Hidden
 }
 
-func (v *view) setAddCollectionValidator(validator func(string) error) {
+func (v *viewImpl) SetAddCollectionValidator(validator func(string) error) {
 	v.addCollectionEntry.Validator = validator
 }
 
-func (v *view) validateAddCollection() error {
+func (v *viewImpl) ValidateAddCollection() error {
 	return v.addCollectionEntry.Validate()
 }
 
-func (v *view) setAddCollectionHandler(handler func()) {
+func (v *viewImpl) SetAddCollectionHandler(handler func()) {
 	v.addButton.OnTapped = handler
 }

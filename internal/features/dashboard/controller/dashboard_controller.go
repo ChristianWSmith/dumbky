@@ -1,36 +1,25 @@
-package dashboard
+package controller
 
 import (
 	"dumbky/internal/constants"
-	"dumbky/internal/features"
 	"dumbky/internal/features/collectionsbrowser"
+	"dumbky/internal/features/dashboard/model"
+	"dumbky/internal/features/dashboard/view"
 	"dumbky/internal/features/workspace"
 
 	"fyne.io/fyne/v2"
 )
 
 type controller struct {
-	model                  *model
-	view                   *view
+	model                  model.Model
+	view                   view.View
 	collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController
 	workspaceCtrl          workspace.WorkspaceController
 }
 
-type DashboardController interface {
-	features.Controller
-}
-
-var _ DashboardController = (*controller)(nil)
-
-func New() DashboardController {
-	collectionsBrowserCtrl := collectionsbrowser.New()
-	workspaceCtrl := workspace.New()
-	return newController(collectionsBrowserCtrl, workspaceCtrl)
-}
-
-func newController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController, workspaceCtrl workspace.WorkspaceController) *controller {
-	model := newModel()
-	view := newView(collectionsBrowserCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
+func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController, workspaceCtrl workspace.WorkspaceController) *controller {
+	model := model.NewModel()
+	view := view.NewView(collectionsBrowserCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
 
 	c := &controller{
 		model:                  model,
@@ -76,5 +65,5 @@ func newController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 }
 
 func (c *controller) CanvasObject() fyne.CanvasObject {
-	return c.view.canvasObject()
+	return c.view.CanvasObject()
 }

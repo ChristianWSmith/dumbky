@@ -1,7 +1,8 @@
-package exchange
+package view
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -9,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type view struct {
+type viewImpl struct {
 	ui         fyne.CanvasObject
 	sendButton *widget.Button
 
@@ -18,7 +19,17 @@ type view struct {
 	methodSelect *widget.Select
 }
 
-func newView(requestUI, responseUI fyne.CanvasObject) *view {
+type View interface {
+	GetBindables() (method, url features.StringBindable, ssl features.BoolBindable)
+	CanvasObject() fyne.CanvasObject
+	SetUrlValidator(validator func(string) error)
+	SetSendHandler(handler func())
+	EnableSend()
+	DisableSend()
+	ValidateURL() error
+}
+
+func NewView(requestUI, responseUI fyne.CanvasObject) View {
 
 	methodSelect := widget.NewSelect(constants.HttpMethods(), nil)
 	urlEntry := widget.NewEntry()
@@ -35,7 +46,7 @@ func newView(requestUI, responseUI fyne.CanvasObject) *view {
 
 	requestResponseView := container.NewHSplit(requestUI, responseUI)
 	ui := container.NewBorder(headerUI, nil, nil, nil, requestResponseView)
-	return &view{
+	return &viewImpl{
 		ui:           ui,
 		sendButton:   sendButton,
 		urlEntry:     urlEntry,
@@ -44,27 +55,31 @@ func newView(requestUI, responseUI fyne.CanvasObject) *view {
 	}
 }
 
-func (v *view) canvasObject() fyne.CanvasObject {
+func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *view) setUrlValidator(validator func(string) error) {
+func (v *viewImpl) GetBindables() (method, url features.StringBindable, ssl features.BoolBindable) {
+	return v.methodSelect, v.urlEntry, v.sslCheck
+}
+
+func (v *viewImpl) SetUrlValidator(validator func(string) error) {
 	v.urlEntry.Validator = validator
 }
 
-func (v *view) setSendHandler(handler func()) {
+func (v *viewImpl) SetSendHandler(handler func()) {
 	v.sendButton.OnTapped = handler
 
 }
 
-func (v *view) enableSend() {
+func (v *viewImpl) EnableSend() {
 	v.sendButton.Enable()
 }
 
-func (v *view) disableSend() {
+func (v *viewImpl) DisableSend() {
 	v.sendButton.Disable()
 }
 
-func (v *view) validateURL() error {
+func (v *viewImpl) ValidateURL() error {
 	return v.urlEntry.Validate()
 }

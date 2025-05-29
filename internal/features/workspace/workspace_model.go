@@ -3,8 +3,8 @@ package workspace
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/db"
-	"dumbky/internal/features/exchange"
 	"dumbky/internal/log"
+	"dumbky/internal/state"
 	"encoding/json"
 	"fmt"
 
@@ -24,9 +24,9 @@ func newModel() *model {
 }
 
 type DocumentState struct {
-	CollectionName string                 `json:"collection_name"`
-	RequestName    string                 `json:"request_name"`
-	ExchangeState  exchange.ExchangeState `json:"exchange"`
+	CollectionName string              `json:"collection_name"`
+	RequestName    string              `json:"request_name"`
+	ExchangeState  state.ExchangeState `json:"exchange"`
 }
 
 type documentData struct {
