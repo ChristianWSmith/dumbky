@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 }
@@ -20,44 +20,44 @@ type WorkspaceHeaderController interface {
 	SetSaveHandler(handler func())
 }
 
-var _ WorkspaceHeaderController = (*Controller)(nil)
+var _ WorkspaceHeaderController = (*controller)(nil)
 
 func New() WorkspaceHeaderController {
 	return newController()
 }
 
-func newController() *Controller {
+func newController() *controller {
 	model := newModel()
 	view := newView()
 
 	view.requestNameEntry.Bind(model.requestNameBinding)
 
-	return &Controller{
+	return &controller{
 		model: model,
 		view:  view,
 	}
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) GetRequestName() string {
+func (c *controller) GetRequestName() string {
 	return c.model.getRequestName()
 }
-func (c *Controller) SetRequestName(requestName string) {
+func (c *controller) SetRequestName(requestName string) {
 	c.model.setRequestName(requestName)
 }
 
-func (c *Controller) SetRequestNameListener(handler func()) {
+func (c *controller) SetRequestNameListener(handler func()) {
 	c.model.setRequestNameListener(handler)
 }
 
-func (c *Controller) SetAddHandler(handler func()) {
+func (c *controller) SetAddHandler(handler func()) {
 	c.view.setAddHandler(handler)
 }
 
-func (c *Controller) SetSaveHandler(handler func()) {
+func (c *controller) SetSaveHandler(handler func()) {
 	c.view.setSaveHandler(handler)
 }
 
