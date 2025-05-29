@@ -40,8 +40,11 @@ func (m *model) setSelectedRequest(requestName string) {
 	m.selectedRequestBinding.Set(requestName)
 }
 
-func (m *model) setSelectedRequestListener(handler func()) {
-	m.selectedRequestBinding.AddListener(binding.NewDataListener(handler))
+func (m *model) setSelectedRequestCallback(callback func()) {
+	m.selectedRequestBinding.AddListener(binding.NewDataListener(func() {
+		callback()
+		m.selectedRequestBinding.Set("")
+	}))
 }
 
 func (m *model) setRequestsList(requestsList []string) {

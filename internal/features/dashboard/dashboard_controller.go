@@ -32,11 +32,9 @@ func NewController() *Controller {
 		workspaceCtrl:        workspaceCtrl,
 	}
 
-	c.dashboardSidebarCtrl.SetSelectedRequestListener(func() {
+	c.dashboardSidebarCtrl.SetSelectedRequestCallback(func() {
 		collectionName := c.dashboardSidebarCtrl.GetSelectedCollection()
-
 		requestName := c.dashboardSidebarCtrl.GetSelectedRequest()
-		c.dashboardSidebarCtrl.SetSelectedRequest("")
 		if collectionName == "" || requestName == "" {
 			return
 		}

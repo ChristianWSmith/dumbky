@@ -16,7 +16,7 @@ type Controller struct {
 	queryParamsKeyValueCtrl *keyvalueeditor.Controller
 	pathParamsKeyValueCtrl  *keyvalueeditor.Controller
 	headersKeyValueCtrl     *keyvalueeditor.Controller
-	Body                    *requestbody.Controller
+	requestBodyCtrl         *requestbody.Controller
 }
 
 var _ features.Controller = (*Controller)(nil)
@@ -33,7 +33,7 @@ func NewController() *Controller {
 		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
 		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
 		headersKeyValueCtrl:     headersKeyValueCtrl,
-		Body:                    bodyKeyValueCtrl,
+		requestBodyCtrl:         bodyKeyValueCtrl,
 	}
 }
 
@@ -42,70 +42,22 @@ func (c *Controller) CanvasObject() fyne.CanvasObject {
 }
 
 func (c *Controller) GetQueryParamsMap() map[string]string {
-	return c.queryParamsKeyValueCtrl.GetMap()
+	return c.queryParamsKeyValueCtrl.Get()
 }
 
 func (c *Controller) GetPathParamsMap() map[string]string {
-	return c.pathParamsKeyValueCtrl.GetMap()
+	return c.pathParamsKeyValueCtrl.Get()
 }
 
 func (c *Controller) GetHeadersMap() map[string]string {
-	return c.headersKeyValueCtrl.GetMap()
-}
-
-func (c *Controller) ValidateQueryParams() error {
-	return c.queryParamsKeyValueCtrl.Validate()
-}
-
-func (c *Controller) ValidatePathParams() error {
-	return c.pathParamsKeyValueCtrl.Validate()
-}
-
-func (c *Controller) ValidateHeaders() error {
-	return c.headersKeyValueCtrl.Validate()
-}
-
-func (c *Controller) GetRequestBodyFormMap() map[string]string {
-	return c.Body.GetBodyFormMap()
-}
-
-func (c *Controller) ValidateRequestBodyForm() error {
-	return c.Body.ValidateBodyForm()
-}
-
-func (c *Controller) GetRequestBodyRaw() string {
-	return c.Body.GetBodyRaw()
-}
-
-func (c *Controller) ValidateRequestBodyRaw() error {
-	return c.Body.ValidateBodyRaw()
-}
-
-func (c *Controller) EnableRequestBodyTypeSelect() {
-	c.Body.EnableBodyTypeSelect()
-}
-
-func (c *Controller) DisableRequestBodyTypeSelect() {
-	c.Body.DisableBodyTypeSelect()
-}
-
-func (c *Controller) SetRequestBodyType(bodyType string) {
-	c.Body.SetBodyType(bodyType)
-}
-
-func (c *Controller) SetRequestBodyRaw(bodyRaw string) {
-	c.Body.SetBodyRaw(bodyRaw)
-}
-
-func (c *Controller) GetRequestBodyType() string {
-	return c.Body.GetBodyType()
+	return c.headersKeyValueCtrl.Get()
 }
 
 func (c *Controller) ToState() RequestState {
 	queryParams := c.queryParamsKeyValueCtrl.ToState()
 	pathParams := c.pathParamsKeyValueCtrl.ToState()
 	headers := c.headersKeyValueCtrl.ToState()
-	body := c.Body.ToState()
+	body := c.requestBodyCtrl.ToState()
 	return RequestState{
 		QueryParams: queryParams,
 		PathParams:  pathParams,
@@ -118,5 +70,41 @@ func (c *Controller) LoadState(requestState RequestState) {
 	c.queryParamsKeyValueCtrl.LoadState(requestState.QueryParams)
 	c.pathParamsKeyValueCtrl.LoadState(requestState.PathParams)
 	c.headersKeyValueCtrl.LoadState(requestState.Headers)
-	c.Body.LoadState(requestState.Body)
+	c.requestBodyCtrl.LoadState(requestState.Body)
+}
+
+func (c *Controller) Validate() error {
+	err := c.queryParamsKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	err = c.pathParamsKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	err = c.headersKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	return c.requestBodyCtrl.Validate()
+}
+
+func (c *Controller) GetRequestBodyFormMap() map[string]string {
+	return c.requestBodyCtrl.GetBodyFormMap()
+}
+
+func (c *Controller) GetRequestBodyRaw() string {
+	return c.requestBodyCtrl.GetBodyRaw()
+}
+
+func (c *Controller) GetRequestBodyType() string {
+	return c.requestBodyCtrl.GetBodyType()
+}
+
+func (c *Controller) SetBodyTypeSelectEnabled(enabled bool) {
+	c.requestBodyCtrl.SetBodyTypeSelectEnabled(enabled)
+}
+
+func (c *Controller) FormatBodyRaw() {
+	c.requestBodyCtrl.FormatBodyRaw()
 }

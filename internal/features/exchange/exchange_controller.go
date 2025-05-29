@@ -9,7 +9,6 @@ import (
 	"dumbky/internal/global"
 	"dumbky/internal/log"
 	"dumbky/internal/requesthelper"
-	"dumbky/internal/utils"
 	"errors"
 
 	"fyne.io/fyne/v2"
@@ -44,14 +43,13 @@ func NewController() *Controller {
 		method := exchangeHeaderCtrl.GetMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
-			requestCtrl.SetRequestBodyType(constants.UI_BODY_TYPE_NONE)
-			requestCtrl.DisableRequestBodyTypeSelect()
+			requestCtrl.SetBodyTypeSelectEnabled(false)
 		} else if method == constants.HTTP_METHOD_DELETE ||
 			method == constants.HTTP_METHOD_OPTIONS ||
 			method == constants.HTTP_METHOD_PATCH ||
 			method == constants.HTTP_METHOD_POST ||
 			method == constants.HTTP_METHOD_PUT {
-			requestCtrl.EnableRequestBodyTypeSelect()
+			requestCtrl.SetBodyTypeSelectEnabled(true)
 		} else {
 			log.Error(errors.New("invalid http method"))
 		}
@@ -81,11 +79,7 @@ func (c *Controller) LoadState(exchangeState ExchangeState) {
 }
 
 func (c *Controller) setLoading(loading bool) {
-	if loading {
-		c.exchangeHeaderCtrl.DisableSend()
-	} else {
-		c.exchangeHeaderCtrl.EnableSend()
-	}
+	c.exchangeHeaderCtrl.SetSendEnabled(!loading)
 	c.responseCtrl.SetLoading(loading)
 }
 
@@ -114,8 +108,7 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 			if bodyType != constants.UI_BODY_TYPE_RAW {
 				return
 			}
-			bodyRaw := c.requestCtrl.GetRequestBodyRaw()
-			c.requestCtrl.SetRequestBodyRaw(utils.SmartFormat(bodyRaw))
+			c.requestCtrl.FormatBodyRaw()
 		})
 	}()
 
@@ -127,59 +120,32 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 	}
 
 	fyne.Do(func() {
-		c.responseCtrl.SetResponse(responsePayload)
+		c.responseCtrl.Set(responsePayload)
 	})
 }
 
 func (c *Controller) renderRequestConfig() (requesthelper.RequestConfig, error) {
-	url := c.exchangeHeaderCtrl.GetURL()
-	err := c.exchangeHeaderCtrl.ValidateURL()
+	err := c.exchangeHeaderCtrl.Validate()
 	if err != nil {
 		log.Warn(err)
 		return requesthelper.RequestConfig{}, err
 	}
+	err = c.requestCtrl.Validate()
+	if err != nil {
+		log.Error(err)
+		return requesthelper.RequestConfig{}, err
+	}
 
+	url := c.exchangeHeaderCtrl.GetURL()
 	method := c.exchangeHeaderCtrl.GetMethod()
-
 	useSSL := c.exchangeHeaderCtrl.GetUseSSL()
 
 	headers := c.requestCtrl.GetHeadersMap()
-
-	err = c.requestCtrl.ValidateHeaders()
-	if err != nil {
-		log.Error(err)
-		return requesthelper.RequestConfig{}, err
-	}
-
 	queryParams := c.requestCtrl.GetQueryParamsMap()
-	err = c.requestCtrl.ValidateQueryParams()
-	if err != nil {
-		log.Error(err)
-		return requesthelper.RequestConfig{}, err
-	}
-
 	pathParams := c.requestCtrl.GetPathParamsMap()
-	err = c.requestCtrl.ValidatePathParams()
-	if err != nil {
-		log.Error(err)
-		return requesthelper.RequestConfig{}, err
-	}
-
 	bodyType := c.requestCtrl.GetRequestBodyType()
 	bodyRaw := c.requestCtrl.GetRequestBodyRaw()
-
-	err = c.requestCtrl.ValidateRequestBodyRaw()
-	if err != nil && bodyType == constants.UI_BODY_TYPE_RAW {
-		log.Warn(err)
-		return requesthelper.RequestConfig{}, err
-	}
-
 	bodyForm := c.requestCtrl.GetRequestBodyFormMap()
-	err = c.requestCtrl.ValidateRequestBodyForm()
-	if err != nil && (bodyType == constants.UI_BODY_TYPE_FORM) {
-		log.Warn(err)
-		return requesthelper.RequestConfig{}, err
-	}
 
 	return requesthelper.RequestConfig{
 		URL:         url,

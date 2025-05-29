@@ -40,14 +40,6 @@ func (c *Controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) Hide() {
-	c.view.hide()
-}
-
-func (c *Controller) Show() {
-	c.view.show()
-}
-
 func (c *Controller) ToState() KeyValueEditorState {
 	keyValueStates := []keyvalue.KeyValueState{}
 	for keyValue := range c.keyValueCtrls {
@@ -66,14 +58,17 @@ func (c *Controller) LoadState(keyValueEditorState KeyValueEditorState) {
 	}
 }
 
+func (c *Controller) SetVisible(visible bool) {
+	if visible {
+		c.view.show()
+	} else {
+		c.view.hide()
+	}
+}
+
 func (c *Controller) Validate() error {
 	for _, keyValueCtrl := range c.collectEnabled() {
-		err := keyValueCtrl.ValidateKey()
-		if err != nil {
-			log.Warn(err)
-			return err
-		}
-		err = keyValueCtrl.ValidateValue()
+		err := keyValueCtrl.Validate()
 		if err != nil {
 			log.Warn(err)
 			return err
@@ -82,11 +77,10 @@ func (c *Controller) Validate() error {
 	return nil
 }
 
-func (c *Controller) GetMap() map[string]string {
+func (c *Controller) Get() map[string]string {
 	out := make(map[string]string)
 	for _, keyValueCtrl := range c.collectEnabled() {
-		key := keyValueCtrl.GetKey()
-		value := keyValueCtrl.GetValue()
+		key, value := keyValueCtrl.Get()
 		out[key] = value
 	}
 	return out

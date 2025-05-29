@@ -58,12 +58,12 @@ func (c *Controller) SetSendHandler(handler func()) {
 	c.view.setSendHandler(handler)
 }
 
-func (c *Controller) EnableSend() {
-	c.view.enableSend()
-}
-
-func (c *Controller) DisableSend() {
-	c.view.disableSend()
+func (c *Controller) SetSendEnabled(enabled bool) {
+	if enabled {
+		c.view.enableSend()
+	} else {
+		c.view.disableSend()
+	}
 }
 
 func (c *Controller) ToState() ExchangeHeaderState {
@@ -84,6 +84,6 @@ func (c *Controller) LoadState(exchangeHeaderState ExchangeHeaderState) {
 	c.model.setUseSSL(exchangeHeaderState.UseSSL)
 }
 
-func (c *Controller) ValidateURL() error {
+func (c *Controller) Validate() error {
 	return c.view.validateURL()
 }

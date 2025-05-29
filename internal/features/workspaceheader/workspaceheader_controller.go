@@ -47,3 +47,5 @@ func (c *Controller) SetAddHandler(handler func()) {
 func (c *Controller) SetSaveHandler(handler func()) {
 	c.view.setSaveHandler(handler)
 }
+
+// TODO: validate request name?

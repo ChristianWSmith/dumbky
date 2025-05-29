@@ -36,18 +36,6 @@ func (c *Controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) SetStatus(s string) {
-	c.model.setStatus(s)
-}
-
-func (c *Controller) SetTime(s string) {
-	c.model.setTime(s)
-}
-
-func (c *Controller) SetBody(s string) {
-	c.model.setBody(s)
-}
-
 func (c *Controller) SetLoading(loading bool) {
 	c.view.setLoading(loading)
 	if loading {
@@ -57,7 +45,7 @@ func (c *Controller) SetLoading(loading bool) {
 	}
 }
 
-func (c *Controller) SetResponse(responsePayload requesthelper.ResponsePayload) {
+func (c *Controller) Set(responsePayload requesthelper.ResponsePayload) {
 	c.model.setResponse(
 		responsePayload.Status,
 		responsePayload.Time,

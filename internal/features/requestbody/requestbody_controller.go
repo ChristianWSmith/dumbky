@@ -5,6 +5,7 @@ import (
 	"dumbky/internal/features"
 	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/log"
+	"dumbky/internal/utils"
 	"dumbky/internal/validators"
 	"errors"
 
@@ -38,27 +39,7 @@ func NewController() *Controller {
 }
 
 func (c *Controller) GetBodyFormMap() map[string]string {
-	return c.bodyFormKeyValueCtrl.GetMap()
-}
-
-func (c *Controller) ValidateBodyForm() error {
-	return c.bodyFormKeyValueCtrl.Validate()
-}
-
-func (c *Controller) showBodyType() {
-	bodyType := c.model.getBodyType()
-	if bodyType == constants.UI_BODY_TYPE_FORM {
-		c.bodyFormKeyValueCtrl.Show()
-		c.view.hideBodyRaw()
-	} else if bodyType == constants.UI_BODY_TYPE_RAW {
-		c.bodyFormKeyValueCtrl.Hide()
-		c.view.showBodyRaw()
-	} else if bodyType == constants.UI_BODY_TYPE_NONE {
-		c.bodyFormKeyValueCtrl.Hide()
-		c.view.hideBodyRaw()
-	} else {
-		log.Error(errors.New("invalid body type"))
-	}
+	return c.bodyFormKeyValueCtrl.Get()
 }
 
 func (c *Controller) CanvasObject() fyne.CanvasObject {
@@ -79,16 +60,21 @@ func (c *Controller) LoadState(requestBodyState RequestBodyState) {
 	c.model.setBodyRaw(requestBodyState.BodyRaw)
 }
 
-func (c *Controller) ValidateBodyRaw() error {
-	return c.view.validateBodyRaw()
+func (c *Controller) Validate() error {
+	err := c.view.validateBodyRaw()
+	if err != nil {
+		return err
+	}
+	return c.bodyFormKeyValueCtrl.Validate()
 }
 
-func (c *Controller) EnableBodyTypeSelect() {
-	c.view.enabledBodyTypeSelect()
-}
-
-func (c *Controller) DisableBodyTypeSelect() {
-	c.view.disabledBodyTypeSelect()
+func (c *Controller) SetBodyTypeSelectEnabled(enabled bool) {
+	if enabled {
+		c.view.enabledBodyTypeSelect()
+	} else {
+		c.view.disabledBodyTypeSelect()
+		c.model.setBodyType(constants.UI_BODY_TYPE_NONE)
+	}
 }
 
 func (c *Controller) GetBodyType() string {
@@ -99,10 +85,22 @@ func (c *Controller) GetBodyRaw() string {
 	return c.model.getBodyRaw()
 }
 
-func (c *Controller) SetBodyRaw(bodyRaw string) {
-	c.model.setBodyRaw(bodyRaw)
+func (c *Controller) FormatBodyRaw() {
+	c.model.setBodyRaw(utils.SmartFormat(c.model.getBodyRaw()))
 }
 
-func (c *Controller) SetBodyType(bodyType string) {
-	c.model.setBodyType(bodyType)
+func (c *Controller) showBodyType() {
+	bodyType := c.model.getBodyType()
+	if bodyType == constants.UI_BODY_TYPE_FORM {
+		c.bodyFormKeyValueCtrl.SetVisible(true)
+		c.view.hideBodyRaw()
+	} else if bodyType == constants.UI_BODY_TYPE_RAW {
+		c.bodyFormKeyValueCtrl.SetVisible(false)
+		c.view.showBodyRaw()
+	} else if bodyType == constants.UI_BODY_TYPE_NONE {
+		c.bodyFormKeyValueCtrl.SetVisible(false)
+		c.view.hideBodyRaw()
+	} else {
+		log.Error(errors.New("invalid body type"))
+	}
 }

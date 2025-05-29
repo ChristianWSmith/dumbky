@@ -36,10 +36,6 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	return c
 }
 
-func (c *Controller) SetDestroyHandler(handler func()) {
-	c.view.setDestroyHandler(handler)
-}
-
 func (c *Controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
@@ -48,26 +44,26 @@ func (c *Controller) ToState() KeyValueState {
 	return c.model.toState()
 }
 
-func (c *Controller) LoadState(kvs KeyValueState) {
-	c.model.loadState(kvs)
+func (c *Controller) LoadState(state KeyValueState) {
+	c.model.loadState(state)
+}
+
+func (c *Controller) SetDestroyHandler(handler func()) {
+	c.view.setDestroyHandler(handler)
 }
 
 func (c *Controller) IsEnabled() bool {
 	return c.model.isEnabled()
 }
 
-func (c *Controller) ValidateKey() error {
-	return c.view.validateKey()
-}
-
-func (c *Controller) ValidateValue() error {
+func (c *Controller) Validate() error {
+	err := c.view.validateKey()
+	if err != nil {
+		return err
+	}
 	return c.view.validateValue()
 }
 
-func (c *Controller) GetKey() string {
-	return c.model.getKey()
-}
-
-func (c *Controller) GetValue() string {
-	return c.model.getValue()
+func (c *Controller) Get() (key, value string) {
+	return c.model.getKey(), c.model.getValue()
 }

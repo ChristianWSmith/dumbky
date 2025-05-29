@@ -30,10 +30,6 @@ func (c *Controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) SetSelectedRequestListener(handler func()) {
-	c.collectionsBrowserCtrl.SetSelectedRequestListener(handler)
-}
-
 func (c *Controller) GetSelectedCollection() string {
 	return c.collectionsBrowserCtrl.GetSelectedCollection()
 }
@@ -42,8 +38,8 @@ func (c *Controller) GetSelectedRequest() string {
 	return c.collectionsBrowserCtrl.GetSelectedRequest()
 }
 
-func (c *Controller) SetSelectedRequest(requestName string) {
-	c.collectionsBrowserCtrl.SetSelectedRequest(requestName)
+func (c *Controller) SetSelectedRequestCallback(callback func()) {
+	c.collectionsBrowserCtrl.SetSelectedRequestCallback(callback)
 }
 
 func (c *Controller) LazyRefreshAndShowRequests() {
