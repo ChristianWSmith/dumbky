@@ -3,13 +3,14 @@ package exchange
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
-	"dumbky/internal/features/exchangeheader"
 	"dumbky/internal/features/request"
 	"dumbky/internal/features/response"
 	"dumbky/internal/global"
 	"dumbky/internal/log"
 	"dumbky/internal/requesthelper"
-	"errors"
+	"dumbky/internal/utils"
+	"dumbky/internal/validators"
+	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
@@ -19,41 +20,50 @@ type controller struct {
 	model *model
 	view  *view
 
-	exchangeHeaderCtrl exchangeheader.ExchangeHeaderController
-	requestCtrl        request.RequestController
-	responseCtrl       response.ResponseController
+	requestCtrl  request.RequestController
+	responseCtrl response.ResponseController
 }
 
 type ExchangeController interface {
 	features.Controller
 	ToState() ExchangeState
 	LoadState(exchangeState ExchangeState)
+	GetMethod() string
+	GetURL() string
+	GetUseSSL() bool
+	SetMethodListener(handler func())
+	SetSendHandler(handler func())
+	SetSendEnabled(enabled bool)
+	Validate() error
 }
 
 var _ ExchangeController = (*controller)(nil)
 
 func New() ExchangeController {
-	exchangeHeaderCtrl := exchangeheader.NewController()
 	requestCtrl := request.New()
 	responseCtrl := response.New()
-	return newController(exchangeHeaderCtrl, requestCtrl, responseCtrl)
+	return newController(requestCtrl, responseCtrl)
 }
 
 func newController(
-	exchangeHeaderCtrl exchangeheader.ExchangeHeaderController,
 	requestCtrl request.RequestController,
 	responseCtrl response.ResponseController) *controller {
 
 	c := &controller{
-		model:              newModel(),
-		view:               newView(exchangeHeaderCtrl.CanvasObject(), requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
-		exchangeHeaderCtrl: exchangeHeaderCtrl,
-		requestCtrl:        requestCtrl,
-		responseCtrl:       responseCtrl,
+		model:        newModel(),
+		view:         newView(requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
+		requestCtrl:  requestCtrl,
+		responseCtrl: responseCtrl,
 	}
 
-	exchangeHeaderCtrl.SetMethodListener(func() {
-		method := exchangeHeaderCtrl.GetMethod()
+	c.view.methodSelect.Bind(c.model.methodBinding)
+	c.view.urlEntry.Bind(c.model.urlBinding)
+	c.view.sslCheck.Bind(c.model.useSSLBinding)
+
+	c.view.setUrlValidator(validators.ValidateURL)
+
+	c.SetMethodListener(func() {
+		method := c.model.getMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
 			requestCtrl.SetBodyTypeSelectEnabled(false)
@@ -64,11 +74,11 @@ func newController(
 			method == constants.HTTP_METHOD_PUT {
 			requestCtrl.SetBodyTypeSelectEnabled(true)
 		} else {
-			log.Error(errors.New("invalid http method"))
+			log.Error(fmt.Errorf("invalid http method %s", method))
 		}
 	})
 
-	exchangeHeaderCtrl.SetSendHandler(func() {
+	c.SetSendHandler(func() {
 		c.sendButtonHandler()
 	})
 
@@ -81,18 +91,26 @@ func (c *controller) CanvasObject() fyne.CanvasObject {
 
 func (c *controller) ToState() ExchangeState {
 	return ExchangeState{
-		Header:  c.exchangeHeaderCtrl.ToState(),
+		Method:  c.model.getMethod(),
+		URL:     c.model.getURL(),
+		UseSSL:  c.model.getUseSSL(),
 		Request: c.requestCtrl.ToState(),
 	}
 }
 
 func (c *controller) LoadState(exchangeState ExchangeState) {
+	method := exchangeState.Method
+	if !utils.ElementInSlice(constants.HttpMethods(), method) {
+		method = constants.HTTP_METHOD_DEFAULT
+	}
+	c.model.setMethod(method)
+	c.model.setURL(exchangeState.URL)
+	c.model.setUseSSL(exchangeState.UseSSL)
 	c.requestCtrl.LoadState(exchangeState.Request)
-	c.exchangeHeaderCtrl.LoadState(exchangeState.Header)
 }
 
 func (c *controller) setLoading(loading bool) {
-	c.exchangeHeaderCtrl.SetSendEnabled(!loading)
+	c.SetSendEnabled(!loading)
 	c.responseCtrl.SetLoading(loading)
 }
 
@@ -138,7 +156,7 @@ func (c *controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 }
 
 func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) {
-	err := c.exchangeHeaderCtrl.Validate()
+	err := c.Validate()
 	if err != nil {
 		log.Warn(err)
 		return requesthelper.RequestConfig{}, err
@@ -149,9 +167,9 @@ func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) 
 		return requesthelper.RequestConfig{}, err
 	}
 
-	url := c.exchangeHeaderCtrl.GetURL()
-	method := c.exchangeHeaderCtrl.GetMethod()
-	useSSL := c.exchangeHeaderCtrl.GetUseSSL()
+	url := c.GetURL()
+	method := c.GetMethod()
+	useSSL := c.GetUseSSL()
 
 	headers := c.requestCtrl.GetHeadersMap()
 	queryParams := c.requestCtrl.GetQueryParamsMap()
@@ -171,4 +189,36 @@ func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) 
 		BodyRaw:     bodyRaw,
 		BodyForm:    bodyForm,
 	}, nil
+}
+
+func (c *controller) GetMethod() string {
+	return c.model.getMethod()
+}
+
+func (c *controller) GetURL() string {
+	return c.model.getURL()
+}
+
+func (c *controller) GetUseSSL() bool {
+	return c.model.getUseSSL()
+}
+
+func (c *controller) SetMethodListener(handler func()) {
+	c.model.setMethodListener(handler)
+}
+
+func (c *controller) SetSendHandler(handler func()) {
+	c.view.setSendHandler(handler)
+}
+
+func (c *controller) SetSendEnabled(enabled bool) {
+	if enabled {
+		c.view.enableSend()
+	} else {
+		c.view.disableSend()
+	}
+}
+
+func (c *controller) Validate() error {
+	return c.view.validateURL()
 }

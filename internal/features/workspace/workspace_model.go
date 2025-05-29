@@ -7,15 +7,19 @@ import (
 	"dumbky/internal/log"
 	"encoding/json"
 	"fmt"
+
+	"fyne.io/fyne/v2/data/binding"
 )
 
 type model struct {
-	documentDataMap map[documentId]documentData
+	documentDataMap    map[documentId]documentData
+	requestNameBinding binding.String
 }
 
 func newModel() *model {
 	return &model{
-		documentDataMap: make(map[documentId]documentData),
+		documentDataMap:    make(map[documentId]documentData),
+		requestNameBinding: binding.NewString(),
 	}
 }
 
@@ -82,4 +86,17 @@ func requestToDocumentState(request db.Request) (DocumentState, error) {
 	}
 
 	return document, nil
+}
+
+func (m *model) setRequestNameListener(handler func()) {
+	m.requestNameBinding.AddListener(binding.NewDataListener(handler))
+}
+
+func (m *model) getRequestName() string {
+	requestName, _ := m.requestNameBinding.Get()
+	return requestName
+}
+
+func (m *model) setRequestName(requestName string) {
+	m.requestNameBinding.Set(requestName)
 }

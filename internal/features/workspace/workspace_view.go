@@ -5,23 +5,41 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 type view struct {
-	ui              *fyne.Container
-	exchangeTabs    *container.DocTabs
-	documentViewMap map[*container.TabItem]documentId
+	ui               *fyne.Container
+	exchangeTabs     *container.DocTabs
+	documentViewMap  map[*container.TabItem]documentId
+	requestNameEntry *widget.Entry
+	addButton        *widget.Button
+	saveButton       *widget.Button
 }
 
-func newView(workspaceHeaderUI fyne.CanvasObject) *view {
+func newView() *view {
 
 	exchangeTabs := container.NewDocTabs()
+	requestNameEntry := widget.NewEntry()
+
+	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
+
+	saveButton := widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), nil)
+
+	controlsLeft := container.NewHBox(addButton)
+	controlsRight := container.NewHBox(saveButton)
+
+	workspaceHeaderUI := container.NewBorder(nil, nil, controlsLeft, controlsRight, requestNameEntry)
 
 	ui := container.NewBorder(workspaceHeaderUI, nil, nil, nil, exchangeTabs)
 	return &view{
-		ui:              ui,
-		exchangeTabs:    exchangeTabs,
-		documentViewMap: make(map[*container.TabItem]documentId),
+		ui:               ui,
+		exchangeTabs:     exchangeTabs,
+		documentViewMap:  make(map[*container.TabItem]documentId),
+		requestNameEntry: requestNameEntry,
+		addButton:        addButton,
+		saveButton:       saveButton,
 	}
 }
 
@@ -77,4 +95,12 @@ func (v *view) addDocumentTab(id documentId, collectionName, requestName string,
 
 func formatTabText(collectionName, requestName string) string {
 	return fmt.Sprintf("%s / %s", collectionName, requestName)
+}
+
+func (v *view) setAddHandler(handler func()) {
+	v.addButton.OnTapped = handler
+}
+
+func (v *view) setSaveHandler(handler func()) {
+	v.saveButton.OnTapped = handler
 }

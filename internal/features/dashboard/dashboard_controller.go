@@ -3,17 +3,17 @@ package dashboard
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
-	"dumbky/internal/features/dashboardsidebar"
+	"dumbky/internal/features/collectionsbrowser"
 	"dumbky/internal/features/workspace"
 
 	"fyne.io/fyne/v2"
 )
 
 type controller struct {
-	model                *model
-	view                 *view
-	dashboardSidebarCtrl dashboardsidebar.DashboardSidebarController
-	workspaceCtrl        workspace.WorkspaceController
+	model                  *model
+	view                   *view
+	collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController
+	workspaceCtrl          workspace.WorkspaceController
 }
 
 type DashboardController interface {
@@ -23,25 +23,25 @@ type DashboardController interface {
 var _ DashboardController = (*controller)(nil)
 
 func New() DashboardController {
-	dashboardSidebarCtrl := dashboardsidebar.New()
+	collectionsBrowserCtrl := collectionsbrowser.New()
 	workspaceCtrl := workspace.New()
-	return newController(dashboardSidebarCtrl, workspaceCtrl)
+	return newController(collectionsBrowserCtrl, workspaceCtrl)
 }
 
-func newController(dashboardSidebarCtrl dashboardsidebar.DashboardSidebarController, workspaceCtrl workspace.WorkspaceController) *controller {
+func newController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController, workspaceCtrl workspace.WorkspaceController) *controller {
 	model := newModel()
-	view := newView(dashboardSidebarCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
+	view := newView(collectionsBrowserCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
 
 	c := &controller{
-		model:                model,
-		view:                 view,
-		dashboardSidebarCtrl: dashboardSidebarCtrl,
-		workspaceCtrl:        workspaceCtrl,
+		model:                  model,
+		view:                   view,
+		collectionsBrowserCtrl: collectionsBrowserCtrl,
+		workspaceCtrl:          workspaceCtrl,
 	}
 
-	c.dashboardSidebarCtrl.SetSelectedRequestCallback(func() {
-		collectionName := c.dashboardSidebarCtrl.GetSelectedCollection()
-		requestName := c.dashboardSidebarCtrl.GetSelectedRequest()
+	c.collectionsBrowserCtrl.SetSelectedRequestCallback(func() {
+		collectionName := c.collectionsBrowserCtrl.GetSelectedCollection()
+		requestName := c.collectionsBrowserCtrl.GetSelectedRequest()
 		if collectionName == "" || requestName == "" {
 			return
 		}
@@ -49,7 +49,7 @@ func newController(dashboardSidebarCtrl dashboardsidebar.DashboardSidebarControl
 	})
 
 	c.workspaceCtrl.SetAddHandler(func() {
-		collectionName := c.dashboardSidebarCtrl.GetSelectedCollection()
+		collectionName := c.collectionsBrowserCtrl.GetSelectedCollection()
 
 		if collectionName == "" {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
@@ -67,7 +67,7 @@ func newController(dashboardSidebarCtrl dashboardsidebar.DashboardSidebarControl
 				// collections view in the browser at that time, they should see
 				// the updated collections list.  this is an edge case and maybe
 				// shouldn't even be addressed.
-				c.dashboardSidebarCtrl.LazyRefreshAndShowRequests()
+				c.collectionsBrowserCtrl.LazyRefreshAndShowRequests()
 			})
 		})
 	})

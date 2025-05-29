@@ -5,7 +5,6 @@ import (
 	"dumbky/internal/db"
 	"dumbky/internal/features"
 	"dumbky/internal/features/exchange"
-	"dumbky/internal/features/workspaceheader"
 	"dumbky/internal/log"
 
 	"fyne.io/fyne/v2"
@@ -14,10 +13,9 @@ import (
 )
 
 type controller struct {
-	model               *model
-	view                *view
-	workspaceHeaderCtrl workspaceheader.WorkspaceHeaderController
-	exchangeCtrlMap     map[documentId]exchange.ExchangeController
+	model           *model
+	view            *view
+	exchangeCtrlMap map[documentId]exchange.ExchangeController
 }
 
 type WorkspaceController interface {
@@ -27,6 +25,10 @@ type WorkspaceController interface {
 	OpenTab(document DocumentState)
 	SaveTab(callback func()) error
 	LoadTab(collectionName, requestName string)
+
+	GetRequestName() string
+	SetRequestName(requestName string)
+	SetRequestNameListener(handler func())
 }
 
 var _ WorkspaceController = (*controller)(nil)
@@ -34,25 +36,25 @@ var _ WorkspaceController = (*controller)(nil)
 type documentId string
 
 func New() WorkspaceController {
-	workspaceHeaderCtrl := workspaceheader.New()
-	return newController(workspaceHeaderCtrl)
+	return newController()
 }
 
-func newController(workspaceHeaderCtrl workspaceheader.WorkspaceHeaderController) *controller {
+func newController() *controller {
 	model := newModel()
-	view := newView(workspaceHeaderCtrl.CanvasObject())
+	view := newView()
+
+	view.requestNameEntry.Bind(model.requestNameBinding)
 
 	c := &controller{
-		model:               model,
-		view:                view,
-		workspaceHeaderCtrl: workspaceHeaderCtrl,
-		exchangeCtrlMap:     make(map[documentId]exchange.ExchangeController),
+		model:           model,
+		view:            view,
+		exchangeCtrlMap: make(map[documentId]exchange.ExchangeController),
 	}
 
 	c.view.setDocumentSelectedHandler(func(tabItem *container.TabItem) {
 		tabId := c.view.getDocumentId(tabItem)
 		documentData := c.model.getDocumentData(tabId)
-		c.workspaceHeaderCtrl.SetRequestName(documentData.requestName)
+		c.SetRequestName(documentData.requestName)
 	})
 
 	c.view.setDocumentClosedHandler(func(tabItem *container.TabItem) {
@@ -67,9 +69,9 @@ func newController(workspaceHeaderCtrl workspaceheader.WorkspaceHeaderController
 
 	c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 
-	c.workspaceHeaderCtrl.SetRequestNameListener(func() {
+	c.SetRequestNameListener(func() {
 		id := c.view.getSelectedDocumentId()
-		c.model.updateRequestName(id, workspaceHeaderCtrl.GetRequestName())
+		c.model.updateRequestName(id, c.GetRequestName())
 		documentData := c.model.getDocumentData(id)
 		if documentData.requestName == "" {
 			c.view.setSelectedDocumentText(documentData.collectionName, constants.UI_PLACEHOLDER_UNTITLED)
@@ -85,14 +87,6 @@ func newController(workspaceHeaderCtrl workspaceheader.WorkspaceHeaderController
 
 func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
-}
-
-func (c *controller) SetAddHandler(handler func()) {
-	c.workspaceHeaderCtrl.SetAddHandler(handler)
-}
-
-func (c *controller) SetSaveHandler(handler func()) {
-	c.workspaceHeaderCtrl.SetSaveHandler(handler)
 }
 
 func (c *controller) OpenTab(document DocumentState) {
@@ -155,4 +149,24 @@ func (c *controller) LoadTab(collectionName, requestName string) {
 			c.OpenTab(document)
 		})
 	}()
+}
+
+func (c *controller) GetRequestName() string {
+	return c.model.getRequestName()
+}
+
+func (c *controller) SetRequestName(requestName string) {
+	c.model.setRequestName(requestName)
+}
+
+func (c *controller) SetRequestNameListener(handler func()) {
+	c.model.setRequestNameListener(handler)
+}
+
+func (c *controller) SetAddHandler(handler func()) {
+	c.view.setAddHandler(handler)
+}
+
+func (c *controller) SetSaveHandler(handler func()) {
+	c.view.setSaveHandler(handler)
 }

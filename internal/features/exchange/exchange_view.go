@@ -1,22 +1,70 @@
 package exchange
 
 import (
+	"dumbky/internal/constants"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 type view struct {
-	ui fyne.CanvasObject
+	ui         fyne.CanvasObject
+	sendButton *widget.Button
+
+	urlEntry     *widget.Entry
+	sslCheck     *widget.Check
+	methodSelect *widget.Select
 }
 
-func newView(headerUI, requestUI, responseUI fyne.CanvasObject) *view {
+func newView(requestUI, responseUI fyne.CanvasObject) *view {
+
+	methodSelect := widget.NewSelect(constants.HttpMethods(), nil)
+	urlEntry := widget.NewEntry()
+	urlEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_URL)
+	urlEntry.TextStyle.Monospace = true
+	sslCheck := widget.NewCheck(constants.UI_LABEL_SSL, nil)
+	sendButton := widget.NewButton(constants.UI_LABEL_SEND, nil)
+	sendButton.Icon = sendButton.Theme().Icon(theme.IconNameMailSend)
+
+	methodSelect.SetSelected(constants.HTTP_METHOD_DEFAULT)
+
+	sslSend := container.NewHBox(sslCheck, sendButton)
+	headerUI := container.NewBorder(nil, nil, methodSelect, sslSend, urlEntry)
+
 	requestResponseView := container.NewHSplit(requestUI, responseUI)
 	ui := container.NewBorder(headerUI, nil, nil, nil, requestResponseView)
 	return &view{
-		ui: ui,
+		ui:           ui,
+		sendButton:   sendButton,
+		urlEntry:     urlEntry,
+		sslCheck:     sslCheck,
+		methodSelect: methodSelect,
 	}
 }
 
 func (v *view) canvasObject() fyne.CanvasObject {
 	return v.ui
+}
+
+func (v *view) setUrlValidator(validator func(string) error) {
+	v.urlEntry.Validator = validator
+}
+
+func (v *view) setSendHandler(handler func()) {
+	v.sendButton.OnTapped = handler
+
+}
+
+func (v *view) enableSend() {
+	v.sendButton.Enable()
+}
+
+func (v *view) disableSend() {
+	v.sendButton.Disable()
+}
+
+func (v *view) validateURL() error {
+	return v.urlEntry.Validate()
 }
