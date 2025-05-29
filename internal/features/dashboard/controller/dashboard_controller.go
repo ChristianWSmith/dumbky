@@ -10,18 +10,18 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type controller struct {
+type controllerImpl struct {
 	model                  model.Model
 	view                   view.View
 	collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController
 	workspaceCtrl          workspace.WorkspaceController
 }
 
-func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController, workspaceCtrl workspace.WorkspaceController) *controller {
+func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController, workspaceCtrl workspace.WorkspaceController) *controllerImpl {
 	model := model.NewModel()
 	view := view.NewView(collectionsBrowserCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
 
-	c := &controller{
+	c := &controllerImpl{
 		model:                  model,
 		view:                   view,
 		collectionsBrowserCtrl: collectionsBrowserCtrl,
@@ -64,6 +64,6 @@ func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 	return c
 }
 
-func (c *controller) CanvasObject() fyne.CanvasObject {
+func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
 	return c.view.CanvasObject()
 }

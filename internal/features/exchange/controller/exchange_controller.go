@@ -18,7 +18,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 )
 
-type controller struct {
+type controllerImpl struct {
 	model model.Model
 	view  view.View
 
@@ -28,9 +28,9 @@ type controller struct {
 
 func NewController(
 	requestCtrl request.RequestController,
-	responseCtrl response.ResponseController) *controller {
+	responseCtrl response.ResponseController) *controllerImpl {
 
-	c := &controller{
+	c := &controllerImpl{
 		model:        model.NewModel(),
 		view:         view.NewView(requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
 		requestCtrl:  requestCtrl,
@@ -68,11 +68,11 @@ func NewController(
 	return c
 }
 
-func (c *controller) CanvasObject() fyne.CanvasObject {
+func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
 	return c.view.CanvasObject()
 }
 
-func (c *controller) ToState() state.ExchangeState {
+func (c *controllerImpl) ToState() state.ExchangeState {
 	return state.ExchangeState{
 		Method:  c.model.GetMethod(),
 		URL:     c.model.GetURL(),
@@ -81,7 +81,7 @@ func (c *controller) ToState() state.ExchangeState {
 	}
 }
 
-func (c *controller) LoadState(exchangeState state.ExchangeState) {
+func (c *controllerImpl) LoadState(exchangeState state.ExchangeState) {
 	method := exchangeState.Method
 	if !utils.ElementInSlice(constants.HttpMethods(), method) {
 		method = constants.HTTP_METHOD_DEFAULT
@@ -92,7 +92,7 @@ func (c *controller) LoadState(exchangeState state.ExchangeState) {
 	c.requestCtrl.LoadState(exchangeState.Request)
 }
 
-func (c *controller) Validate() error {
+func (c *controllerImpl) Validate() error {
 	err := c.requestCtrl.Validate()
 	if err != nil {
 		return err
@@ -100,7 +100,7 @@ func (c *controller) Validate() error {
 	return c.view.ValidateURL()
 }
 
-func (c *controller) setSendEnabled(enabled bool) {
+func (c *controllerImpl) setSendEnabled(enabled bool) {
 	if enabled {
 		c.view.EnableSend()
 	} else {
@@ -108,12 +108,12 @@ func (c *controller) setSendEnabled(enabled bool) {
 	}
 }
 
-func (c *controller) setLoading(loading bool) {
+func (c *controllerImpl) setLoading(loading bool) {
 	c.setSendEnabled(!loading)
 	c.responseCtrl.SetLoading(loading)
 }
 
-func (c *controller) sendButtonHandler() {
+func (c *controllerImpl) sendButtonHandler() {
 	c.setLoading(true)
 
 	requestPayload, err := c.renderRequestConfig()
@@ -127,7 +127,7 @@ func (c *controller) sendButtonHandler() {
 	go c.sendRequestWorker(requestPayload)
 }
 
-func (c *controller) sendRequestWorker(requestConfig requesthelper.RequestConfig) {
+func (c *controllerImpl) sendRequestWorker(requestConfig requesthelper.RequestConfig) {
 	defer fyne.Do(func() {
 		c.setLoading(false)
 	})
@@ -154,7 +154,7 @@ func (c *controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 	})
 }
 
-func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) {
+func (c *controllerImpl) renderRequestConfig() (requesthelper.RequestConfig, error) {
 	err := c.Validate()
 	if err != nil {
 		log.Warn(err)
