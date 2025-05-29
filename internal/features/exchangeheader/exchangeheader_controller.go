@@ -9,18 +9,35 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 }
 
-var _ features.Controller = (*Controller)(nil)
+type ExchangeHeaderController interface {
+	features.Controller
+	GetMethod() string
+	GetURL() string
+	GetUseSSL() bool
+	SetMethodListener(handler func())
+	SetSendHandler(handler func())
+	SetSendEnabled(enabled bool)
+	ToState() ExchangeHeaderState
+	LoadState(exchangeHeaderState ExchangeHeaderState)
+	Validate() error
+}
 
-func NewController() *Controller {
+var _ ExchangeHeaderController = (*controller)(nil)
+
+func NewController() ExchangeHeaderController {
+	return newController()
+}
+
+func newController() *controller {
 	model := newModel()
 	view := newView()
 
-	c := &Controller{
+	c := &controller{
 		model: model,
 		view:  view,
 	}
@@ -34,31 +51,31 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) GetMethod() string {
+func (c *controller) GetMethod() string {
 	return c.model.getMethod()
 }
 
-func (c *Controller) GetURL() string {
+func (c *controller) GetURL() string {
 	return c.model.getURL()
 }
 
-func (c *Controller) GetUseSSL() bool {
+func (c *controller) GetUseSSL() bool {
 	return c.model.getUseSSL()
 }
 
-func (c *Controller) SetMethodListener(handler func()) {
+func (c *controller) SetMethodListener(handler func()) {
 	c.model.setMethodListener(handler)
 }
 
-func (c *Controller) SetSendHandler(handler func()) {
+func (c *controller) SetSendHandler(handler func()) {
 	c.view.setSendHandler(handler)
 }
 
-func (c *Controller) SetSendEnabled(enabled bool) {
+func (c *controller) SetSendEnabled(enabled bool) {
 	if enabled {
 		c.view.enableSend()
 	} else {
@@ -66,7 +83,7 @@ func (c *Controller) SetSendEnabled(enabled bool) {
 	}
 }
 
-func (c *Controller) ToState() ExchangeHeaderState {
+func (c *controller) ToState() ExchangeHeaderState {
 	return ExchangeHeaderState{
 		Method: c.model.getMethod(),
 		URL:    c.model.getURL(),
@@ -74,7 +91,7 @@ func (c *Controller) ToState() ExchangeHeaderState {
 	}
 }
 
-func (c *Controller) LoadState(exchangeHeaderState ExchangeHeaderState) {
+func (c *controller) LoadState(exchangeHeaderState ExchangeHeaderState) {
 	method := exchangeHeaderState.Method
 	if !utils.ElementInSlice(constants.HttpMethods(), method) {
 		method = constants.HTTP_METHOD_DEFAULT
@@ -84,6 +101,6 @@ func (c *Controller) LoadState(exchangeHeaderState ExchangeHeaderState) {
 	c.model.setUseSSL(exchangeHeaderState.UseSSL)
 }
 
-func (c *Controller) Validate() error {
+func (c *controller) Validate() error {
 	return c.view.validateURL()
 }

@@ -11,15 +11,27 @@ import (
 	"fyne.io/fyne/v2/dialog"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 }
 
-var _ features.Controller = (*Controller)(nil)
+type CollectionsBrowserController interface {
+	features.Controller
+	GetSelectedCollection() string
+	GetSelectedRequest() string
+	SetSelectedRequestCallback(callback func())
+	LazyRefreshAndShowRequests()
+}
 
-func NewController() *Controller {
-	c := &Controller{}
+var _ CollectionsBrowserController = (*controller)(nil)
+
+func New() CollectionsBrowserController {
+	return newController()
+}
+
+func newController() *controller {
+	c := &controller{}
 
 	c.model = newModel()
 	c.view = newView(c.model.requestsListBinding, c.model.collectionsListBinding, c.deleteRequest, c.deleteCollection)
@@ -65,23 +77,23 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) GetSelectedCollection() string {
+func (c *controller) GetSelectedCollection() string {
 	return c.model.getSelectedCollection()
 }
 
-func (c *Controller) GetSelectedRequest() string {
+func (c *controller) GetSelectedRequest() string {
 	return c.model.getSelectedRequest()
 }
 
-func (c *Controller) SetSelectedRequestCallback(callback func()) {
+func (c *controller) SetSelectedRequestCallback(callback func()) {
 	c.model.setSelectedRequestCallback(callback)
 }
 
-func (c *Controller) deleteRequest(name string) {
+func (c *controller) deleteRequest(name string) {
 	collectionName := c.model.getSelectedCollection()
 	go func() {
 		err := db.DeleteRequest(collectionName, name)
@@ -95,14 +107,14 @@ func (c *Controller) deleteRequest(name string) {
 	}()
 }
 
-func (c *Controller) LazyRefreshAndShowRequests() {
+func (c *controller) LazyRefreshAndShowRequests() {
 	if c.view.showingRequests() {
 		collectionName := c.model.getSelectedCollection()
 		c.refreshAndShowRequests(collectionName)
 	}
 }
 
-func (c *Controller) deleteCollection(name string) {
+func (c *controller) deleteCollection(name string) {
 	go func() {
 		err := db.DeleteCollection(name)
 		if err != nil {
@@ -114,7 +126,7 @@ func (c *Controller) deleteCollection(name string) {
 	}()
 }
 
-func (c *Controller) refreshAndShowCollections() {
+func (c *controller) refreshAndShowCollections() {
 	c.model.setSelectedCollection("")
 	c.model.setSelectedRequest("")
 
@@ -127,7 +139,7 @@ func (c *Controller) refreshAndShowCollections() {
 	}()
 }
 
-func (c *Controller) refreshAndShowRequests(collectionName string) {
+func (c *controller) refreshAndShowRequests(collectionName string) {
 	c.model.setSelectedCollection(collectionName)
 
 	go func() {
@@ -139,7 +151,7 @@ func (c *Controller) refreshAndShowRequests(collectionName string) {
 	}()
 }
 
-func (c *Controller) lazyRefreshAndShowCollections() {
+func (c *controller) lazyRefreshAndShowCollections() {
 	if c.view.showingCollections() {
 		c.refreshAndShowCollections()
 	}

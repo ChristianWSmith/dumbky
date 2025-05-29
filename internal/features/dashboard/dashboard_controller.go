@@ -9,23 +9,30 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model                *model
 	view                 *view
-	dashboardSidebarCtrl *dashboardsidebar.Controller
-	workspaceCtrl        *workspace.Controller
+	dashboardSidebarCtrl dashboardsidebar.DashboardSidebarController
+	workspaceCtrl        workspace.WorkspaceController
 }
 
-var _ features.Controller = (*Controller)(nil)
+type DashboardController interface {
+	features.Controller
+}
 
-func NewController() *Controller {
+var _ DashboardController = (*controller)(nil)
 
-	dashboardSidebarCtrl := dashboardsidebar.NewController()
-	workspaceCtrl := workspace.NewController()
+func New() DashboardController {
+	dashboardSidebarCtrl := dashboardsidebar.New()
+	workspaceCtrl := workspace.New()
+	return newController(dashboardSidebarCtrl, workspaceCtrl)
+}
+
+func newController(dashboardSidebarCtrl dashboardsidebar.DashboardSidebarController, workspaceCtrl workspace.WorkspaceController) *controller {
 	model := newModel()
 	view := newView(dashboardSidebarCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
 
-	c := &Controller{
+	c := &controller{
 		model:                model,
 		view:                 view,
 		dashboardSidebarCtrl: dashboardSidebarCtrl,
@@ -68,6 +75,6 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }

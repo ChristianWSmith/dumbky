@@ -9,18 +9,28 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 }
 
-var _ features.Controller = (*Controller)(nil)
+type ResponseController interface {
+	features.Controller
+	SetLoading(loading bool)
+	Set(responsePayload requesthelper.ResponsePayload)
+}
 
-func NewController() *Controller {
+var _ ResponseController = (*controller)(nil)
+
+func New() ResponseController {
+	return newController()
+}
+
+func newController() *controller {
 	model := newModel()
 	view := newView()
 
-	c := &Controller{
+	c := &controller{
 		model: model,
 		view:  view,
 	}
@@ -32,11 +42,11 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) SetLoading(loading bool) {
+func (c *controller) SetLoading(loading bool) {
 	c.view.setLoading(loading)
 	if loading {
 		c.model.setResponse(constants.UI_LOADING_RESPONSE_STATUS,
@@ -45,7 +55,7 @@ func (c *Controller) SetLoading(loading bool) {
 	}
 }
 
-func (c *Controller) Set(responsePayload requesthelper.ResponsePayload) {
+func (c *controller) Set(responsePayload requesthelper.ResponsePayload) {
 	c.model.setResponse(
 		responsePayload.Status,
 		responsePayload.Time,

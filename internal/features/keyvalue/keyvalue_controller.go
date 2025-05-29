@@ -6,18 +6,32 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 }
 
-var _ features.Controller = (*Controller)(nil)
+type KeyValueController interface {
+	features.Controller
+	Get() (key, value string)
+	Validate() error
+	IsEnabled() bool
+	SetDestroyHandler(handler func())
+	LoadState(state KeyValueState)
+	ToState() KeyValueState
+}
 
-func NewController(keyValidator, valueValidator func(val string) error) *Controller {
+var _ KeyValueController = (*controller)(nil)
+
+func New(keyValidator, valueValidator func(val string) error) KeyValueController {
+	return newController(keyValidator, valueValidator)
+}
+
+func newController(keyValidator, valueValidator func(val string) error) *controller {
 	model := newModel()
 	view := newView()
 
-	c := &Controller{
+	c := &controller{
 		model: model,
 		view:  view,
 	}
@@ -36,27 +50,27 @@ func NewController(keyValidator, valueValidator func(val string) error) *Control
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) ToState() KeyValueState {
+func (c *controller) ToState() KeyValueState {
 	return c.model.toState()
 }
 
-func (c *Controller) LoadState(state KeyValueState) {
+func (c *controller) LoadState(state KeyValueState) {
 	c.model.loadState(state)
 }
 
-func (c *Controller) SetDestroyHandler(handler func()) {
+func (c *controller) SetDestroyHandler(handler func()) {
 	c.view.setDestroyHandler(handler)
 }
 
-func (c *Controller) IsEnabled() bool {
+func (c *controller) IsEnabled() bool {
 	return c.model.isEnabled()
 }
 
-func (c *Controller) Validate() error {
+func (c *controller) Validate() error {
 	err := c.view.validateKey()
 	if err != nil {
 		return err
@@ -64,6 +78,6 @@ func (c *Controller) Validate() error {
 	return c.view.validateValue()
 }
 
-func (c *Controller) Get() (key, value string) {
+func (c *controller) Get() (key, value string) {
 	return c.model.getKey(), c.model.getValue()
 }

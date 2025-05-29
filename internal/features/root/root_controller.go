@@ -7,26 +7,34 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model               *model
 	view                *view
-	dashboardController *dashboard.Controller
+	dashboardController dashboard.DashboardController
 }
 
-var _ features.Controller = (*Controller)(nil)
+type RootController interface {
+	features.Controller
+}
 
-func NewController() *Controller {
-	dashboardController := dashboard.NewController()
+var _ RootController = (*controller)(nil)
+
+func New() RootController {
+	dashboardController := dashboard.New()
+	return newController(dashboardController)
+}
+
+func newController(dashboardController dashboard.DashboardController) *controller {
 	model := newModel()
 	view := newView(dashboardController.CanvasObject())
 
-	return &Controller{
+	return &controller{
 		model:               model,
 		view:                view,
 		dashboardController: dashboardController,
 	}
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }

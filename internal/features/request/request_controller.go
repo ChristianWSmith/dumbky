@@ -9,51 +9,73 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 
-	queryParamsKeyValueCtrl *keyvalueeditor.Controller
-	pathParamsKeyValueCtrl  *keyvalueeditor.Controller
-	headersKeyValueCtrl     *keyvalueeditor.Controller
-	requestBodyCtrl         *requestbody.Controller
+	queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController
+	pathParamsKeyValueCtrl  keyvalueeditor.KeyValueEditorController
+	headersKeyValueCtrl     keyvalueeditor.KeyValueEditorController
+	requestBodyCtrl         requestbody.RequestBodyController
 }
 
-var _ features.Controller = (*Controller)(nil)
+type RequestController interface {
+	features.Controller
+	GetQueryParamsMap() map[string]string
+	GetPathParamsMap() map[string]string
+	GetHeadersMap() map[string]string
+	ToState() RequestState
+	LoadState(requestState RequestState)
+	Validate() error
+	GetRequestBodyFormMap() map[string]string
+	GetRequestBodyRaw() string
+	GetRequestBodyType() string
+	SetBodyTypeSelectEnabled(enabled bool)
+	FormatBodyRaw()
+}
 
-func NewController() *Controller {
-	queryParamsKeyValueCtrl := keyvalueeditor.NewController(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
-	pathParamsKeyValueCtrl := keyvalueeditor.NewController(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
-	headersKeyValueCtrl := keyvalueeditor.NewController(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
-	bodyKeyValueCtrl := requestbody.NewController()
+var _ RequestController = (*controller)(nil)
 
-	return &Controller{
+func New() RequestController {
+	queryParamsKeyValueCtrl := keyvalueeditor.New(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
+	pathParamsKeyValueCtrl := keyvalueeditor.New(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
+	headersKeyValueCtrl := keyvalueeditor.New(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
+	requestBodyCtrl := requestbody.New()
+	return newController(queryParamsKeyValueCtrl, pathParamsKeyValueCtrl, headersKeyValueCtrl, requestBodyCtrl)
+}
+
+func newController(queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
+	pathParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
+	headersKeyValueCtrl keyvalueeditor.KeyValueEditorController,
+	requestBodyCtrl requestbody.RequestBodyController) *controller {
+
+	return &controller{
 		model:                   newModel(),
-		view:                    newView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyKeyValueCtrl.CanvasObject()),
+		view:                    newView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), requestBodyCtrl.CanvasObject()),
 		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
 		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
 		headersKeyValueCtrl:     headersKeyValueCtrl,
-		requestBodyCtrl:         bodyKeyValueCtrl,
+		requestBodyCtrl:         requestBodyCtrl,
 	}
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) GetQueryParamsMap() map[string]string {
+func (c *controller) GetQueryParamsMap() map[string]string {
 	return c.queryParamsKeyValueCtrl.Get()
 }
 
-func (c *Controller) GetPathParamsMap() map[string]string {
+func (c *controller) GetPathParamsMap() map[string]string {
 	return c.pathParamsKeyValueCtrl.Get()
 }
 
-func (c *Controller) GetHeadersMap() map[string]string {
+func (c *controller) GetHeadersMap() map[string]string {
 	return c.headersKeyValueCtrl.Get()
 }
 
-func (c *Controller) ToState() RequestState {
+func (c *controller) ToState() RequestState {
 	queryParams := c.queryParamsKeyValueCtrl.ToState()
 	pathParams := c.pathParamsKeyValueCtrl.ToState()
 	headers := c.headersKeyValueCtrl.ToState()
@@ -66,14 +88,14 @@ func (c *Controller) ToState() RequestState {
 	}
 }
 
-func (c *Controller) LoadState(requestState RequestState) {
+func (c *controller) LoadState(requestState RequestState) {
 	c.queryParamsKeyValueCtrl.LoadState(requestState.QueryParams)
 	c.pathParamsKeyValueCtrl.LoadState(requestState.PathParams)
 	c.headersKeyValueCtrl.LoadState(requestState.Headers)
 	c.requestBodyCtrl.LoadState(requestState.Body)
 }
 
-func (c *Controller) Validate() error {
+func (c *controller) Validate() error {
 	err := c.queryParamsKeyValueCtrl.Validate()
 	if err != nil {
 		return err
@@ -89,22 +111,22 @@ func (c *Controller) Validate() error {
 	return c.requestBodyCtrl.Validate()
 }
 
-func (c *Controller) GetRequestBodyFormMap() map[string]string {
+func (c *controller) GetRequestBodyFormMap() map[string]string {
 	return c.requestBodyCtrl.GetBodyFormMap()
 }
 
-func (c *Controller) GetRequestBodyRaw() string {
+func (c *controller) GetRequestBodyRaw() string {
 	return c.requestBodyCtrl.GetBodyRaw()
 }
 
-func (c *Controller) GetRequestBodyType() string {
+func (c *controller) GetRequestBodyType() string {
 	return c.requestBodyCtrl.GetBodyType()
 }
 
-func (c *Controller) SetBodyTypeSelectEnabled(enabled bool) {
+func (c *controller) SetBodyTypeSelectEnabled(enabled bool) {
 	c.requestBodyCtrl.SetBodyTypeSelectEnabled(enabled)
 }
 
-func (c *Controller) FormatBodyRaw() {
+func (c *controller) FormatBodyRaw() {
 	c.requestBodyCtrl.FormatBodyRaw()
 }

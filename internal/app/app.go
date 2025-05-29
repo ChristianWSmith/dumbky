@@ -33,7 +33,7 @@ func Run() {
 	w := a.NewWindow("Dumbky")
 	global.Window = w
 
-	rootCtrl := root.NewController()
+	rootCtrl := root.New()
 	w.SetContent(rootCtrl.CanvasObject())
 
 	width, height := getWindowSize()

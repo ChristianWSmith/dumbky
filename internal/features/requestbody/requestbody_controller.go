@@ -12,19 +12,34 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 
-	bodyFormKeyValueCtrl *keyvalueeditor.Controller
+	bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController
 }
 
-var _ features.Controller = (*Controller)(nil)
+type RequestBodyController interface {
+	features.Controller
+	GetBodyFormMap() map[string]string
+	ToState() RequestBodyState
+	LoadState(requestBodyState RequestBodyState)
+	Validate() error
+	SetBodyTypeSelectEnabled(enabled bool)
+	GetBodyType() string
+	GetBodyRaw() string
+	FormatBodyRaw()
+}
 
-func NewController() *Controller {
-	bodyFormKeyValueCtrl := keyvalueeditor.NewController(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
+var _ RequestBodyController = (*controller)(nil)
 
-	c := &Controller{
+func New() RequestBodyController {
+	bodyFormKeyValueCtrl := keyvalueeditor.New(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
+	return newController(bodyFormKeyValueCtrl)
+}
+
+func newController(bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController) *controller {
+	c := &controller{
 		model:                newModel(),
 		view:                 newView(bodyFormKeyValueCtrl.CanvasObject()),
 		bodyFormKeyValueCtrl: bodyFormKeyValueCtrl,
@@ -38,15 +53,15 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) GetBodyFormMap() map[string]string {
-	return c.bodyFormKeyValueCtrl.Get()
-}
-
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) ToState() RequestBodyState {
+func (c *controller) GetBodyFormMap() map[string]string {
+	return c.bodyFormKeyValueCtrl.Get()
+}
+
+func (c *controller) ToState() RequestBodyState {
 	return RequestBodyState{
 		BodyType: c.model.getBodyType(),
 		BodyForm: c.bodyFormKeyValueCtrl.ToState(),
@@ -54,13 +69,13 @@ func (c *Controller) ToState() RequestBodyState {
 	}
 }
 
-func (c *Controller) LoadState(requestBodyState RequestBodyState) {
+func (c *controller) LoadState(requestBodyState RequestBodyState) {
 	c.model.setBodyType(requestBodyState.BodyType)
 	c.bodyFormKeyValueCtrl.LoadState(requestBodyState.BodyForm)
 	c.model.setBodyRaw(requestBodyState.BodyRaw)
 }
 
-func (c *Controller) Validate() error {
+func (c *controller) Validate() error {
 	err := c.view.validateBodyRaw()
 	if err != nil {
 		return err
@@ -68,7 +83,7 @@ func (c *Controller) Validate() error {
 	return c.bodyFormKeyValueCtrl.Validate()
 }
 
-func (c *Controller) SetBodyTypeSelectEnabled(enabled bool) {
+func (c *controller) SetBodyTypeSelectEnabled(enabled bool) {
 	if enabled {
 		c.view.enabledBodyTypeSelect()
 	} else {
@@ -77,19 +92,19 @@ func (c *Controller) SetBodyTypeSelectEnabled(enabled bool) {
 	}
 }
 
-func (c *Controller) GetBodyType() string {
+func (c *controller) GetBodyType() string {
 	return c.model.getBodyType()
 }
 
-func (c *Controller) GetBodyRaw() string {
+func (c *controller) GetBodyRaw() string {
 	return c.model.getBodyRaw()
 }
 
-func (c *Controller) FormatBodyRaw() {
+func (c *controller) FormatBodyRaw() {
 	c.model.setBodyRaw(utils.SmartFormat(c.model.getBodyRaw()))
 }
 
-func (c *Controller) showBodyType() {
+func (c *controller) showBodyType() {
 	bodyType := c.model.getBodyType()
 	if bodyType == constants.UI_BODY_TYPE_FORM {
 		c.bodyFormKeyValueCtrl.SetVisible(true)

@@ -15,23 +15,36 @@ import (
 	"fyne.io/fyne/v2/dialog"
 )
 
-type Controller struct {
+type controller struct {
 	model *model
 	view  *view
 
-	exchangeHeaderCtrl *exchangeheader.Controller
-	requestCtrl        *request.Controller
-	responseCtrl       *response.Controller
+	exchangeHeaderCtrl exchangeheader.ExchangeHeaderController
+	requestCtrl        request.RequestController
+	responseCtrl       response.ResponseController
 }
 
-var _ features.Controller = (*Controller)(nil)
+type ExchangeController interface {
+	features.Controller
+	ToState() ExchangeState
+	LoadState(exchangeState ExchangeState)
+}
 
-func NewController() *Controller {
+var _ ExchangeController = (*controller)(nil)
+
+func New() ExchangeController {
 	exchangeHeaderCtrl := exchangeheader.NewController()
-	requestCtrl := request.NewController()
-	responseCtrl := response.NewController()
+	requestCtrl := request.New()
+	responseCtrl := response.New()
+	return newController(exchangeHeaderCtrl, requestCtrl, responseCtrl)
+}
 
-	c := &Controller{
+func newController(
+	exchangeHeaderCtrl exchangeheader.ExchangeHeaderController,
+	requestCtrl request.RequestController,
+	responseCtrl response.ResponseController) *controller {
+
+	c := &controller{
 		model:              newModel(),
 		view:               newView(exchangeHeaderCtrl.CanvasObject(), requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
 		exchangeHeaderCtrl: exchangeHeaderCtrl,
@@ -62,28 +75,28 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) ToState() ExchangeState {
+func (c *controller) ToState() ExchangeState {
 	return ExchangeState{
 		Header:  c.exchangeHeaderCtrl.ToState(),
 		Request: c.requestCtrl.ToState(),
 	}
 }
 
-func (c *Controller) LoadState(exchangeState ExchangeState) {
+func (c *controller) LoadState(exchangeState ExchangeState) {
 	c.requestCtrl.LoadState(exchangeState.Request)
 	c.exchangeHeaderCtrl.LoadState(exchangeState.Header)
 }
 
-func (c *Controller) setLoading(loading bool) {
+func (c *controller) setLoading(loading bool) {
 	c.exchangeHeaderCtrl.SetSendEnabled(!loading)
 	c.responseCtrl.SetLoading(loading)
 }
 
-func (c *Controller) sendButtonHandler() {
+func (c *controller) sendButtonHandler() {
 	c.setLoading(true)
 
 	requestPayload, err := c.renderRequestConfig()
@@ -97,7 +110,7 @@ func (c *Controller) sendButtonHandler() {
 	go c.sendRequestWorker(requestPayload)
 }
 
-func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig) {
+func (c *controller) sendRequestWorker(requestConfig requesthelper.RequestConfig) {
 	defer fyne.Do(func() {
 		c.setLoading(false)
 	})
@@ -124,7 +137,7 @@ func (c *Controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 	})
 }
 
-func (c *Controller) renderRequestConfig() (requesthelper.RequestConfig, error) {
+func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) {
 	err := c.exchangeHeaderCtrl.Validate()
 	if err != nil {
 		log.Warn(err)

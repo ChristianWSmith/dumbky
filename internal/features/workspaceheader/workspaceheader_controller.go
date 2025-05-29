@@ -11,9 +11,22 @@ type Controller struct {
 	view  *view
 }
 
-var _ features.Controller = (*Controller)(nil)
+type WorkspaceHeaderController interface {
+	features.Controller
+	GetRequestName() string
+	SetRequestName(requestName string)
+	SetRequestNameListener(handler func())
+	SetAddHandler(handler func())
+	SetSaveHandler(handler func())
+}
 
-func NewController() *Controller {
+var _ WorkspaceHeaderController = (*Controller)(nil)
+
+func New() WorkspaceHeaderController {
+	return newController()
+}
+
+func newController() *Controller {
 	model := newModel()
 	view := newView()
 

@@ -13,27 +13,40 @@ import (
 	"github.com/google/uuid"
 )
 
-type Controller struct {
+type controller struct {
 	model               *model
 	view                *view
-	workspaceHeaderCtrl *workspaceheader.Controller
-	exchangeCtrlMap     map[documentId]*exchange.Controller
+	workspaceHeaderCtrl workspaceheader.WorkspaceHeaderController
+	exchangeCtrlMap     map[documentId]exchange.ExchangeController
 }
 
-var _ features.Controller = (*Controller)(nil)
+type WorkspaceController interface {
+	features.Controller
+	SetAddHandler(handler func())
+	SetSaveHandler(handler func())
+	OpenTab(document DocumentState)
+	SaveTab(callback func()) error
+	LoadTab(collectionName, requestName string)
+}
+
+var _ WorkspaceController = (*controller)(nil)
 
 type documentId string
 
-func NewController() *Controller {
+func New() WorkspaceController {
+	workspaceHeaderCtrl := workspaceheader.New()
+	return newController(workspaceHeaderCtrl)
+}
+
+func newController(workspaceHeaderCtrl workspaceheader.WorkspaceHeaderController) *controller {
 	model := newModel()
-	workspaceHeaderCtrl := workspaceheader.NewController()
 	view := newView(workspaceHeaderCtrl.CanvasObject())
 
-	c := &Controller{
+	c := &controller{
 		model:               model,
 		view:                view,
 		workspaceHeaderCtrl: workspaceHeaderCtrl,
-		exchangeCtrlMap:     make(map[documentId]*exchange.Controller),
+		exchangeCtrlMap:     make(map[documentId]exchange.ExchangeController),
 	}
 
 	c.view.setDocumentSelectedHandler(func(tabItem *container.TabItem) {
@@ -70,19 +83,19 @@ func NewController() *Controller {
 	return c
 }
 
-func (c *Controller) CanvasObject() fyne.CanvasObject {
+func (c *controller) CanvasObject() fyne.CanvasObject {
 	return c.view.canvasObject()
 }
 
-func (c *Controller) SetAddHandler(handler func()) {
+func (c *controller) SetAddHandler(handler func()) {
 	c.workspaceHeaderCtrl.SetAddHandler(handler)
 }
 
-func (c *Controller) SetSaveHandler(handler func()) {
+func (c *controller) SetSaveHandler(handler func()) {
 	c.workspaceHeaderCtrl.SetSaveHandler(handler)
 }
 
-func (c *Controller) OpenTab(document DocumentState) {
+func (c *controller) OpenTab(document DocumentState) {
 	if c.view.selectDocumentTabOnCondition(func(id documentId) bool {
 		documentData := c.model.getDocumentData(id)
 		return documentData.requestName == document.RequestName && documentData.collectionName == document.CollectionName
@@ -92,7 +105,7 @@ func (c *Controller) OpenTab(document DocumentState) {
 
 	id := documentId(uuid.New().String())
 
-	exchangeCtrl := exchange.NewController()
+	exchangeCtrl := exchange.New()
 	exchangeCtrl.LoadState(document.ExchangeState)
 	c.exchangeCtrlMap[id] = exchangeCtrl
 
@@ -104,7 +117,7 @@ func (c *Controller) OpenTab(document DocumentState) {
 	c.view.addDocumentTab(id, document.CollectionName, document.RequestName, exchangeCtrl.CanvasObject())
 }
 
-func (c *Controller) SaveTab(callback func()) error {
+func (c *controller) SaveTab(callback func()) error {
 	id := c.view.getSelectedDocumentId()
 	documentData := c.model.getDocumentData(id)
 	exchangeState := c.exchangeCtrlMap[id].ToState()
@@ -128,7 +141,7 @@ func (c *Controller) SaveTab(callback func()) error {
 	return nil
 }
 
-func (c *Controller) LoadTab(collectionName, requestName string) {
+func (c *controller) LoadTab(collectionName, requestName string) {
 	go func() {
 		request, err := db.LoadRequest(collectionName, requestName)
 		if err != nil {
