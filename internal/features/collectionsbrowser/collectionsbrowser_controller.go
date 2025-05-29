@@ -93,6 +93,13 @@ func (c *controller) SetSelectedRequestCallback(callback func()) {
 	c.model.setSelectedRequestCallback(callback)
 }
 
+func (c *controller) LazyRefreshAndShowRequests() {
+	if c.view.showingRequests() {
+		collectionName := c.model.getSelectedCollection()
+		c.refreshAndShowRequests(collectionName)
+	}
+}
+
 func (c *controller) deleteRequest(name string) {
 	collectionName := c.model.getSelectedCollection()
 	go func() {
@@ -105,13 +112,6 @@ func (c *controller) deleteRequest(name string) {
 			c.LazyRefreshAndShowRequests()
 		})
 	}()
-}
-
-func (c *controller) LazyRefreshAndShowRequests() {
-	if c.view.showingRequests() {
-		collectionName := c.model.getSelectedCollection()
-		c.refreshAndShowRequests(collectionName)
-	}
 }
 
 func (c *controller) deleteCollection(name string) {

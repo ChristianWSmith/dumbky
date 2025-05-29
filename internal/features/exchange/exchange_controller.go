@@ -28,12 +28,6 @@ type ExchangeController interface {
 	features.Controller
 	ToState() ExchangeState
 	LoadState(exchangeState ExchangeState)
-	GetMethod() string
-	GetURL() string
-	GetUseSSL() bool
-	SetMethodListener(handler func())
-	SetSendHandler(handler func())
-	SetSendEnabled(enabled bool)
 	Validate() error
 }
 
@@ -62,7 +56,7 @@ func newController(
 
 	c.view.setUrlValidator(validators.ValidateURL)
 
-	c.SetMethodListener(func() {
+	c.model.setMethodListener(func() {
 		method := c.model.getMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
@@ -78,7 +72,7 @@ func newController(
 		}
 	})
 
-	c.SetSendHandler(func() {
+	c.view.setSendHandler(func() {
 		c.sendButtonHandler()
 	})
 
@@ -109,8 +103,24 @@ func (c *controller) LoadState(exchangeState ExchangeState) {
 	c.requestCtrl.LoadState(exchangeState.Request)
 }
 
+func (c *controller) Validate() error {
+	err := c.requestCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	return c.view.validateURL()
+}
+
+func (c *controller) setSendEnabled(enabled bool) {
+	if enabled {
+		c.view.enableSend()
+	} else {
+		c.view.disableSend()
+	}
+}
+
 func (c *controller) setLoading(loading bool) {
-	c.SetSendEnabled(!loading)
+	c.setSendEnabled(!loading)
 	c.responseCtrl.SetLoading(loading)
 }
 
@@ -135,7 +145,7 @@ func (c *controller) sendRequestWorker(requestConfig requesthelper.RequestConfig
 
 	go func() {
 		fyne.Do(func() {
-			bodyType := c.requestCtrl.GetRequestBodyType()
+			bodyType := c.requestCtrl.GetBodyType()
 			if bodyType != constants.UI_BODY_TYPE_RAW {
 				return
 			}
@@ -161,22 +171,17 @@ func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) 
 		log.Warn(err)
 		return requesthelper.RequestConfig{}, err
 	}
-	err = c.requestCtrl.Validate()
-	if err != nil {
-		log.Error(err)
-		return requesthelper.RequestConfig{}, err
-	}
 
-	url := c.GetURL()
-	method := c.GetMethod()
-	useSSL := c.GetUseSSL()
+	url := c.model.getURL()
+	method := c.model.getMethod()
+	useSSL := c.model.getUseSSL()
 
 	headers := c.requestCtrl.GetHeadersMap()
 	queryParams := c.requestCtrl.GetQueryParamsMap()
 	pathParams := c.requestCtrl.GetPathParamsMap()
-	bodyType := c.requestCtrl.GetRequestBodyType()
-	bodyRaw := c.requestCtrl.GetRequestBodyRaw()
-	bodyForm := c.requestCtrl.GetRequestBodyFormMap()
+	bodyType := c.requestCtrl.GetBodyType()
+	bodyRaw := c.requestCtrl.GetBodyRaw()
+	bodyForm := c.requestCtrl.GetBodyFormMap()
 
 	return requesthelper.RequestConfig{
 		URL:         url,
@@ -189,36 +194,4 @@ func (c *controller) renderRequestConfig() (requesthelper.RequestConfig, error) 
 		BodyRaw:     bodyRaw,
 		BodyForm:    bodyForm,
 	}, nil
-}
-
-func (c *controller) GetMethod() string {
-	return c.model.getMethod()
-}
-
-func (c *controller) GetURL() string {
-	return c.model.getURL()
-}
-
-func (c *controller) GetUseSSL() bool {
-	return c.model.getUseSSL()
-}
-
-func (c *controller) SetMethodListener(handler func()) {
-	c.model.setMethodListener(handler)
-}
-
-func (c *controller) SetSendHandler(handler func()) {
-	c.view.setSendHandler(handler)
-}
-
-func (c *controller) SetSendEnabled(enabled bool) {
-	if enabled {
-		c.view.enableSend()
-	} else {
-		c.view.disableSend()
-	}
-}
-
-func (c *controller) Validate() error {
-	return c.view.validateURL()
 }

@@ -25,10 +25,6 @@ type WorkspaceController interface {
 	OpenTab(document DocumentState)
 	SaveTab(callback func()) error
 	LoadTab(collectionName, requestName string)
-
-	GetRequestName() string
-	SetRequestName(requestName string)
-	SetRequestNameListener(handler func())
 }
 
 var _ WorkspaceController = (*controller)(nil)
@@ -54,7 +50,7 @@ func newController() *controller {
 	c.view.setDocumentSelectedHandler(func(tabItem *container.TabItem) {
 		tabId := c.view.getDocumentId(tabItem)
 		documentData := c.model.getDocumentData(tabId)
-		c.SetRequestName(documentData.requestName)
+		c.model.setRequestName(documentData.requestName)
 	})
 
 	c.view.setDocumentClosedHandler(func(tabItem *container.TabItem) {
@@ -69,9 +65,9 @@ func newController() *controller {
 
 	c.OpenTab(DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
 
-	c.SetRequestNameListener(func() {
+	c.model.setRequestNameListener(func() {
 		id := c.view.getSelectedDocumentId()
-		c.model.updateRequestName(id, c.GetRequestName())
+		c.model.updateRequestName(id, c.model.getRequestName())
 		documentData := c.model.getDocumentData(id)
 		if documentData.requestName == "" {
 			c.view.setSelectedDocumentText(documentData.collectionName, constants.UI_PLACEHOLDER_UNTITLED)
@@ -149,18 +145,6 @@ func (c *controller) LoadTab(collectionName, requestName string) {
 			c.OpenTab(document)
 		})
 	}()
-}
-
-func (c *controller) GetRequestName() string {
-	return c.model.getRequestName()
-}
-
-func (c *controller) SetRequestName(requestName string) {
-	c.model.setRequestName(requestName)
-}
-
-func (c *controller) SetRequestNameListener(handler func()) {
-	c.model.setRequestNameListener(handler)
 }
 
 func (c *controller) SetAddHandler(handler func()) {

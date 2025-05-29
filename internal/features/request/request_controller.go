@@ -30,9 +30,6 @@ type RequestController interface {
 	ToState() RequestState
 	LoadState(requestState RequestState)
 	Validate() error
-	GetRequestBodyFormMap() map[string]string
-	GetRequestBodyRaw() string
-	GetRequestBodyType() string
 	SetBodyTypeSelectEnabled(enabled bool)
 	FormatBodyRaw()
 	GetBodyFormMap() map[string]string
@@ -126,18 +123,6 @@ func (c *controller) Validate() error {
 		return err
 	}
 	return c.view.validateBodyRaw()
-}
-
-func (c *controller) GetRequestBodyFormMap() map[string]string {
-	return c.GetBodyFormMap()
-}
-
-func (c *controller) GetRequestBodyRaw() string {
-	return c.GetBodyRaw()
-}
-
-func (c *controller) GetRequestBodyType() string {
-	return c.GetBodyType()
 }
 
 func (c *controller) GetBodyFormMap() map[string]string {
