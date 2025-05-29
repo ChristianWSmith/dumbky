@@ -1,10 +1,13 @@
 package request
 
 import (
+	"dumbky/internal/constants"
 	"dumbky/internal/features"
 	"dumbky/internal/features/keyvalueeditor"
-	"dumbky/internal/features/requestbody"
+	"dumbky/internal/log"
+	"dumbky/internal/utils"
 	"dumbky/internal/validators"
+	"errors"
 
 	"fyne.io/fyne/v2"
 )
@@ -16,7 +19,7 @@ type controller struct {
 	queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController
 	pathParamsKeyValueCtrl  keyvalueeditor.KeyValueEditorController
 	headersKeyValueCtrl     keyvalueeditor.KeyValueEditorController
-	requestBodyCtrl         requestbody.RequestBodyController
+	bodyFormKeyValueCtrl    keyvalueeditor.KeyValueEditorController
 }
 
 type RequestController interface {
@@ -32,6 +35,9 @@ type RequestController interface {
 	GetRequestBodyType() string
 	SetBodyTypeSelectEnabled(enabled bool)
 	FormatBodyRaw()
+	GetBodyFormMap() map[string]string
+	GetBodyType() string
+	GetBodyRaw() string
 }
 
 var _ RequestController = (*controller)(nil)
@@ -40,23 +46,30 @@ func New() RequestController {
 	queryParamsKeyValueCtrl := keyvalueeditor.New(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
 	pathParamsKeyValueCtrl := keyvalueeditor.New(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
 	headersKeyValueCtrl := keyvalueeditor.New(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
-	requestBodyCtrl := requestbody.New()
-	return newController(queryParamsKeyValueCtrl, pathParamsKeyValueCtrl, headersKeyValueCtrl, requestBodyCtrl)
+	bodyFormKeyValueCtrl := keyvalueeditor.New(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
+	return newController(queryParamsKeyValueCtrl, pathParamsKeyValueCtrl, headersKeyValueCtrl, bodyFormKeyValueCtrl)
 }
 
 func newController(queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
 	pathParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
 	headersKeyValueCtrl keyvalueeditor.KeyValueEditorController,
-	requestBodyCtrl requestbody.RequestBodyController) *controller {
+	bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController) *controller {
 
-	return &controller{
+	c := &controller{
 		model:                   newModel(),
-		view:                    newView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), requestBodyCtrl.CanvasObject()),
+		view:                    newView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyFormKeyValueCtrl.CanvasObject()),
 		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
 		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
 		headersKeyValueCtrl:     headersKeyValueCtrl,
-		requestBodyCtrl:         requestBodyCtrl,
+		bodyFormKeyValueCtrl:    bodyFormKeyValueCtrl,
 	}
+
+	c.view.bodyTypeSelect.Bind(c.model.bodyTypeBinding)
+	c.view.bodyRawEntry.Bind(c.model.bodyRawBinding)
+
+	c.model.setBodyTypeListener(c.showBodyType)
+
+	return c
 }
 
 func (c *controller) CanvasObject() fyne.CanvasObject {
@@ -76,15 +89,13 @@ func (c *controller) GetHeadersMap() map[string]string {
 }
 
 func (c *controller) ToState() RequestState {
-	queryParams := c.queryParamsKeyValueCtrl.ToState()
-	pathParams := c.pathParamsKeyValueCtrl.ToState()
-	headers := c.headersKeyValueCtrl.ToState()
-	body := c.requestBodyCtrl.ToState()
 	return RequestState{
-		QueryParams: queryParams,
-		PathParams:  pathParams,
-		Headers:     headers,
-		Body:        body,
+		QueryParams: c.queryParamsKeyValueCtrl.ToState(),
+		PathParams:  c.pathParamsKeyValueCtrl.ToState(),
+		Headers:     c.headersKeyValueCtrl.ToState(),
+		BodyForm:    c.bodyFormKeyValueCtrl.ToState(),
+		BodyType:    c.model.getBodyType(),
+		BodyRaw:     c.model.getBodyRaw(),
 	}
 }
 
@@ -92,7 +103,9 @@ func (c *controller) LoadState(requestState RequestState) {
 	c.queryParamsKeyValueCtrl.LoadState(requestState.QueryParams)
 	c.pathParamsKeyValueCtrl.LoadState(requestState.PathParams)
 	c.headersKeyValueCtrl.LoadState(requestState.Headers)
-	c.requestBodyCtrl.LoadState(requestState.Body)
+	c.bodyFormKeyValueCtrl.LoadState(requestState.BodyForm)
+	c.model.setBodyType(requestState.BodyType)
+	c.model.setBodyRaw(requestState.BodyRaw)
 }
 
 func (c *controller) Validate() error {
@@ -108,25 +121,61 @@ func (c *controller) Validate() error {
 	if err != nil {
 		return err
 	}
-	return c.requestBodyCtrl.Validate()
+	err = c.bodyFormKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	return c.view.validateBodyRaw()
 }
 
 func (c *controller) GetRequestBodyFormMap() map[string]string {
-	return c.requestBodyCtrl.GetBodyFormMap()
+	return c.GetBodyFormMap()
 }
 
 func (c *controller) GetRequestBodyRaw() string {
-	return c.requestBodyCtrl.GetBodyRaw()
+	return c.GetBodyRaw()
 }
 
 func (c *controller) GetRequestBodyType() string {
-	return c.requestBodyCtrl.GetBodyType()
+	return c.GetBodyType()
 }
 
+func (c *controller) GetBodyFormMap() map[string]string {
+	return c.bodyFormKeyValueCtrl.Get()
+}
 func (c *controller) SetBodyTypeSelectEnabled(enabled bool) {
-	c.requestBodyCtrl.SetBodyTypeSelectEnabled(enabled)
+	if enabled {
+		c.view.enabledBodyTypeSelect()
+	} else {
+		c.view.disabledBodyTypeSelect()
+		c.model.setBodyType(constants.UI_BODY_TYPE_NONE)
+	}
+}
+
+func (c *controller) GetBodyType() string {
+	return c.model.getBodyType()
+}
+
+func (c *controller) GetBodyRaw() string {
+	return c.model.getBodyRaw()
 }
 
 func (c *controller) FormatBodyRaw() {
-	c.requestBodyCtrl.FormatBodyRaw()
+	c.model.setBodyRaw(utils.SmartFormat(c.model.getBodyRaw()))
+}
+
+func (c *controller) showBodyType() {
+	bodyType := c.model.getBodyType()
+	if bodyType == constants.UI_BODY_TYPE_FORM {
+		c.bodyFormKeyValueCtrl.SetVisible(true)
+		c.view.hideBodyRaw()
+	} else if bodyType == constants.UI_BODY_TYPE_RAW {
+		c.bodyFormKeyValueCtrl.SetVisible(false)
+		c.view.showBodyRaw()
+	} else if bodyType == constants.UI_BODY_TYPE_NONE {
+		c.bodyFormKeyValueCtrl.SetVisible(false)
+		c.view.hideBodyRaw()
+	} else {
+		log.Error(errors.New("invalid body type"))
+	}
 }
