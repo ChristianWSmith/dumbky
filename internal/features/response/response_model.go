@@ -16,18 +16,6 @@ func newModel() *model {
 	}
 }
 
-func (m *model) setStatus(s string) {
-	m.status.Set(s)
-}
-
-func (m *model) setTime(s string) {
-	m.time.Set(s)
-}
-
-func (m *model) setBody(s string) {
-	m.body.Set(s)
-}
-
 func (m *model) setResponse(status, time, body string) {
 	m.status.Set(status)
 	m.time.Set(time)
