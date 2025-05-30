@@ -4,7 +4,7 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features/response/model"
 	"dumbky/internal/features/response/view"
-	"dumbky/internal/requesthelper"
+	"dumbky/internal/restclient"
 	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
@@ -42,7 +42,7 @@ func (c *controllerImpl) SetLoading(loading bool) {
 	}
 }
 
-func (c *controllerImpl) Set(responsePayload requesthelper.ResponsePayload) {
+func (c *controllerImpl) Set(responsePayload restclient.ResponsePayload) {
 	c.model.SetResponse(
 		responsePayload.Status,
 		responsePayload.Time,

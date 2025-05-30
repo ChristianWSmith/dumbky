@@ -1,4 +1,4 @@
-package requesthelper
+package restclient
 
 import (
 	"crypto/tls"
