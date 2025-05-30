@@ -30,7 +30,7 @@ func getWindowSize() (float32, float32) {
 func Run() {
 	a := app.NewWithID(constants.APP_ID)
 	a.Settings().SetTheme(theme.AppTheme{})
-	w := a.NewWindow("Dumbky")
+	w := a.NewWindow(constants.APP_NAME)
 	global.Window = w
 
 	rootCtrl := root.New()
@@ -39,8 +39,8 @@ func Run() {
 	width, height := getWindowSize()
 	w.Resize(fyne.NewSize(width, height))
 
+	defer glfw.Terminate()
 	// TODO: remove?
-	// defer glfw.Terminate()
 	// w.Canvas().Refresh(rootCtrl.UI)
 
 	w.ShowAndRun()
