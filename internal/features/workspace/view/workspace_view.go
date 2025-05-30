@@ -5,7 +5,6 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
 	"dumbky/internal/utils"
-	"fmt"
 
 	"dumbky/internal/features/workspace/common"
 
@@ -34,13 +33,13 @@ type View interface {
 	CanvasObject() fyne.CanvasObject
 	GetDocumentId(tabItem *container.TabItem) common.DocumentId
 	GetSelectedDocumentId() common.DocumentId
-	SetSelectedDocumentText(collectionName, requestName string)
+	SetSelectedDocumentText(requestName string)
 	DestroyDocumentTab(tabItem *container.TabItem)
 	SetDocumentClosedHandler(handler func(*container.TabItem))
 	SetDocumentSelectedHandler(handler func(*container.TabItem))
 	RefreshTabs()
 	SelectDocumentTabOnCondition(handler func(common.DocumentId) bool) bool
-	AddDocumentTab(id common.DocumentId, collectionName, requestName string, ui fyne.CanvasObject)
+	AddDocumentTab(id common.DocumentId, requestName string, ui fyne.CanvasObject)
 	SetAddHandler(handler func())
 	SetSaveHandler(handler func())
 }
@@ -93,8 +92,8 @@ func (v *viewImpl) GetSelectedDocumentId() common.DocumentId {
 	return v.documentViewMap[selectedTab]
 }
 
-func (v *viewImpl) SetSelectedDocumentText(collectionName, requestName string) {
-	v.exchangeTabs.Selected().Text = formatTabText(collectionName, requestName)
+func (v *viewImpl) SetSelectedDocumentText(requestName string) {
+	v.exchangeTabs.Selected().Text = formatTabText(requestName)
 }
 
 func (v *viewImpl) DestroyDocumentTab(tabItem *container.TabItem) {
@@ -123,8 +122,8 @@ func (v *viewImpl) SelectDocumentTabOnCondition(handler func(common.DocumentId) 
 	return false
 }
 
-func (v *viewImpl) AddDocumentTab(id common.DocumentId, collectionName, requestName string, ui fyne.CanvasObject) {
-	exchangeViewTab := container.NewTabItem(formatTabText(collectionName, requestName), ui)
+func (v *viewImpl) AddDocumentTab(id common.DocumentId, requestName string, ui fyne.CanvasObject) {
+	exchangeViewTab := container.NewTabItem(formatTabText(requestName), ui)
 	v.documentViewMap[exchangeViewTab] = id
 	v.exchangeTabs.Append(exchangeViewTab)
 	v.exchangeTabs.Select(exchangeViewTab)
@@ -138,7 +137,6 @@ func (v *viewImpl) SetSaveHandler(handler func()) {
 	v.saveButton.OnTapped = handler
 }
 
-func formatTabText(collectionName, requestName string) string {
-	text := fmt.Sprintf("%s %s %s", collectionName, constants.UI_COLLECTION_REQUEST_SEPARATOR, requestName)
-	return utils.TruncateStringWithEllipsis(text, constants.UI_DOCUMENT_TAB_MAX_LENGTH)
+func formatTabText(requestName string) string {
+	return utils.TruncateStringWithEllipsis(requestName, constants.UI_DOCUMENT_TAB_MAX_LENGTH)
 }

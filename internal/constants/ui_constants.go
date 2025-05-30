@@ -24,7 +24,6 @@ const UI_LABEL_KEY_VALUE_ENABLE string = ""
 const UI_LABEL_COLLECTIONS string = "Collections"
 const UI_LABEL_DELETE string = "Delete"
 const UI_LABEL_BACK string = "Back"
-const UI_COLLECTION_REQUEST_SEPARATOR string = "/"
 
 const UI_BODY_TYPE_RAW string = "Raw"
 const UI_BODY_TYPE_FORM string = "Form"

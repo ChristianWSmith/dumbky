@@ -58,9 +58,9 @@ func NewController() *controllerImpl {
 		c.model.UpdateRequestName(id, c.model.GetRequestName())
 		documentData := c.model.GetDocumentData(id)
 		if documentData.RequestName == "" {
-			c.view.SetSelectedDocumentText(documentData.CollectionName, constants.UI_PLACEHOLDER_UNTITLED)
+			c.view.SetSelectedDocumentText(constants.UI_PLACEHOLDER_UNTITLED)
 		} else {
-			c.view.SetSelectedDocumentText(documentData.CollectionName, documentData.RequestName)
+			c.view.SetSelectedDocumentText(documentData.RequestName)
 		}
 		c.view.RefreshTabs()
 
@@ -92,7 +92,7 @@ func (c *controllerImpl) OpenTab(document state.DocumentState) {
 		RequestName:    document.RequestName,
 	})
 
-	c.view.AddDocumentTab(id, document.CollectionName, document.RequestName, exchangeCtrl.CanvasObject())
+	c.view.AddDocumentTab(id, document.RequestName, exchangeCtrl.CanvasObject())
 }
 
 func (c *controllerImpl) SaveTab(callback func()) error {

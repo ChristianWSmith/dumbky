@@ -85,7 +85,7 @@ func (m *modelImpl) SetRequestName(requestName string) {
 }
 
 func (m *modelImpl) SetCollectionName(collectionName string) {
-	m.collectionName.Set(fmt.Sprintf("%s %s", collectionName, constants.UI_COLLECTION_REQUEST_SEPARATOR))
+	m.collectionName.Set(collectionName)
 }
 
 func DocumentStateToRequest(documentState state.DocumentState) (db.Request, error) {
