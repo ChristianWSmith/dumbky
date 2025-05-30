@@ -22,8 +22,6 @@ type controllerImpl struct {
 }
 
 func NewController() *controllerImpl {
-	//view.requestNameEntry.Bind(model.requestNameBinding)
-
 	c := &controllerImpl{
 		model:           model.NewModel(),
 		view:            view.NewView(),
