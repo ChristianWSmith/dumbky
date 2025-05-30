@@ -1,7 +1,8 @@
-package request
+package view
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features"
 	"dumbky/internal/validators"
 
 	"fyne.io/fyne/v2"
@@ -9,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type view struct {
+type viewImpl struct {
 	ui fyne.CanvasObject
 
 	bodyRawEntry     *widget.Entry
@@ -17,7 +18,19 @@ type view struct {
 	bodyContentStack *fyne.Container
 }
 
-func newView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI fyne.CanvasObject) *view {
+type Bindables struct {
+	BodyType, BodyRaw features.StringBindable
+}
+
+type View interface {
+	GetBindables() Bindables
+	CanvasObject() fyne.CanvasObject
+	SetBodyRawVisible(visible bool)
+	SetBodyTypeSelectEnabled(enabled bool)
+	Validate() error
+}
+
+func NewView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI fyne.CanvasObject) View {
 
 	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsUI)
 	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsUI)
@@ -41,7 +54,7 @@ func newView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI fyne.CanvasObjec
 	tabs := container.NewAppTabs(queryParamsTab, pathParamsTab, headersTab, bodyTab)
 	ui := container.NewBorder(nil, nil, nil, nil, tabs)
 
-	return &view{
+	return &viewImpl{
 		ui:               ui,
 		bodyRawEntry:     bodyRawEntry,
 		bodyTypeSelect:   bodyTypeSelect,
@@ -49,28 +62,37 @@ func newView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI fyne.CanvasObjec
 	}
 }
 
-func (v *view) canvasObject() fyne.CanvasObject {
+func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *view) showBodyRaw() {
-	v.bodyRawEntry.Show()
-	v.bodyContentStack.Refresh()
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{
+		BodyType: v.bodyTypeSelect,
+		BodyRaw:  v.bodyRawEntry,
+	}
 }
 
-func (v *view) hideBodyRaw() {
-	v.bodyRawEntry.Hide()
-	v.bodyContentStack.Refresh()
+func (v *viewImpl) SetBodyRawVisible(visible bool) {
+	if visible {
+
+		v.bodyRawEntry.Show()
+		v.bodyContentStack.Refresh()
+	} else {
+
+		v.bodyRawEntry.Hide()
+		v.bodyContentStack.Refresh()
+	}
 }
 
-func (v *view) enabledBodyTypeSelect() {
-	v.bodyTypeSelect.Enable()
+func (v *viewImpl) SetBodyTypeSelectEnabled(enabled bool) {
+	if enabled {
+		v.bodyTypeSelect.Enable()
+	} else {
+		v.bodyTypeSelect.Disable()
+	}
 }
 
-func (v *view) disabledBodyTypeSelect() {
-	v.bodyTypeSelect.Disable()
-}
-
-func (v *view) validateBodyRaw() error {
+func (v *viewImpl) Validate() error {
 	return v.bodyRawEntry.Validate()
 }
