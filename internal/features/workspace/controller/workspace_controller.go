@@ -9,6 +9,7 @@ import (
 	"dumbky/internal/features/workspace/view"
 	"dumbky/internal/log"
 	"dumbky/internal/state"
+	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -33,6 +34,7 @@ func NewController() *controllerImpl {
 		tabId := c.view.GetDocumentId(tabItem)
 		documentData := c.model.GetDocumentData(tabId)
 		c.model.SetRequestName(documentData.RequestName)
+		c.model.SetCollectionName(documentData.CollectionName)
 	})
 
 	c.view.SetDocumentClosedHandler(func(tabItem *container.TabItem) {
@@ -41,11 +43,15 @@ func NewController() *controllerImpl {
 		c.model.DestroyDocumentData(id)
 		delete(c.exchangeCtrlMap, id)
 		if c.model.DocumentCount() == 0 {
-			c.OpenTab(state.DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
+			c.OpenTab(state.DocumentState{
+				CollectionName: constants.DB_DEFAULT_COLLECTION_NAME,
+				RequestName:    utils.SillyName()})
 		}
 	})
 
-	c.OpenTab(state.DocumentState{CollectionName: constants.DB_DEFAULT_COLLECTION_NAME, RequestName: constants.UI_PLACEHOLDER_UNTITLED})
+	c.OpenTab(state.DocumentState{
+		CollectionName: constants.DB_DEFAULT_COLLECTION_NAME,
+		RequestName:    utils.SillyName()})
 
 	c.model.SetRequestNameListener(func() {
 		id := c.view.GetSelectedDocumentId()
@@ -141,4 +147,5 @@ func (c *controllerImpl) bindAll() {
 	bindings := c.model.GetBindings()
 	bindables := c.view.GetBindables()
 	bindables.RequestName.Bind(bindings.RequestName)
+	bindables.CollectionName.Bind(bindings.CollectionName)
 }

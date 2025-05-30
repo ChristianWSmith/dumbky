@@ -7,6 +7,7 @@ import (
 	"dumbky/internal/features/dashboard/view"
 	"dumbky/internal/features/workspace"
 	"dumbky/internal/state"
+	"dumbky/internal/utils"
 
 	"fyne.io/fyne/v2"
 )
@@ -46,7 +47,7 @@ func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 		}
 		c.workspaceCtrl.OpenTab(state.DocumentState{
 			CollectionName: collectionName,
-			RequestName:    constants.UI_PLACEHOLDER_UNTITLED})
+			RequestName:    utils.SillyName()})
 	})
 
 	c.workspaceCtrl.SetSaveHandler(func() {

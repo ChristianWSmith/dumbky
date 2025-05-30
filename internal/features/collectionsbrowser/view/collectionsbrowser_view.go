@@ -43,13 +43,17 @@ type View interface {
 	SetAddCollectionHandler(handler func())
 }
 
-func NewView(requestsListBinding, collectionsListBinding binding.StringList, onDeleteRequest, onDeleteCollection func(string)) View {
+type ViewCallbacks struct {
+	OnDeleteCollection, OnDeleteRequest func(string)
+}
+
+func NewView(requestsListBinding, collectionsListBinding binding.StringList, callbacks ViewCallbacks) View {
 	addCollectionEntry := widget.NewEntry()
 
 	requestsMenu := func(position fyne.Position, parent fyne.CanvasObject, requestName string) {
 		pop := fyne.NewMenu("",
 			fyne.NewMenuItem(constants.UI_LABEL_DELETE, func() {
-				onDeleteRequest(requestName)
+				callbacks.OnDeleteRequest(requestName)
 			}),
 		)
 		widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), position, parent)
@@ -58,7 +62,7 @@ func NewView(requestsListBinding, collectionsListBinding binding.StringList, onD
 	collectionsMenu := func(position fyne.Position, parent fyne.CanvasObject, collectionName string) {
 		pop := fyne.NewMenu("",
 			fyne.NewMenuItem(constants.UI_LABEL_DELETE, func() {
-				onDeleteCollection(collectionName)
+				callbacks.OnDeleteCollection(collectionName)
 			}),
 		)
 		widget.ShowPopUpMenuAtRelativePosition(pop, global.Window.Canvas(), position, parent)
@@ -104,7 +108,7 @@ func NewView(requestsListBinding, collectionsListBinding binding.StringList, onD
 		},
 	)
 
-	backButton := widget.NewButtonWithIcon("Back", theme.NavigateBackIcon(), nil)
+	backButton := widget.NewButtonWithIcon(constants.UI_LABEL_BACK, theme.NavigateBackIcon(), nil)
 	selectedCollectionLabel := widget.NewLabel("")
 	requestsContainer := container.NewBorder(selectedCollectionLabel, backButton, nil, nil, requestsList)
 

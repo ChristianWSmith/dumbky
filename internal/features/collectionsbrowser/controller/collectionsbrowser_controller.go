@@ -24,7 +24,11 @@ func NewController() *controllerImpl {
 
 	bindings := c.model.GetBindings()
 
-	c.view = view.NewView(bindings.RequestsList, bindings.CollectionsList, c.deleteRequest, c.deleteCollection)
+	c.view = view.NewView(bindings.RequestsList, bindings.CollectionsList,
+		view.ViewCallbacks{
+			OnDeleteCollection: c.deleteCollection,
+			OnDeleteRequest:    c.deleteRequest,
+		})
 
 	bindables := c.view.GetBindables()
 	bindables.AddCollection.Bind(bindings.AddCollection)

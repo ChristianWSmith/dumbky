@@ -1,7 +1,10 @@
 package view
 
 import (
+	"dumbky/internal/components"
+	"dumbky/internal/constants"
 	"dumbky/internal/features"
+	"dumbky/internal/utils"
 	"fmt"
 
 	"dumbky/internal/features/workspace/common"
@@ -13,16 +16,17 @@ import (
 )
 
 type viewImpl struct {
-	ui               *fyne.Container
-	exchangeTabs     *container.DocTabs
-	documentViewMap  map[*container.TabItem]common.DocumentId
-	requestNameEntry *widget.Entry
-	addButton        *widget.Button
-	saveButton       *widget.Button
+	ui                  *fyne.Container
+	exchangeTabs        *container.DocTabs
+	documentViewMap     map[*container.TabItem]common.DocumentId
+	requestNameEntry    *widget.Entry
+	collectionNameEntry *components.ReadOnlyEntry
+	addButton           *widget.Button
+	saveButton          *widget.Button
 }
 
 type Bindables struct {
-	RequestName features.StringBindable
+	RequestName, CollectionName features.StringBindable
 }
 
 type View interface {
@@ -44,25 +48,28 @@ type View interface {
 func NewView() View {
 
 	exchangeTabs := container.NewDocTabs()
+	exchangeTabs.SetTabLocation(container.TabLocationLeading)
 	requestNameEntry := widget.NewEntry()
 
 	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 
 	saveButton := widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), nil)
+	collectionNameEntry := components.NewReadOnlyEntry("")
 
-	controlsLeft := container.NewHBox(addButton)
+	controlsLeft := container.NewHBox(addButton, collectionNameEntry)
 	controlsRight := container.NewHBox(saveButton)
 
 	workspaceHeaderUI := container.NewBorder(nil, nil, controlsLeft, controlsRight, requestNameEntry)
 
 	ui := container.NewBorder(workspaceHeaderUI, nil, nil, nil, exchangeTabs)
 	return &viewImpl{
-		ui:               ui,
-		exchangeTabs:     exchangeTabs,
-		documentViewMap:  make(map[*container.TabItem]common.DocumentId),
-		requestNameEntry: requestNameEntry,
-		addButton:        addButton,
-		saveButton:       saveButton,
+		ui:                  ui,
+		exchangeTabs:        exchangeTabs,
+		documentViewMap:     make(map[*container.TabItem]common.DocumentId),
+		requestNameEntry:    requestNameEntry,
+		collectionNameEntry: collectionNameEntry,
+		addButton:           addButton,
+		saveButton:          saveButton,
 	}
 }
 
@@ -72,7 +79,8 @@ func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 
 func (v *viewImpl) GetBindables() Bindables {
 	return Bindables{
-		RequestName: v.requestNameEntry,
+		RequestName:    v.requestNameEntry,
+		CollectionName: v.collectionNameEntry,
 	}
 }
 
@@ -131,5 +139,6 @@ func (v *viewImpl) SetSaveHandler(handler func()) {
 }
 
 func formatTabText(collectionName, requestName string) string {
-	return fmt.Sprintf("%s / %s", collectionName, requestName)
+	text := fmt.Sprintf("%s %s %s", collectionName, constants.UI_COLLECTION_REQUEST_SEPARATOR, requestName)
+	return utils.TruncateStringWithEllipsis(text, constants.UI_DOCUMENT_TAB_MAX_LENGTH)
 }

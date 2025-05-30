@@ -13,12 +13,12 @@ import (
 )
 
 type modelImpl struct {
-	documentDataMap    map[common.DocumentId]common.DocumentData
-	requestNameBinding binding.String
+	documentDataMap             map[common.DocumentId]common.DocumentData
+	requestName, collectionName binding.String
 }
 
 type Bindings struct {
-	RequestName binding.String
+	RequestName, CollectionName binding.String
 }
 
 type Model interface {
@@ -30,13 +30,15 @@ type Model interface {
 	SetRequestNameListener(handler func())
 	GetRequestName() string
 	SetRequestName(string)
+	SetCollectionName(string)
 	GetBindings() Bindings
 }
 
 func NewModel() Model {
 	return &modelImpl{
-		documentDataMap:    make(map[common.DocumentId]common.DocumentData),
-		requestNameBinding: binding.NewString(),
+		documentDataMap: make(map[common.DocumentId]common.DocumentData),
+		requestName:     binding.NewString(),
+		collectionName:  binding.NewString(),
 	}
 }
 
@@ -46,7 +48,8 @@ func (m *modelImpl) DestroyDocumentData(id common.DocumentId) {
 
 func (m *modelImpl) GetBindings() Bindings {
 	return Bindings{
-		RequestName: m.requestNameBinding,
+		RequestName:    m.requestName,
+		CollectionName: m.collectionName,
 	}
 }
 
@@ -69,16 +72,20 @@ func (m *modelImpl) UpdateRequestName(id common.DocumentId, requestName string) 
 }
 
 func (m *modelImpl) SetRequestNameListener(handler func()) {
-	m.requestNameBinding.AddListener(binding.NewDataListener(handler))
+	m.requestName.AddListener(binding.NewDataListener(handler))
 }
 
 func (m *modelImpl) GetRequestName() string {
-	requestName, _ := m.requestNameBinding.Get()
+	requestName, _ := m.requestName.Get()
 	return requestName
 }
 
 func (m *modelImpl) SetRequestName(requestName string) {
-	m.requestNameBinding.Set(requestName)
+	m.requestName.Set(requestName)
+}
+
+func (m *modelImpl) SetCollectionName(collectionName string) {
+	m.collectionName.Set(fmt.Sprintf("%s %s", collectionName, constants.UI_COLLECTION_REQUEST_SEPARATOR))
 }
 
 func DocumentStateToRequest(documentState state.DocumentState) (db.Request, error) {

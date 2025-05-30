@@ -7,7 +7,7 @@ const UI_PLACEHOLDER_RESPONSE_TIME string = ""
 const UI_PLACEHOLDER_RESPONSE_BODY string = ""
 const UI_PLACEHOLDER_KEY string = ""
 const UI_PLACEHOLDER_VALUE string = ""
-const UI_PLACEHOLDER_UNTITLED string = "untitled"
+const UI_PLACEHOLDER_UNTITLED string = "Untitled"
 
 const UI_LOADING_RESPONSE_STATUS string = ""
 const UI_LOADING_RESPONSE_TIME string = ""
@@ -23,13 +23,18 @@ const UI_LABEL_KEY_VALUE_ADD string = ""
 const UI_LABEL_KEY_VALUE_ENABLE string = ""
 const UI_LABEL_COLLECTIONS string = "Collections"
 const UI_LABEL_DELETE string = "Delete"
+const UI_LABEL_BACK string = "Back"
+const UI_COLLECTION_REQUEST_SEPARATOR string = "/"
 
 const UI_BODY_TYPE_RAW string = "Raw"
 const UI_BODY_TYPE_FORM string = "Form"
 const UI_BODY_TYPE_NONE string = "None"
 const UI_BODY_TYPE_DEFAULT string = UI_BODY_TYPE_NONE
 
-const UI_DASHBOARD_SIDEBAR_OFFSET float64 = 0.2
+const UI_DASHBOARD_SIDEBAR_OFFSET float64 = 0.25
+const UI_DOCUMENT_TAB_MAX_LENGTH = 20
+
+const UI_DICEWARE_COUNT int = 2
 
 func UIBodyTypes() []string {
 	return []string{
