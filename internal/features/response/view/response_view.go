@@ -1,15 +1,16 @@
-package response
+package view
 
 import (
 	"dumbky/internal/components"
 	"dumbky/internal/constants"
+	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
-type view struct {
+type viewImpl struct {
 	status *components.ReadOnlyEntry
 	time   *components.ReadOnlyEntry
 	body   *components.ReadOnlyEntry
@@ -19,13 +20,23 @@ type view struct {
 	statusStack *fyne.Container
 }
 
+type Bindables struct {
+	Status, Time, Body features.StringBindable
+}
+
+type View interface {
+	GetBindables() Bindables
+	CanvasObject() fyne.CanvasObject
+	SetLoading(loading bool)
+}
+
 func styleEntry(entry *components.ReadOnlyEntry) {
 	entry.SetSelectable(true)
 	entry.SetWrapping(fyne.TextWrapWord)
 	entry.SetTextStyle(fyne.TextStyle{Monospace: true})
 }
 
-func newView() *view {
+func NewView() View {
 	statusEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
 	timeEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
 	bodyEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
@@ -43,7 +54,7 @@ func newView() *view {
 
 	ui := container.NewBorder(info, nil, nil, nil, scroll)
 
-	return &view{
+	return &viewImpl{
 		status:      statusEntry,
 		time:        timeEntry,
 		body:        bodyEntry,
@@ -53,11 +64,19 @@ func newView() *view {
 	}
 }
 
-func (v *view) canvasObject() fyne.CanvasObject {
+func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *view) setLoading(loading bool) {
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{
+		Status: v.status,
+		Time:   v.time,
+		Body:   v.body,
+	}
+}
+
+func (v *viewImpl) SetLoading(loading bool) {
 	if loading {
 		v.status.Hide()
 		v.loadingBar.Start()
