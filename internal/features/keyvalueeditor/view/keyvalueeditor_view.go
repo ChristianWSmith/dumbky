@@ -1,4 +1,4 @@
-package keyvalueeditor
+package view
 
 import (
 	"dumbky/internal/components"
@@ -10,13 +10,26 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type view struct {
+type viewImpl struct {
 	ui                *fyne.Container
 	keyValueContainer *fyne.Container
 	addButton         *widget.Button
 }
 
-func newView() *view {
+type Bindables struct {
+}
+
+type View interface {
+	GetBindables() Bindables
+	CanvasObject() fyne.CanvasObject
+	SetVisible(visible bool)
+	SetAddHandler(handler func())
+	Clear()
+	Add(ui fyne.CanvasObject)
+	Remove(ui fyne.CanvasObject)
+}
+
+func NewView() View {
 	keyValueBox := container.NewVBox()
 
 	addButton := widget.NewButtonWithIcon(constants.UI_LABEL_KEY_VALUE_ADD, theme.ContentAddIcon(), nil)
@@ -26,40 +39,44 @@ func newView() *view {
 	scroll := components.NewScrollInterceptorWrapper(keyValueAddContainer)
 	ui := container.NewBorder(nil, nil, nil, nil, scroll)
 
-	return &view{
+	return &viewImpl{
 		ui:                ui,
 		keyValueContainer: keyValueBox,
 		addButton:         addButton,
 	}
 }
 
-func (v *view) canvasObject() fyne.CanvasObject {
+func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *view) hide() {
-	v.ui.Hide()
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{}
 }
 
-func (v *view) show() {
-	v.ui.Show()
+func (v *viewImpl) SetVisible(visible bool) {
+	if visible {
+		v.ui.Show()
+	} else {
+		v.ui.Hide()
+	}
 }
 
-func (v *view) setAddHandler(handler func()) {
+func (v *viewImpl) SetAddHandler(handler func()) {
 	v.addButton.OnTapped = handler
 }
 
-func (v *view) clear() {
+func (v *viewImpl) Clear() {
 	v.keyValueContainer.RemoveAll()
 	v.keyValueContainer.Refresh()
 }
 
-func (v *view) add(ui fyne.CanvasObject) {
+func (v *viewImpl) Add(ui fyne.CanvasObject) {
 	v.keyValueContainer.Add(ui)
 	v.keyValueContainer.Refresh()
 }
 
-func (v *view) remove(ui fyne.CanvasObject) {
+func (v *viewImpl) Remove(ui fyne.CanvasObject) {
 	v.keyValueContainer.Remove(ui)
 	v.keyValueContainer.Refresh()
 }

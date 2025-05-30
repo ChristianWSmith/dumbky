@@ -16,6 +16,7 @@ type Bindables struct {
 
 type View interface {
 	CanvasObject() fyne.CanvasObject
+	GetBindables() Bindables
 }
 
 func NewView(dashboardSidebarUI, workspaceUI fyne.CanvasObject) View {
@@ -31,4 +32,8 @@ func NewView(dashboardSidebarUI, workspaceUI fyne.CanvasObject) View {
 
 func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
+}
+
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{}
 }

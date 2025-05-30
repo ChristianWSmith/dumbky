@@ -1,6 +1,6 @@
 package model
 
-type modelImpl struct {
+type ModelImpl struct {
 }
 
 type Bindings struct {
@@ -11,9 +11,9 @@ type Model interface {
 }
 
 func NewModel() Model {
-	return &modelImpl{}
+	return &ModelImpl{}
 }
 
-func (m *modelImpl) GetBindings() Bindings {
+func (m *ModelImpl) GetBindings() Bindings {
 	return Bindings{}
 }

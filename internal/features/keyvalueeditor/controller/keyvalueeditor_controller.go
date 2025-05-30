@@ -1,60 +1,46 @@
-package keyvalueeditor
+package controller
 
 import (
-	"dumbky/internal/features"
 	"dumbky/internal/features/keyvalue"
+	"dumbky/internal/features/keyvalueeditor/model"
+	"dumbky/internal/features/keyvalueeditor/view"
 	"dumbky/internal/log"
 	"dumbky/internal/state"
 
 	"fyne.io/fyne/v2"
 )
 
-type controller struct {
-	model *model
-	view  *view
+type controllerImpl struct {
+	model model.Model
+	view  view.View
 
 	keyValueCtrls  map[keyvalue.KeyValueController]bool
 	keyValidator   func(val string) error
 	valueValidator func(val string) error
 }
 
-type KeyValueEditorController interface {
-	features.Controller
-	ToState() state.KeyValueEditorState
-	LoadState(keyValueEditorState state.KeyValueEditorState)
-	SetVisible(visible bool)
-	Validate() error
-	Get() map[string]string
-}
-
-var _ KeyValueEditorController = (*controller)(nil)
-
-func New(keyValidator, valueValidator func(string) error) KeyValueEditorController {
-	return newController(keyValidator, valueValidator)
-}
-
-func newController(keyValidator, valueValidator func(string) error) *controller {
-	model := newModel()
-	view := newView()
+func NewController(keyValidator, valueValidator func(string) error) *controllerImpl {
+	model := model.NewModel()
+	view := view.NewView()
 	keyValueControllers := make(map[keyvalue.KeyValueController]bool)
-	c := &controller{
+	c := &controllerImpl{
 		model:          model,
 		view:           view,
 		keyValueCtrls:  keyValueControllers,
 		keyValidator:   keyValidator,
 		valueValidator: valueValidator,
 	}
-	view.setAddHandler(func() {
+	view.SetAddHandler(func() {
 		c.addKeyValue(state.KeyValueState{Enabled: true, Key: "", Value: ""})
 	})
 	return c
 }
 
-func (c *controller) CanvasObject() fyne.CanvasObject {
-	return c.view.canvasObject()
+func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
+	return c.view.CanvasObject()
 }
 
-func (c *controller) ToState() state.KeyValueEditorState {
+func (c *controllerImpl) ToState() state.KeyValueEditorState {
 	keyValueStates := []state.KeyValueState{}
 	for keyValue := range c.keyValueCtrls {
 		keyValueState := keyValue.ToState()
@@ -65,22 +51,18 @@ func (c *controller) ToState() state.KeyValueEditorState {
 	}
 }
 
-func (c *controller) LoadState(keyValueEditorState state.KeyValueEditorState) {
+func (c *controllerImpl) LoadState(keyValueEditorState state.KeyValueEditorState) {
 	c.clear()
 	for _, keyValueState := range keyValueEditorState.KeyValueStates {
 		c.addKeyValue(keyValueState)
 	}
 }
 
-func (c *controller) SetVisible(visible bool) {
-	if visible {
-		c.view.show()
-	} else {
-		c.view.hide()
-	}
+func (c *controllerImpl) SetVisible(visible bool) {
+	c.view.SetVisible(visible)
 }
 
-func (c *controller) Validate() error {
+func (c *controllerImpl) Validate() error {
 	for _, keyValueCtrl := range c.collectEnabled() {
 		err := keyValueCtrl.Validate()
 		if err != nil {
@@ -91,7 +73,7 @@ func (c *controller) Validate() error {
 	return nil
 }
 
-func (c *controller) Get() map[string]string {
+func (c *controllerImpl) Get() map[string]string {
 	out := make(map[string]string)
 	for _, keyValueCtrl := range c.collectEnabled() {
 		key, value := keyValueCtrl.Get()
@@ -100,23 +82,23 @@ func (c *controller) Get() map[string]string {
 	return out
 }
 
-func (c *controller) clear() {
+func (c *controllerImpl) clear() {
 	c.keyValueCtrls = make(map[keyvalue.KeyValueController]bool)
-	c.view.clear()
+	c.view.Clear()
 }
 
-func (c *controller) addKeyValue(keyValueState state.KeyValueState) {
+func (c *controllerImpl) addKeyValue(keyValueState state.KeyValueState) {
 	keyValueCtrl := keyvalue.New(c.keyValidator, c.valueValidator)
 	keyValueCtrl.LoadState(keyValueState)
 	keyValueCtrl.SetDestroyHandler(func() {
 		delete(c.keyValueCtrls, keyValueCtrl)
-		c.view.remove(keyValueCtrl.CanvasObject())
+		c.view.Remove(keyValueCtrl.CanvasObject())
 	})
 	c.keyValueCtrls[keyValueCtrl] = true
-	c.view.add(keyValueCtrl.CanvasObject())
+	c.view.Add(keyValueCtrl.CanvasObject())
 }
 
-func (c *controller) collectEnabled() []keyvalue.KeyValueController {
+func (c *controllerImpl) collectEnabled() []keyvalue.KeyValueController {
 	out := []keyvalue.KeyValueController{}
 	for kv := range c.keyValueCtrls {
 		enabled := kv.IsEnabled()
