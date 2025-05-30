@@ -11,6 +11,9 @@ type viewImpl struct {
 	ui fyne.CanvasObject
 }
 
+type Bindables struct {
+}
+
 type View interface {
 	CanvasObject() fyne.CanvasObject
 }

@@ -1,7 +1,8 @@
-package keyvalue
+package view
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/features"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -9,7 +10,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-type view struct {
+type viewImpl struct {
 	ui fyne.CanvasObject
 
 	destroyButton *widget.Button
@@ -18,7 +19,23 @@ type view struct {
 	valueEntry    *widget.Entry
 }
 
-func newView() *view {
+type Bindables struct {
+	Enabled    features.BoolBindable
+	Key, Value features.StringBindable
+}
+
+type View interface {
+	GetBindables() Bindables
+	CanvasObject() fyne.CanvasObject
+	ValidateKey() error
+	ValidateValue() error
+	SetEnabled(enabled bool)
+	SetDestroyHandler(handler func())
+	SetKeyValidator(validator func(string) error)
+	SetValueValidator(validator func(string) error)
+}
+
+func NewView() View {
 
 	keyEntry := widget.NewEntry()
 	keyEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_KEY)
@@ -36,7 +53,7 @@ func newView() *view {
 
 	ui := container.NewBorder(nil, nil, enabledCheck, destroyButton, grid)
 
-	return &view{
+	return &viewImpl{
 		ui:            ui,
 		destroyButton: destroyButton,
 		enabledCheck:  enabledCheck,
@@ -45,19 +62,27 @@ func newView() *view {
 	}
 }
 
-func (v *view) canvasObject() fyne.CanvasObject {
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{
+		Enabled: v.enabledCheck,
+		Key:     v.keyEntry,
+		Value:   v.valueEntry,
+	}
+}
+
+func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *view) validateKey() error {
+func (v *viewImpl) ValidateKey() error {
 	return v.keyEntry.Validate()
 }
 
-func (v *view) validateValue() error {
+func (v *viewImpl) ValidateValue() error {
 	return v.valueEntry.Validate()
 }
 
-func (v *view) setEnabled(enabled bool) {
+func (v *viewImpl) SetEnabled(enabled bool) {
 	if enabled {
 		v.keyEntry.Enable()
 		v.valueEntry.Enable()
@@ -67,14 +92,14 @@ func (v *view) setEnabled(enabled bool) {
 	}
 }
 
-func (v *view) setDestroyHandler(handler func()) {
+func (v *viewImpl) SetDestroyHandler(handler func()) {
 	v.destroyButton.OnTapped = handler
 }
 
-func (v *view) setKeyValidator(validator func(string) error) {
+func (v *viewImpl) SetKeyValidator(validator func(string) error) {
 	v.keyEntry.Validator = validator
 }
 
-func (v *view) setValueValidator(validator func(string) error) {
+func (v *viewImpl) SetValueValidator(validator func(string) error) {
 	v.keyEntry.Validator = validator
 }
