@@ -37,11 +37,7 @@ func NewController(
 		responseCtrl: responseCtrl,
 	}
 
-	methodBinding, urlBinding, sslBinding := c.model.GetBindings()
-	method, url, ssl := c.view.GetBindables()
-	method.Bind(methodBinding)
-	url.Bind(urlBinding)
-	ssl.Bind(sslBinding)
+	c.bindAll()
 
 	c.view.SetUrlValidator(validators.ValidateURL)
 
@@ -98,6 +94,14 @@ func (c *controllerImpl) Validate() error {
 		return err
 	}
 	return c.view.ValidateURL()
+}
+
+func (c *controllerImpl) bindAll() {
+	bindings := c.model.GetBindings()
+	bindables := c.view.GetBindables()
+	bindables.Method.Bind(bindings.Method)
+	bindables.URL.Bind(bindings.URL)
+	bindables.UseSSL.Bind(bindings.UseSSL)
 }
 
 func (c *controllerImpl) setSendEnabled(enabled bool) {

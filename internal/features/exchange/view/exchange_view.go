@@ -19,8 +19,13 @@ type viewImpl struct {
 	methodSelect *widget.Select
 }
 
+type Bindables struct {
+	Method, URL features.StringBindable
+	UseSSL      features.BoolBindable
+}
+
 type View interface {
-	GetBindables() (method, url features.StringBindable, ssl features.BoolBindable)
+	GetBindables() Bindables
 	CanvasObject() fyne.CanvasObject
 	SetUrlValidator(validator func(string) error)
 	SetSendHandler(handler func())
@@ -59,8 +64,12 @@ func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *viewImpl) GetBindables() (method, url features.StringBindable, ssl features.BoolBindable) {
-	return v.methodSelect, v.urlEntry, v.sslCheck
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{
+		Method: v.methodSelect,
+		URL:    v.urlEntry,
+		UseSSL: v.sslCheck,
+	}
 }
 
 func (v *viewImpl) SetUrlValidator(validator func(string) error) {

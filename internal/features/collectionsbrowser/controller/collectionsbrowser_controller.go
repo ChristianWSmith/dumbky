@@ -22,13 +22,13 @@ func NewController() *controllerImpl {
 
 	c.model = model.NewModel()
 
-	selectedCollectionBinding, addCollectionBinding, collectionsListBinding, requestsListBinding := c.model.GetBindings()
+	bindings := c.model.GetBindings()
 
-	c.view = view.NewView(requestsListBinding, collectionsListBinding, c.deleteRequest, c.deleteCollection)
+	c.view = view.NewView(bindings.RequestsList, bindings.CollectionsList, c.deleteRequest, c.deleteCollection)
 
-	addCollectionEntry, selectedCollectionLabel := c.view.GetBindables()
-	addCollectionEntry.Bind(addCollectionBinding)
-	selectedCollectionLabel.Bind(selectedCollectionBinding)
+	bindables := c.view.GetBindables()
+	bindables.AddCollection.Bind(bindings.AddCollection)
+	bindables.SelectedCollection.Bind(bindings.SelectedCollection)
 
 	c.view.SetAddCollectionValidator(validators.ValidateCollectionName)
 	c.view.SetAddCollectionHandler(func() {

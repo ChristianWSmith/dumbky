@@ -12,8 +12,13 @@ type modelImpl struct {
 	useSSLBinding binding.Bool
 }
 
+type Bindings struct {
+	Method, URL binding.String
+	UseSSL      binding.Bool
+}
+
 type Model interface {
-	GetBindings() (method, url binding.String, ssl binding.Bool)
+	GetBindings() Bindings
 	GetMethod() string
 	GetURL() string
 	GetUseSSL() bool
@@ -33,8 +38,12 @@ func NewModel() Model {
 	}
 }
 
-func (m *modelImpl) GetBindings() (method, url binding.String, ssl binding.Bool) {
-	return m.methodBinding, m.urlBinding, m.useSSLBinding
+func (m *modelImpl) GetBindings() Bindings {
+	return Bindings{
+		Method: m.methodBinding,
+		URL:    m.urlBinding,
+		UseSSL: m.useSSLBinding,
+	}
 }
 
 func (m *modelImpl) GetMethod() string {

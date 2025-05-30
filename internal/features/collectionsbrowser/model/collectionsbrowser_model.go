@@ -12,9 +12,13 @@ type modelImpl struct {
 	requestsListBinding       binding.StringList
 }
 
+type Bindings struct {
+	SelectedCollection, AddCollection binding.String
+	CollectionsList, RequestsList     binding.StringList
+}
+
 type Model interface {
-	GetBindings() (selectedCollectionBinding, addCollectionBinding binding.String,
-		collectionsListBinding, requestsListBinding binding.StringList)
+	GetBindings() Bindings
 	GetSelectedCollection() string
 	GetSelectedRequest() string
 	SetSelectedCollection(collectionName string)
@@ -38,9 +42,13 @@ func NewModel() Model {
 	}
 }
 
-func (m *modelImpl) GetBindings() (selectedCollectionBinding, addCollectionBinding binding.String,
-	collectionsListBinding, requestsListBinding binding.StringList) {
-	return m.selectedCollectionBinding, m.addCollectionBinding, m.collectionsListBinding, m.requestsListBinding
+func (m *modelImpl) GetBindings() Bindings {
+	return Bindings{
+		SelectedCollection: m.selectedCollectionBinding,
+		AddCollection:      m.addCollectionBinding,
+		CollectionsList:    m.collectionsListBinding,
+		RequestsList:       m.requestsListBinding,
+	}
 }
 
 func (m *modelImpl) GetSelectedCollection() string {

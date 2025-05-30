@@ -24,9 +24,13 @@ type viewImpl struct {
 	selectedCollectionLabel *widget.Label
 }
 
+type Bindables struct {
+	AddCollection, SelectedCollection features.StringBindable
+}
+
 type View interface {
 	CanvasObject() fyne.CanvasObject
-	GetBindables() (addCollectionEntry, selectedCollectionLabel features.StringBindable)
+	GetBindables() Bindables
 	SetBackHandler(handler func())
 	SetRequestSelectedCallback(callback func(int))
 	SetCollectionSelectedCallback(callback func(int))
@@ -130,8 +134,11 @@ func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 	return v.ui
 }
 
-func (v *viewImpl) GetBindables() (addCollectionEntry, selectedCollectionLabel features.StringBindable) {
-	return v.addCollectionEntry, v.selectedCollectionLabel
+func (v *viewImpl) GetBindables() Bindables {
+	return Bindables{
+		AddCollection:      v.addCollectionEntry,
+		SelectedCollection: v.selectedCollectionLabel,
+	}
 }
 
 func (v *viewImpl) SetBackHandler(handler func()) {
