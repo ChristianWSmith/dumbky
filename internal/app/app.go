@@ -40,8 +40,6 @@ func Run() {
 	w.Resize(fyne.NewSize(width, height))
 
 	defer glfw.Terminate()
-	// TODO: remove?
-	// w.Canvas().Refresh(rootCtrl.UI)
 
 	w.ShowAndRun()
 }
