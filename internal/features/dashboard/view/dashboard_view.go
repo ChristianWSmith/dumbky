@@ -10,8 +10,7 @@ import (
 )
 
 type viewImpl struct {
-	ui     fyne.CanvasObject
-	offset float64
+	ui fyne.CanvasObject
 }
 
 type Bindables struct {
@@ -24,35 +23,35 @@ type View interface {
 
 func NewView(dashboardSidebarUI, workspaceUI fyne.CanvasObject) View {
 
-	showHideButton := widget.NewButtonWithIcon("", theme.NavigateBackIcon(), nil)
+	showHideButton := widget.NewButtonWithIcon("", theme.NavigateNextIcon(), nil)
 
-	sidebar := container.NewBorder(nil, nil, nil, showHideButton, dashboardSidebarUI)
+	mainUI := container.NewBorder(nil, nil, showHideButton, nil, workspaceUI)
 
-	split := container.NewHSplit(sidebar, workspaceUI)
-	split.SetOffset(constants.UI_DASHBOARD_SIDEBAR_OFFSET)
+	splitUI := container.NewHSplit(dashboardSidebarUI, mainUI)
+	splitUI.SetOffset(constants.UI_DASHBOARD_SIDEBAR_OFFSET)
+	splitUI.Hide()
 
-	ui := container.NewBorder(nil, nil, nil, nil, split)
-	v := &viewImpl{
-		ui:     ui,
-		offset: constants.UI_DASHBOARD_SIDEBAR_OFFSET,
-	}
+	ui := container.NewBorder(nil, nil, nil, nil, mainUI)
 
 	showHideButton.OnTapped = func() {
-		if dashboardSidebarUI.Visible() {
-			showHideButton.Icon = theme.NavigateNextIcon()
-			v.offset = split.Offset
-			dashboardSidebarUI.Hide()
-			split.SetOffset(0.0)
-			split.Refresh()
+		if splitUI.Visible() {
+			showHideButton.SetIcon(theme.NavigateNextIcon())
+			splitUI.Hide()
+			ui.RemoveAll()
+			ui.Add(mainUI)
+			ui.Refresh()
 		} else {
-			showHideButton.Icon = theme.NavigateBackIcon()
-			dashboardSidebarUI.Show()
-			split.SetOffset(v.offset)
-			split.Refresh()
+			showHideButton.SetIcon(theme.NavigateBackIcon())
+			splitUI.Show()
+			ui.RemoveAll()
+			ui.Add(splitUI)
+			ui.Refresh()
 		}
 	}
 
-	showHideButton.Tapped(nil)
+	v := &viewImpl{
+		ui: ui,
+	}
 
 	return v
 }

@@ -54,6 +54,9 @@ func NewView() View {
 
 	saveButton := widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), nil)
 	collectionNameEntry := components.NewReadOnlyEntry("")
+	collectionNameEntry.SetTextStyle(fyne.TextStyle{
+		Bold: true,
+	})
 
 	controlsLeft := container.NewHBox(addButton, collectionNameEntry)
 	controlsRight := container.NewHBox(saveButton)

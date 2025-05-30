@@ -15,9 +15,10 @@ type ReadOnlyEntry struct {
 
 func NewReadOnlyEntry(text string) *ReadOnlyEntry {
 	entry := widget.NewEntry()
+	label := widget.NewLabel(text)
 	entry.Disable()
 	r := &ReadOnlyEntry{
-		label: widget.NewLabel(text),
+		label: label,
 		entry: entry,
 	}
 	r.ExtendBaseWidget(r)

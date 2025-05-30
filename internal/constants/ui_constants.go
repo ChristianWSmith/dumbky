@@ -30,7 +30,7 @@ const UI_BODY_TYPE_FORM string = "Form"
 const UI_BODY_TYPE_NONE string = "None"
 const UI_BODY_TYPE_DEFAULT string = UI_BODY_TYPE_NONE
 
-const UI_DASHBOARD_SIDEBAR_OFFSET float64 = 0.25
+const UI_DASHBOARD_SIDEBAR_OFFSET float64 = 0.2
 const UI_DOCUMENT_TAB_MAX_LENGTH = 20
 
 const UI_DICEWARE_COUNT int = 2
