@@ -9,6 +9,9 @@ const HTTP_METHOD_PATCH string = "PATCH"
 const HTTP_METHOD_OPTIONS string = "OPTIONS"
 const HTTP_METHOD_DEFAULT string = HTTP_METHOD_GET
 
+const PROTOCOL_HTTP string = "http://"
+const PROTOCOL_HTTPS string = "https://"
+
 func HttpMethods() []string {
 	return []string{
 		HTTP_METHOD_GET,
