@@ -11,9 +11,9 @@ import (
 )
 
 type viewImpl struct {
-	status *components.ReadOnlyEntry
-	time   *components.ReadOnlyEntry
-	body   *components.ReadOnlyEntry
+	status *components.FancyLabel
+	time   *components.FancyLabel
+	body   *components.FancyLabel
 
 	ui          *fyne.Container
 	loadingBar  *widget.ProgressBarInfinite
@@ -30,20 +30,21 @@ type View interface {
 	SetLoading(loading bool)
 }
 
-func styleEntry(entry *components.ReadOnlyEntry) {
-	entry.SetSelectable(true)
-	entry.SetWrapping(fyne.TextWrapWord)
-	entry.SetTextStyle(fyne.TextStyle{Monospace: true})
+func styleLabel(label *components.FancyLabel) {
+	label.SetSelectable(true)
+	label.SetWrapping(fyne.TextWrapWord)
+	label.SetTextStyle(fyne.TextStyle{Monospace: true})
+	label.Refresh()
 }
 
 func NewView() View {
-	statusEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
-	timeEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_TIME)
-	bodyEntry := components.NewReadOnlyEntry(constants.UI_PLACEHOLDER_RESPONSE_BODY)
+	statusEntry := components.NewFancyLabel(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
+	timeEntry := components.NewFancyLabel(constants.UI_PLACEHOLDER_RESPONSE_TIME)
+	bodyEntry := components.NewFancyLabel(constants.UI_PLACEHOLDER_RESPONSE_BODY)
 
-	styleEntry(statusEntry)
-	styleEntry(timeEntry)
-	styleEntry(bodyEntry)
+	styleLabel(statusEntry)
+	styleLabel(timeEntry)
+	styleLabel(bodyEntry)
 
 	loadingBar := widget.NewProgressBarInfinite()
 	loadingBar.Hide()

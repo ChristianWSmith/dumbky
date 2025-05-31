@@ -19,7 +19,7 @@ type viewImpl struct {
 	exchangeTabs        *container.DocTabs
 	documentViewMap     map[*container.TabItem]common.DocumentId
 	requestNameEntry    *widget.Entry
-	collectionNameEntry *components.ReadOnlyEntry
+	collectionNameLabel *components.FancyLabel
 	addButton           *widget.Button
 	saveButton          *widget.Button
 }
@@ -53,12 +53,14 @@ func NewView() View {
 	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 
 	saveButton := widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), nil)
-	collectionNameEntry := components.NewReadOnlyEntry("")
-	collectionNameEntry.SetTextStyle(fyne.TextStyle{
+	collectionNameLabel := components.NewFancyLabel("")
+	collectionNameLabel.SetTextStyle(fyne.TextStyle{
 		Bold: true,
 	})
+	collectionNameLabel.SetBackgroundColor(theme.Color(theme.ColorNameFocus))
+	collectionNameLabel.Refresh()
 
-	controlsLeft := container.NewHBox(addButton, collectionNameEntry)
+	controlsLeft := container.NewHBox(addButton, collectionNameLabel)
 	controlsRight := container.NewHBox(saveButton)
 
 	workspaceHeaderUI := container.NewBorder(nil, nil, controlsLeft, controlsRight, requestNameEntry)
@@ -69,7 +71,7 @@ func NewView() View {
 		exchangeTabs:        exchangeTabs,
 		documentViewMap:     make(map[*container.TabItem]common.DocumentId),
 		requestNameEntry:    requestNameEntry,
-		collectionNameEntry: collectionNameEntry,
+		collectionNameLabel: collectionNameLabel,
 		addButton:           addButton,
 		saveButton:          saveButton,
 	}
@@ -82,7 +84,7 @@ func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 func (v *viewImpl) GetBindables() Bindables {
 	return Bindables{
 		RequestName:    v.requestNameEntry,
-		CollectionName: v.collectionNameEntry,
+		CollectionName: v.collectionNameLabel,
 	}
 }
 

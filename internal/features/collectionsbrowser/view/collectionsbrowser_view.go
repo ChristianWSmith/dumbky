@@ -1,6 +1,7 @@
 package view
 
 import (
+	"dumbky/internal/components"
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
 	"dumbky/internal/global"
@@ -21,7 +22,7 @@ type viewImpl struct {
 	requestsContainer       *fyne.Container
 	addButton               *widget.Button
 	backButton              *widget.Button
-	selectedCollectionLabel *widget.Label
+	selectedCollectionLabel *components.FancyLabel
 }
 
 type Bindables struct {
@@ -109,12 +110,22 @@ func NewView(requestsListBinding, collectionsListBinding binding.StringList, cal
 	)
 
 	backButton := widget.NewButtonWithIcon(constants.UI_LABEL_BACK, theme.NavigateBackIcon(), nil)
-	selectedCollectionLabel := widget.NewLabel("")
+	selectedCollectionLabel := components.NewFancyLabel("")
+	selectedCollectionLabel.SetTextStyle(fyne.TextStyle{
+		Bold: true,
+	})
+	selectedCollectionLabel.SetBackgroundColor(theme.Color(theme.ColorNameFocus))
+	selectedCollectionLabel.Refresh()
 	requestsContainer := container.NewBorder(selectedCollectionLabel, backButton, nil, nil, requestsList)
 
 	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 	addCollectionContainer := container.NewBorder(nil, nil, nil, addButton, addCollectionEntry)
-	collectionLabel := widget.NewLabel(constants.UI_LABEL_COLLECTIONS)
+	collectionLabel := components.NewFancyLabel(constants.UI_LABEL_COLLECTIONS)
+	collectionLabel.SetTextStyle(fyne.TextStyle{
+		Bold: true,
+	})
+	collectionLabel.SetBackgroundColor(theme.Color(theme.ColorNameFocus))
+	collectionLabel.Refresh()
 	collectionsContainer := container.NewBorder(collectionLabel, addCollectionContainer, nil, nil, collectionsList)
 
 	stack := container.NewStack(collectionsContainer, requestsContainer)
