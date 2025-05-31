@@ -120,7 +120,7 @@ func (c *controllerImpl) setLoading(loading bool) {
 func (c *controllerImpl) sendButtonHandler() {
 	c.setLoading(true)
 
-	requestPayload, err := c.renderRequestConfig()
+	requestPayload, err := c.RenderRequestConfig()
 	if err != nil {
 		// TODO: error feedback
 		log.Error(err)
@@ -158,7 +158,7 @@ func (c *controllerImpl) sendRequestWorker(requestConfig httputils.RequestConfig
 	})
 }
 
-func (c *controllerImpl) renderRequestConfig() (httputils.RequestConfig, error) {
+func (c *controllerImpl) RenderRequestConfig() (httputils.RequestConfig, error) {
 	err := c.Validate()
 	if err != nil {
 		log.Warn(err)

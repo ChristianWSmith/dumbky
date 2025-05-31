@@ -5,6 +5,7 @@ import (
 	"dumbky/internal/features/exchange/controller"
 	"dumbky/internal/features/request"
 	"dumbky/internal/features/response"
+	"dumbky/internal/httputils"
 	"dumbky/internal/state"
 )
 
@@ -13,6 +14,7 @@ type ExchangeController interface {
 	ToState() state.ExchangeState
 	LoadState(exchangeState state.ExchangeState)
 	Validate() error
+	RenderRequestConfig() (httputils.RequestConfig, error)
 }
 
 func New() ExchangeController {

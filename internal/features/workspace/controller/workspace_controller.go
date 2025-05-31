@@ -7,6 +7,7 @@ import (
 	"dumbky/internal/features/workspace/common"
 	"dumbky/internal/features/workspace/model"
 	"dumbky/internal/features/workspace/view"
+	"dumbky/internal/httputils"
 	"dumbky/internal/log"
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
@@ -47,6 +48,17 @@ func NewController() *controllerImpl {
 				CollectionName: constants.DB_DEFAULT_COLLECTION_NAME,
 				RequestName:    utils.SillyName()})
 		}
+	})
+
+	c.view.SetImportHandler(func() {})
+
+	c.view.SetExportHandler(func() {
+		id := c.view.GetSelectedDocumentId()
+		exchangeCtrl := c.exchangeCtrlMap[id]
+		requestConfig, _ := exchangeCtrl.RenderRequestConfig()
+		request, _ := httputils.RenderRequest(requestConfig)
+		curlCmd, _ := httputils.RequestToCurl(request)
+		log.Debug(curlCmd)
 	})
 
 	c.OpenTab(state.DocumentState{

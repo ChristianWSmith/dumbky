@@ -22,6 +22,8 @@ type viewImpl struct {
 	collectionNameLabel *components.FancyLabel
 	addButton           *widget.Button
 	saveButton          *widget.Button
+	importButton        *widget.Button
+	exportButton        *widget.Button
 }
 
 type Bindables struct {
@@ -42,6 +44,8 @@ type View interface {
 	AddDocumentTab(id common.DocumentId, requestName string, ui fyne.CanvasObject)
 	SetAddHandler(handler func())
 	SetSaveHandler(handler func())
+	SetImportHandler(handler func())
+	SetExportHandler(handler func())
 }
 
 func NewView() View {
@@ -53,6 +57,10 @@ func NewView() View {
 	addButton := widget.NewButtonWithIcon("", theme.ContentAddIcon(), nil)
 
 	saveButton := widget.NewButtonWithIcon("", theme.DocumentSaveIcon(), nil)
+
+	importButton := widget.NewButtonWithIcon("", theme.LoginIcon(), nil)
+	exportButton := widget.NewButtonWithIcon("", theme.LogoutIcon(), nil)
+
 	collectionNameLabel := components.NewFancyLabel("")
 	collectionNameLabel.SetTextStyle(fyne.TextStyle{
 		Bold: true,
@@ -62,7 +70,7 @@ func NewView() View {
 	collectionNameLabel.Refresh()
 
 	controlsLeft := container.NewHBox(addButton, collectionNameLabel)
-	controlsRight := container.NewHBox(saveButton)
+	controlsRight := container.NewHBox(saveButton, importButton, exportButton)
 
 	workspaceHeaderUI := container.NewBorder(nil, nil, controlsLeft, controlsRight, requestNameEntry)
 
@@ -75,6 +83,8 @@ func NewView() View {
 		collectionNameLabel: collectionNameLabel,
 		addButton:           addButton,
 		saveButton:          saveButton,
+		importButton:        importButton,
+		exportButton:        exportButton,
 	}
 }
 
@@ -141,6 +151,14 @@ func (v *viewImpl) SetAddHandler(handler func()) {
 
 func (v *viewImpl) SetSaveHandler(handler func()) {
 	v.saveButton.OnTapped = handler
+}
+
+func (v *viewImpl) SetImportHandler(handler func()) {
+	v.importButton.OnTapped = handler
+}
+
+func (v *viewImpl) SetExportHandler(handler func()) {
+	v.exportButton.OnTapped = handler
 }
 
 func formatTabText(requestName string) string {

@@ -73,7 +73,7 @@ func resolveHeaders(request http.Request, headers map[string]string) {
 	}
 }
 
-func renderRequest(requestConfig RequestConfig) (*http.Request, error) {
+func RenderRequest(requestConfig RequestConfig) (*http.Request, error) {
 	body, err := resolveBody(requestConfig)
 
 	if err != nil {
@@ -104,7 +104,7 @@ func SendRequest(requestConfig RequestConfig) (ResponsePayload, error) {
 		}
 	}
 
-	request, err := renderRequest(requestConfig)
+	request, err := RenderRequest(requestConfig)
 
 	if err != nil {
 		return ResponsePayload{}, err
