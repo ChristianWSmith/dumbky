@@ -64,9 +64,9 @@ $ go build
 ## Roadmap 🗺️
 
 - [x] Saving/loading requests. 💾
+- [x] Enhance UI/UX for better user experience. 🎨
+- [ ] Import/export from cURL. 🤖
 - [ ] Implement environment variables for request configuration. 🔧
-- [ ] Add support for automated testing scripts. 🤖
-- [ ] Enhance UI/UX for better user experience. 🎨
 
 *This roadmap is tentative and subject to change.* 🔄
 
