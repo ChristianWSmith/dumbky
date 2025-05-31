@@ -115,6 +115,7 @@ func NewView(requestsListBinding, collectionsListBinding binding.StringList, cal
 		Bold: true,
 	})
 	selectedCollectionLabel.SetBackgroundColor(theme.Color(theme.ColorNameFocus))
+	selectedCollectionLabel.SetBorderColor(theme.Color(theme.ColorNamePrimary))
 	selectedCollectionLabel.Refresh()
 	requestsContainer := container.NewBorder(selectedCollectionLabel, backButton, nil, nil, requestsList)
 
@@ -125,6 +126,7 @@ func NewView(requestsListBinding, collectionsListBinding binding.StringList, cal
 		Bold: true,
 	})
 	collectionLabel.SetBackgroundColor(theme.Color(theme.ColorNameFocus))
+	collectionLabel.SetBorderColor(theme.Color(theme.ColorNamePrimary))
 	collectionLabel.Refresh()
 	collectionsContainer := container.NewBorder(collectionLabel, addCollectionContainer, nil, nil, collectionsList)
 

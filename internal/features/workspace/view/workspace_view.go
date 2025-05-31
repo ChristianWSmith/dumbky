@@ -58,6 +58,7 @@ func NewView() View {
 		Bold: true,
 	})
 	collectionNameLabel.SetBackgroundColor(theme.Color(theme.ColorNameFocus))
+	collectionNameLabel.SetBorderColor(theme.Color(theme.ColorNamePrimary))
 	collectionNameLabel.Refresh()
 
 	controlsLeft := container.NewHBox(addButton, collectionNameLabel)

@@ -13,8 +13,9 @@ import (
 
 type FancyLabel struct {
 	widget.BaseWidget
-	label   *widget.Label
-	bgColor color.Color
+	label       *widget.Label
+	bgColor     color.Color
+	borderColor color.Color
 }
 
 func NewFancyLabel(text string) *FancyLabel {
@@ -41,9 +42,10 @@ func (fl *FancyLabel) CreateRenderer() fyne.WidgetRenderer {
 	stack := container.NewStack(box, border, fl.label)
 
 	return &fancyLabelRenderer{
-		fl:    fl,
-		box:   box,
-		stack: stack,
+		fl:     fl,
+		border: border,
+		box:    box,
+		stack:  stack,
 	}
 }
 
@@ -53,6 +55,10 @@ func (fl *FancyLabel) Bind(data binding.String) {
 
 func (fl *FancyLabel) SetBackgroundColor(bgColor color.Color) {
 	fl.bgColor = bgColor
+}
+
+func (fl *FancyLabel) SetBorderColor(borderColor color.Color) {
+	fl.borderColor = borderColor
 }
 
 func (fl *FancyLabel) SetTextStyle(textStyle fyne.TextStyle) {
@@ -68,9 +74,10 @@ func (fl *FancyLabel) SetWrapping(wrapping fyne.TextWrap) {
 }
 
 type fancyLabelRenderer struct {
-	fl    *FancyLabel
-	box   *canvas.Rectangle
-	stack *fyne.Container
+	fl     *FancyLabel
+	border *canvas.Rectangle
+	box    *canvas.Rectangle
+	stack  *fyne.Container
 }
 
 func (r *fancyLabelRenderer) Layout(size fyne.Size) {
@@ -83,6 +90,7 @@ func (r *fancyLabelRenderer) MinSize() fyne.Size {
 
 func (r *fancyLabelRenderer) Refresh() {
 	r.box.FillColor = r.fl.bgColor
+	r.border.StrokeColor = r.fl.borderColor
 	r.stack.Refresh()
 }
 
