@@ -1,4 +1,4 @@
-package restclient
+package httputils
 
 import (
 	"crypto/tls"
@@ -73,6 +73,24 @@ func resolveHeaders(request http.Request, headers map[string]string) {
 	}
 }
 
+func renderRequest(requestConfig RequestConfig) (*http.Request, error) {
+	body, err := resolveBody(requestConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	url := resolveURL(requestConfig)
+
+	request, err := http.NewRequest(requestConfig.Method, url, body)
+	if err != nil {
+		return nil, err
+	}
+
+	resolveHeaders(*request, requestConfig.Headers)
+	return request, nil
+}
+
 func SendRequest(requestConfig RequestConfig) (ResponsePayload, error) {
 	var client *http.Client
 
@@ -86,20 +104,11 @@ func SendRequest(requestConfig RequestConfig) (ResponsePayload, error) {
 		}
 	}
 
-	body, err := resolveBody(requestConfig)
+	request, err := renderRequest(requestConfig)
+
 	if err != nil {
-		log.Error(err)
 		return ResponsePayload{}, err
 	}
-
-	url := resolveURL(requestConfig)
-
-	request, err := http.NewRequest(requestConfig.Method, url, body)
-	if err != nil {
-		log.Error(err)
-		return ResponsePayload{}, err
-	}
-	resolveHeaders(*request, requestConfig.Headers)
 
 	log.Info("Sending request")
 	start := time.Now()

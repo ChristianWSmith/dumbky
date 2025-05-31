@@ -24,6 +24,9 @@ func NewFancyLabel(text string) *FancyLabel {
 	fl.ExtendBaseWidget(fl)
 	fl.label = widget.NewLabel(text)
 
+	fl.bgColor = theme.Color(theme.ColorNameInputBackground)
+	fl.borderColor = theme.Color(theme.ColorNameInputBorder)
+
 	return fl
 }
 

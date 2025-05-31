@@ -7,8 +7,8 @@ import (
 	"dumbky/internal/features/request"
 	"dumbky/internal/features/response"
 	"dumbky/internal/global"
+	"dumbky/internal/httputils"
 	"dumbky/internal/log"
-	"dumbky/internal/restclient"
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
 	"dumbky/internal/validators"
@@ -131,7 +131,7 @@ func (c *controllerImpl) sendButtonHandler() {
 	go c.sendRequestWorker(requestPayload)
 }
 
-func (c *controllerImpl) sendRequestWorker(requestConfig restclient.RequestConfig) {
+func (c *controllerImpl) sendRequestWorker(requestConfig httputils.RequestConfig) {
 	defer fyne.Do(func() {
 		c.setLoading(false)
 	})
@@ -146,7 +146,7 @@ func (c *controllerImpl) sendRequestWorker(requestConfig restclient.RequestConfi
 		})
 	}()
 
-	responsePayload, err := restclient.SendRequest(requestConfig)
+	responsePayload, err := httputils.SendRequest(requestConfig)
 	if err != nil {
 		log.Warn(err)
 		dialog.ShowError(err, global.Window)
@@ -158,11 +158,11 @@ func (c *controllerImpl) sendRequestWorker(requestConfig restclient.RequestConfi
 	})
 }
 
-func (c *controllerImpl) renderRequestConfig() (restclient.RequestConfig, error) {
+func (c *controllerImpl) renderRequestConfig() (httputils.RequestConfig, error) {
 	err := c.Validate()
 	if err != nil {
 		log.Warn(err)
-		return restclient.RequestConfig{}, err
+		return httputils.RequestConfig{}, err
 	}
 
 	url := c.model.GetURL()
@@ -176,7 +176,7 @@ func (c *controllerImpl) renderRequestConfig() (restclient.RequestConfig, error)
 	bodyRaw := c.requestCtrl.GetBodyRaw()
 	bodyForm := c.requestCtrl.GetBodyFormMap()
 
-	return restclient.RequestConfig{
+	return httputils.RequestConfig{
 		URL:         url,
 		Method:      method,
 		UseSSL:      useSSL,
