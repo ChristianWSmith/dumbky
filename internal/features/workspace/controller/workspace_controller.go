@@ -11,6 +11,7 @@ import (
 	"dumbky/internal/log"
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -50,15 +51,47 @@ func NewController() *controllerImpl {
 		}
 	})
 
-	c.view.SetImportHandler(func() {})
+	c.view.SetImportHandler(func() {
+		// TODO: split this out, do body
+		curlCmd := `curl -X POST -H "Content-Type: application/json" -d '{"key":"value"}' https://example.com/api?a=b`
+
+		request, _ := httputils.CurlToRequest(curlCmd)
+		exchangeState := state.ExchangeState{}
+		prefix := ""
+		if strings.HasPrefix(request.URL.String(), "http://") {
+			exchangeState.UseSSL = false
+			prefix = "http://"
+		} else if strings.HasPrefix(request.URL.String(), "https://") {
+			exchangeState.UseSSL = true
+			prefix = "https://"
+		}
+		exchangeState.Method = request.Method
+		exchangeState.URL = prefix + request.URL.Host + request.URL.Path
+		for key, value := range request.URL.Query() {
+			exchangeState.Request.QueryParams.KeyValueStates =
+				append(exchangeState.Request.Headers.KeyValueStates,
+					state.KeyValueState{Enabled: true, Key: key, Value: strings.Join(value, ",")})
+		}
+		for key, value := range request.Header {
+			exchangeState.Request.Headers.KeyValueStates =
+				append(exchangeState.Request.Headers.KeyValueStates,
+					state.KeyValueState{Enabled: true, Key: key, Value: strings.Join(value, ",")})
+		}
+		c.OpenTab(state.DocumentState{
+			CollectionName: c.model.GetCollectionName(),
+			RequestName:    "IMPORT " + utils.SillyName(),
+			ExchangeState:  exchangeState,
+		})
+	})
 
 	c.view.SetExportHandler(func() {
+		// TODO: split this out
 		id := c.view.GetSelectedDocumentId()
 		exchangeCtrl := c.exchangeCtrlMap[id]
 		requestConfig, _ := exchangeCtrl.RenderRequestConfig()
 		request, _ := httputils.RenderRequest(requestConfig)
 		curlCmd, _ := httputils.RequestToCurl(request)
-		log.Debug(curlCmd)
+		log.Debug(curlCmd) // TODO: display this with a copy to clipboard button
 	})
 
 	c.OpenTab(state.DocumentState{

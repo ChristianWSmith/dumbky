@@ -31,6 +31,7 @@ type Model interface {
 	GetRequestName() string
 	SetRequestName(string)
 	SetCollectionName(string)
+	GetCollectionName() string
 	GetBindings() Bindings
 }
 
@@ -82,6 +83,11 @@ func (m *modelImpl) GetRequestName() string {
 
 func (m *modelImpl) SetRequestName(requestName string) {
 	m.requestName.Set(requestName)
+}
+
+func (m *modelImpl) GetCollectionName() string {
+	collectionName, _ := m.collectionName.Get()
+	return collectionName
 }
 
 func (m *modelImpl) SetCollectionName(collectionName string) {
