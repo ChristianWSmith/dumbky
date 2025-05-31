@@ -44,6 +44,7 @@ func GetBus[T any]() *EventBus[T] {
 type EventBus[T any] struct {
 	subscribers []func(T)
 	mu          sync.RWMutex
+	current     T
 }
 
 func NewEventBus[T any]() *EventBus[T] {
@@ -59,7 +60,14 @@ func (b *EventBus[T]) Subscribe(fn func(T)) {
 func (b *EventBus[T]) Publish(event T) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
+	b.current = event
 	for _, sub := range b.subscribers {
 		go sub(event) // run handlers in goroutines
 	}
+}
+
+func (b *EventBus[T]) Current() T {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return b.current
 }
