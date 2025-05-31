@@ -80,4 +80,4 @@ If you have any questions or feedback, feel free to open an issue or contact the
 
 ---
 
-Dumbky and its mascot, the duck in a dunce cap 🦆🎓, are here to make your API testing a little more fun and a lot simpler! 🎉
+Dumbky and its mascot, the Duck-in-a-Dunce 🦆🎓, are here to make your API testing a little more fun and a lot simpler! 🎉
