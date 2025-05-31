@@ -6,7 +6,6 @@ import (
 
 type modelImpl struct {
 	selectedCollectionBinding binding.String
-	selectedRequestBinding    binding.String
 	addCollectionBinding      binding.String
 	collectionsListBinding    binding.StringList
 	requestsListBinding       binding.StringList
@@ -20,10 +19,7 @@ type Bindings struct {
 type Model interface {
 	GetBindings() Bindings
 	GetSelectedCollection() string
-	GetSelectedRequest() string
 	SetSelectedCollection(collectionName string)
-	SetSelectedRequest(requestName string)
-	SetSelectedRequestCallback(callback func())
 	SetRequestsList(requestsList []string)
 	SetCollectionsList(collectionsList []string)
 	GetCollectionNameById(id int) string
@@ -35,7 +31,6 @@ type Model interface {
 func NewModel() Model {
 	return &modelImpl{
 		selectedCollectionBinding: binding.NewString(),
-		selectedRequestBinding:    binding.NewString(),
 		addCollectionBinding:      binding.NewString(),
 		collectionsListBinding:    binding.NewStringList(),
 		requestsListBinding:       binding.NewStringList(),
@@ -56,24 +51,8 @@ func (m *modelImpl) GetSelectedCollection() string {
 	return selectedCollection
 }
 
-func (m *modelImpl) GetSelectedRequest() string {
-	selectedRequest, _ := m.selectedRequestBinding.Get()
-	return selectedRequest
-}
-
 func (m *modelImpl) SetSelectedCollection(collectionName string) {
 	m.selectedCollectionBinding.Set(collectionName)
-}
-
-func (m *modelImpl) SetSelectedRequest(requestName string) {
-	m.selectedRequestBinding.Set(requestName)
-}
-
-func (m *modelImpl) SetSelectedRequestCallback(callback func()) {
-	m.selectedRequestBinding.AddListener(binding.NewDataListener(func() {
-		callback()
-		m.selectedRequestBinding.Set("")
-	}))
 }
 
 func (m *modelImpl) SetRequestsList(requestsList []string) {

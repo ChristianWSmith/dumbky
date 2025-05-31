@@ -2,6 +2,7 @@ package controller
 
 import (
 	"dumbky/internal/db"
+	"dumbky/internal/events"
 	"dumbky/internal/features/collectionsbrowser/model"
 	"dumbky/internal/features/collectionsbrowser/view"
 	"dumbky/internal/global"
@@ -57,8 +58,8 @@ func NewController() *controllerImpl {
 	})
 
 	c.view.SetRequestSelectedCallback(func(id int) {
-		name := c.model.GetRequestNameById(id)
-		c.model.SetSelectedRequest(name)
+		requestName := c.model.GetRequestNameById(id)
+		events.GetBus[events.RequestSelected]().Publish(events.RequestSelected{RequestName: requestName})
 	})
 
 	c.view.SetCollectionSelectedCallback(func(id int) {
@@ -78,14 +79,6 @@ func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
 
 func (c *controllerImpl) GetSelectedCollection() string {
 	return c.model.GetSelectedCollection()
-}
-
-func (c *controllerImpl) GetSelectedRequest() string {
-	return c.model.GetSelectedRequest()
-}
-
-func (c *controllerImpl) SetSelectedRequestCallback(callback func()) {
-	c.model.SetSelectedRequestCallback(callback)
 }
 
 func (c *controllerImpl) LazyRefreshAndShowRequests() {
@@ -123,7 +116,6 @@ func (c *controllerImpl) deleteCollection(name string) {
 
 func (c *controllerImpl) refreshAndShowCollections() {
 	c.model.SetSelectedCollection("")
-	c.model.SetSelectedRequest("")
 
 	go func() {
 		collectionNames := db.FetchCollectionNames()

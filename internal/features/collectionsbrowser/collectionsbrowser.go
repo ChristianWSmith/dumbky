@@ -8,8 +8,6 @@ import (
 type CollectionsBrowserController interface {
 	features.Controller
 	GetSelectedCollection() string
-	GetSelectedRequest() string
-	SetSelectedRequestCallback(callback func())
 	LazyRefreshAndShowRequests()
 }
 

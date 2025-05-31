@@ -2,12 +2,14 @@ package controller
 
 import (
 	"dumbky/internal/constants"
+	"dumbky/internal/events"
 	"dumbky/internal/features/collectionsbrowser"
 	"dumbky/internal/features/dashboard/model"
 	"dumbky/internal/features/dashboard/view"
 	"dumbky/internal/features/workspace"
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
+	"fmt"
 
 	"fyne.io/fyne/v2"
 )
@@ -30,13 +32,13 @@ func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 		workspaceCtrl:          workspaceCtrl,
 	}
 
-	c.collectionsBrowserCtrl.SetSelectedRequestCallback(func() {
+	events.GetBus[events.RequestSelected]().Subscribe(func(e events.RequestSelected) {
+		fmt.Println("Collection selected:", e.RequestName)
 		collectionName := c.collectionsBrowserCtrl.GetSelectedCollection()
-		requestName := c.collectionsBrowserCtrl.GetSelectedRequest()
-		if collectionName == "" || requestName == "" {
+		if collectionName == "" || e.RequestName == "" {
 			return
 		}
-		c.workspaceCtrl.LoadTab(collectionName, requestName)
+		c.workspaceCtrl.LoadTab(collectionName, e.RequestName)
 	})
 
 	c.workspaceCtrl.SetAddHandler(func() {
