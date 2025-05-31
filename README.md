@@ -63,7 +63,7 @@ $ go build
 
 ## Roadmap 🗺️
 
-- [ ] Add support for saving request histories. 💾
+- [x] Saving/loading requests. 💾
 - [ ] Implement environment variables for request configuration. 🔧
 - [ ] Add support for automated testing scripts. 🤖
 - [ ] Enhance UI/UX for better user experience. 🎨
