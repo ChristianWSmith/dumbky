@@ -109,7 +109,9 @@ func (v *viewImpl) GetSelectedDocumentId() common.DocumentId {
 }
 
 func (v *viewImpl) SetSelectedDocumentText(requestName string) {
-	v.exchangeTabs.Selected().Text = formatTabText(requestName)
+	if v.exchangeTabs.Selected() != nil {
+		v.exchangeTabs.Selected().Text = formatTabText(requestName)
+	}
 }
 
 func (v *viewImpl) DestroyDocumentTab(tabItem *container.TabItem) {

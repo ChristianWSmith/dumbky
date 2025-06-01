@@ -8,11 +8,9 @@ import (
 	"dumbky/internal/features/workspace/common"
 	"dumbky/internal/features/workspace/model"
 	"dumbky/internal/features/workspace/view"
-	"dumbky/internal/httputils"
 	"dumbky/internal/log"
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
-	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -31,6 +29,7 @@ func NewController() *controllerImpl {
 		view:            view.NewView(),
 		exchangeCtrlMap: make(map[common.DocumentId]exchange.ExchangeController),
 	}
+
 	c.bindAll()
 
 	c.view.SetDocumentSelectedHandler(func(tabItem *container.TabItem) {
@@ -46,58 +45,19 @@ func NewController() *controllerImpl {
 		c.model.DestroyDocumentData(id)
 		delete(c.exchangeCtrlMap, id)
 		if c.model.DocumentCount() == 0 {
-			c.OpenTab(state.DocumentState{
+			c.openTab(state.DocumentState{
 				CollectionName: constants.DB_DEFAULT_COLLECTION_NAME,
 				RequestName:    utils.SillyName()})
 		}
 	})
 
 	c.view.SetImportHandler(func() {
-		// TODO: split this out, do body
-		curlCmd := `curl -X POST -H "Content-Type: application/json" -d '{"key":"value"}' https://example.com/api?a=b`
-
-		request, _ := httputils.CurlToRequest(curlCmd)
-		exchangeState := state.ExchangeState{}
-		prefix := ""
-		if strings.HasPrefix(request.URL.String(), "http://") {
-			exchangeState.UseSSL = false
-			prefix = "http://"
-		} else if strings.HasPrefix(request.URL.String(), "https://") {
-			exchangeState.UseSSL = true
-			prefix = "https://"
-		}
-		exchangeState.Method = request.Method
-		exchangeState.URL = prefix + request.URL.Host + request.URL.Path
-		for key, value := range request.URL.Query() {
-			exchangeState.Request.QueryParams.KeyValueStates =
-				append(exchangeState.Request.Headers.KeyValueStates,
-					state.KeyValueState{Enabled: true, Key: key, Value: strings.Join(value, ",")})
-		}
-		for key, value := range request.Header {
-			exchangeState.Request.Headers.KeyValueStates =
-				append(exchangeState.Request.Headers.KeyValueStates,
-					state.KeyValueState{Enabled: true, Key: key, Value: strings.Join(value, ",")})
-		}
-		c.OpenTab(state.DocumentState{
-			CollectionName: c.model.GetCollectionName(),
-			RequestName:    "IMPORT " + utils.SillyName(),
-			ExchangeState:  exchangeState,
-		})
+		// TODO
 	})
 
 	c.view.SetExportHandler(func() {
-		// TODO: split this out
-		id := c.view.GetSelectedDocumentId()
-		exchangeCtrl := c.exchangeCtrlMap[id]
-		requestConfig, _ := exchangeCtrl.RenderRequestConfig()
-		request, _ := httputils.RenderRequest(requestConfig)
-		curlCmd, _ := httputils.RequestToCurl(request)
-		log.Debug(curlCmd) // TODO: display this with a copy to clipboard button
+		// TODO
 	})
-
-	c.OpenTab(state.DocumentState{
-		CollectionName: constants.DB_DEFAULT_COLLECTION_NAME,
-		RequestName:    utils.SillyName()})
 
 	c.model.SetRequestNameListener(func() {
 		id := c.view.GetSelectedDocumentId()
@@ -112,9 +72,35 @@ func NewController() *controllerImpl {
 
 	})
 
-	c.SetSaveHandler(func() {
-		go c.SaveTab()
+	c.view.SetSaveHandler(func() {
+		go c.saveTab()
 	})
+
+	events.Subscribe(func(requestSelectedEvent events.RequestSelected) {
+		if !requestSelectedEvent.IsSelected {
+			return
+		}
+		collectionSelectedEvent := events.Current[events.CollectionSelected]()
+		if !collectionSelectedEvent.IsSelected {
+			return
+		}
+		c.loadTab(collectionSelectedEvent.CollectionName, requestSelectedEvent.RequestName)
+	})
+
+	c.view.SetAddHandler(func() {
+		collectionSelectedEvent := events.Current[events.CollectionSelected]()
+		collectionName := collectionSelectedEvent.CollectionName
+		if !collectionSelectedEvent.IsSelected {
+			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
+		}
+		c.openTab(state.DocumentState{
+			CollectionName: collectionName,
+			RequestName:    utils.SillyName()})
+	})
+
+	c.openTab(state.DocumentState{
+		CollectionName: constants.DB_DEFAULT_COLLECTION_NAME,
+		RequestName:    utils.SillyName()})
 
 	return c
 }
@@ -123,7 +109,7 @@ func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
 	return c.view.CanvasObject()
 }
 
-func (c *controllerImpl) OpenTab(document state.DocumentState) {
+func (c *controllerImpl) openTab(document state.DocumentState) {
 	if c.view.SelectDocumentTabOnCondition(func(id common.DocumentId) bool {
 		documentData := c.model.GetDocumentData(id)
 		return documentData.RequestName == document.RequestName && documentData.CollectionName == document.CollectionName
@@ -145,7 +131,7 @@ func (c *controllerImpl) OpenTab(document state.DocumentState) {
 	c.view.AddDocumentTab(id, document.RequestName, exchangeCtrl.CanvasObject())
 }
 
-func (c *controllerImpl) SaveTab() error {
+func (c *controllerImpl) saveTab() error {
 	id := c.view.GetSelectedDocumentId()
 	documentData := c.model.GetDocumentData(id)
 	exchangeState := c.exchangeCtrlMap[id].ToState()
@@ -170,7 +156,7 @@ func (c *controllerImpl) SaveTab() error {
 	return nil
 }
 
-func (c *controllerImpl) LoadTab(collectionName, requestName string) {
+func (c *controllerImpl) loadTab(collectionName, requestName string) {
 	go func() {
 		request, err := db.LoadRequest(collectionName, requestName)
 		if err != nil {
@@ -181,17 +167,9 @@ func (c *controllerImpl) LoadTab(collectionName, requestName string) {
 			log.Error(err)
 		}
 		fyne.Do(func() {
-			c.OpenTab(document)
+			c.openTab(document)
 		})
 	}()
-}
-
-func (c *controllerImpl) SetAddHandler(handler func()) {
-	c.view.SetAddHandler(handler)
-}
-
-func (c *controllerImpl) SetSaveHandler(handler func()) {
-	c.view.SetSaveHandler(handler)
 }
 
 func (c *controllerImpl) bindAll() {
