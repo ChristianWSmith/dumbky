@@ -1,28 +1,33 @@
 package controller
 
 import (
-	"dumbky/internal/features/dashboard"
+	"dumbky/internal/features/collectionsbrowser"
 	"dumbky/internal/features/root/model"
 	"dumbky/internal/features/root/view"
+	"dumbky/internal/features/workspace"
 
 	"fyne.io/fyne/v2"
 )
 
 type controllerImpl struct {
-	model               model.Model
-	view                view.View
-	dashboardController dashboard.DashboardController
+	model                  model.Model
+	view                   view.View
+	collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController
+	workspaceCtrl          workspace.WorkspaceController
 }
 
-func NewController(dashboardController dashboard.DashboardController) *controllerImpl {
+func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserController, workspaceCtrl workspace.WorkspaceController) *controllerImpl {
 	model := model.NewModel()
-	view := view.NewView(dashboardController.CanvasObject())
+	view := view.NewView(collectionsBrowserCtrl.CanvasObject(), workspaceCtrl.CanvasObject())
 
-	return &controllerImpl{
-		model:               model,
-		view:                view,
-		dashboardController: dashboardController,
+	c := &controllerImpl{
+		model:                  model,
+		view:                   view,
+		collectionsBrowserCtrl: collectionsBrowserCtrl,
+		workspaceCtrl:          workspaceCtrl,
 	}
+
+	return c
 }
 
 func (c *controllerImpl) CanvasObject() fyne.CanvasObject {

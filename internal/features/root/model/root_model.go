@@ -3,7 +3,8 @@ package model
 type modelImpl struct {
 }
 
-type Bindings struct{}
+type Bindings struct {
+}
 
 type Model interface {
 	GetBindings() Bindings
