@@ -59,15 +59,21 @@ func NewController() *controllerImpl {
 
 	c.view.SetRequestSelectedCallback(func(id int) {
 		requestName := c.model.GetRequestNameById(id)
-		events.Publish(events.RequestSelected{RequestName: requestName})
+		events.Publish(events.RequestSelected{RequestName: requestName, IsSelected: true})
 	})
 
 	c.view.SetCollectionSelectedCallback(func(id int) {
-		name := c.model.GetCollectionNameById(id)
-		c.refreshAndShowRequests(name)
+		collectionName := c.model.GetCollectionNameById(id)
+		c.model.SetSelectedCollection(collectionName)
+		events.Publish(events.CollectionSelected{CollectionName: collectionName, IsSelected: true})
+		c.refreshAndShowRequests()
 	})
 
 	c.view.SetBackHandler(func() { c.refreshAndShowCollections() })
+
+	events.Subscribe(func(event events.RequestSaved) {
+		c.lazyRefreshAndShowRequests()
+	})
 
 	c.refreshAndShowCollections()
 	return c
@@ -77,14 +83,9 @@ func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
 	return c.view.CanvasObject()
 }
 
-func (c *controllerImpl) GetSelectedCollection() string {
-	return c.model.GetSelectedCollection()
-}
-
-func (c *controllerImpl) LazyRefreshAndShowRequests() {
+func (c *controllerImpl) lazyRefreshAndShowRequests() {
 	if c.view.ShowingRequests() {
-		collectionName := c.model.GetSelectedCollection()
-		c.refreshAndShowRequests(collectionName)
+		c.refreshAndShowRequests()
 	}
 }
 
@@ -97,7 +98,7 @@ func (c *controllerImpl) deleteRequest(name string) {
 			return
 		}
 		fyne.Do(func() {
-			c.LazyRefreshAndShowRequests()
+			c.lazyRefreshAndShowRequests()
 		})
 	}()
 }
@@ -116,6 +117,7 @@ func (c *controllerImpl) deleteCollection(name string) {
 
 func (c *controllerImpl) refreshAndShowCollections() {
 	c.model.SetSelectedCollection("")
+	events.Publish(events.CollectionSelected{IsSelected: false})
 
 	go func() {
 		collectionNames := db.FetchCollectionNames()
@@ -126,9 +128,8 @@ func (c *controllerImpl) refreshAndShowCollections() {
 	}()
 }
 
-func (c *controllerImpl) refreshAndShowRequests(collectionName string) {
-	c.model.SetSelectedCollection(collectionName)
-
+func (c *controllerImpl) refreshAndShowRequests() {
+	collectionName := c.model.GetSelectedCollection()
 	go func() {
 		requestNames := db.FetchRequestNames(collectionName)
 		fyne.Do(func() {

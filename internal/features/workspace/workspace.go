@@ -11,7 +11,7 @@ type WorkspaceController interface {
 	SetAddHandler(handler func())
 	SetSaveHandler(handler func())
 	OpenTab(document state.DocumentState)
-	SaveTab(callback func()) error
+	SaveTab() error
 	LoadTab(collectionName, requestName string)
 }
 

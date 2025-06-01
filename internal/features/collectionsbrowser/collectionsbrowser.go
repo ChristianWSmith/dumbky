@@ -7,8 +7,6 @@ import (
 
 type CollectionsBrowserController interface {
 	features.Controller
-	GetSelectedCollection() string
-	LazyRefreshAndShowRequests()
 }
 
 func New() CollectionsBrowserController {

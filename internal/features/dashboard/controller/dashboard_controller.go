@@ -9,7 +9,6 @@ import (
 	"dumbky/internal/features/workspace"
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
-	"fmt"
 
 	"fyne.io/fyne/v2"
 )
@@ -32,37 +31,26 @@ func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 		workspaceCtrl:          workspaceCtrl,
 	}
 
-	events.Subscribe(func(e events.RequestSelected) {
-		fmt.Println("Collection selected:", e.RequestName)
-		collectionName := c.collectionsBrowserCtrl.GetSelectedCollection()
-		if collectionName == "" || e.RequestName == "" {
+	events.Subscribe(func(requestSelectedEvent events.RequestSelected) {
+		if !requestSelectedEvent.IsSelected {
 			return
 		}
-		c.workspaceCtrl.LoadTab(collectionName, e.RequestName)
+		collectionSelectedEvent := events.Current[events.CollectionSelected]()
+		if !collectionSelectedEvent.IsSelected {
+			return
+		}
+		c.workspaceCtrl.LoadTab(collectionSelectedEvent.CollectionName, requestSelectedEvent.RequestName)
 	})
 
 	c.workspaceCtrl.SetAddHandler(func() {
-		collectionName := c.collectionsBrowserCtrl.GetSelectedCollection()
-
-		if collectionName == "" {
+		collectionSelectedEvent := events.Current[events.CollectionSelected]()
+		collectionName := collectionSelectedEvent.CollectionName
+		if !collectionSelectedEvent.IsSelected {
 			collectionName = constants.DB_DEFAULT_COLLECTION_NAME
 		}
 		c.workspaceCtrl.OpenTab(state.DocumentState{
 			CollectionName: collectionName,
 			RequestName:    utils.SillyName()})
-	})
-
-	c.workspaceCtrl.SetSaveHandler(func() {
-		go c.workspaceCtrl.SaveTab(func() {
-			fyne.Do(func() {
-				// TODO: the idea here is that the user might have a request open from
-				// collection A before deleting collection A.  if they're on the
-				// collections view in the browser at that time, they should see
-				// the updated collections list.  this is an edge case and maybe
-				// shouldn't even be addressed.
-				c.collectionsBrowserCtrl.LazyRefreshAndShowRequests()
-			})
-		})
 	})
 
 	return c

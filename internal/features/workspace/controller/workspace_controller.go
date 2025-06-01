@@ -3,6 +3,7 @@ package controller
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/db"
+	"dumbky/internal/events"
 	"dumbky/internal/features/exchange"
 	"dumbky/internal/features/workspace/common"
 	"dumbky/internal/features/workspace/model"
@@ -111,6 +112,10 @@ func NewController() *controllerImpl {
 
 	})
 
+	c.SetSaveHandler(func() {
+		go c.SaveTab()
+	})
+
 	return c
 }
 
@@ -140,7 +145,7 @@ func (c *controllerImpl) OpenTab(document state.DocumentState) {
 	c.view.AddDocumentTab(id, document.RequestName, exchangeCtrl.CanvasObject())
 }
 
-func (c *controllerImpl) SaveTab(callback func()) error {
+func (c *controllerImpl) SaveTab() error {
 	id := c.view.GetSelectedDocumentId()
 	documentData := c.model.GetDocumentData(id)
 	exchangeState := c.exchangeCtrlMap[id].ToState()
@@ -158,8 +163,9 @@ func (c *controllerImpl) SaveTab(callback func()) error {
 		err := db.SaveRequest(request)
 		if err != nil {
 			log.Error(err)
+			return
 		}
-		callback()
+		events.Publish(events.RequestSaved{})
 	}()
 	return nil
 }
