@@ -32,7 +32,7 @@ func NewController(collectionsBrowserCtrl collectionsbrowser.CollectionsBrowserC
 		workspaceCtrl:          workspaceCtrl,
 	}
 
-	events.GetBus[events.RequestSelected]().Subscribe(func(e events.RequestSelected) {
+	events.Subscribe(func(e events.RequestSelected) {
 		fmt.Println("Collection selected:", e.RequestName)
 		collectionName := c.collectionsBrowserCtrl.GetSelectedCollection()
 		if collectionName == "" || e.RequestName == "" {

@@ -59,7 +59,7 @@ func NewController() *controllerImpl {
 
 	c.view.SetRequestSelectedCallback(func(id int) {
 		requestName := c.model.GetRequestNameById(id)
-		events.GetBus[events.RequestSelected]().Publish(events.RequestSelected{RequestName: requestName})
+		events.Publish(events.RequestSelected{RequestName: requestName})
 	})
 
 	c.view.SetCollectionSelectedCallback(func(id int) {

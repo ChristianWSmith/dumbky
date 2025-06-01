@@ -5,17 +5,16 @@ import (
 	"sync"
 )
 
-var registry = &BusRegistry{
+var registry = &busRegistry{
 	buses: make(map[reflect.Type]any),
 }
 
-type BusRegistry struct {
+type busRegistry struct {
 	mu    sync.RWMutex
 	buses map[reflect.Type]any
 }
 
-// Generic function, not a method
-func GetBus[T any]() *EventBus[T] {
+func getBus[T any]() *eventBus[T] {
 	typ := reflect.TypeOf((*T)(nil)).Elem()
 
 	registry.mu.RLock()
@@ -23,51 +22,60 @@ func GetBus[T any]() *EventBus[T] {
 	registry.mu.RUnlock()
 
 	if ok {
-		return bus.(*EventBus[T])
+		return bus.(*eventBus[T])
 	}
 
-	// Double-checked locking
 	registry.mu.Lock()
 	defer registry.mu.Unlock()
 
-	// Someone else might have created it while we waited
 	if bus, ok := registry.buses[typ]; ok {
-		return bus.(*EventBus[T])
+		return bus.(*eventBus[T])
 	}
 
-	newBus := NewEventBus[T]()
+	newBus := newEventBus[T]()
 	registry.buses[typ] = newBus
 	return newBus
 }
 
-// EventBus[T] handles subscriptions and publishing for a specific event type T
-type EventBus[T any] struct {
+type eventBus[T any] struct {
 	subscribers []func(T)
 	mu          sync.RWMutex
-	current     T
+	last        T
 }
 
-func NewEventBus[T any]() *EventBus[T] {
-	return &EventBus[T]{}
+func newEventBus[T any]() *eventBus[T] {
+	return &eventBus[T]{}
 }
 
-func (b *EventBus[T]) Subscribe(fn func(T)) {
+func (b *eventBus[T]) subscribe(fn func(T)) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	b.subscribers = append(b.subscribers, fn)
 }
 
-func (b *EventBus[T]) Publish(event T) {
+func (b *eventBus[T]) publish(event T) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	b.current = event
+	b.last = event
 	for _, sub := range b.subscribers {
-		go sub(event) // run handlers in goroutines
+		go sub(event)
 	}
 }
 
-func (b *EventBus[T]) Current() T {
+func (b *eventBus[T]) current() T {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	return b.current
+	return b.last
+}
+
+func Subscribe[T any](fn func(T)) {
+	getBus[T]().subscribe(fn)
+}
+
+func Publish[T any](event T) {
+	getBus[T]().publish(event)
+}
+
+func Current[T any]() T {
+	return getBus[T]().current()
 }
