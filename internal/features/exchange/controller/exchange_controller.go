@@ -119,6 +119,10 @@ func (c *controllerImpl) LoadState(exchangeState state.ExchangeState) {
 	c.bodyFormKeyValueCtrl.LoadState(exchangeState.BodyForm)
 	c.model.SetBodyType(exchangeState.BodyType)
 	c.model.SetBodyRaw(exchangeState.BodyRaw)
+	// TODO: save response details in exchange state and reload them here
+	c.model.SetResponse(constants.UI_LOADING_RESPONSE_STATUS,
+		constants.UI_LOADING_RESPONSE_TIME,
+		constants.UI_LOADING_RESPONSE_BODY)
 }
 
 func (c *controllerImpl) validate() error {

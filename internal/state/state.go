@@ -16,6 +16,7 @@ type ExchangeState struct {
 	BodyType    string              `json:"bodyType"`
 	BodyForm    KeyValueEditorState `json:"bodyForm"`
 	BodyRaw     string              `json:"bodyRaw"`
+	// TODO: save response details in exchange state
 }
 
 type KeyValueEditorState struct {
