@@ -7,13 +7,9 @@ type DocumentState struct {
 }
 
 type ExchangeState struct {
-	Method  string       `json:"method"`
-	URL     string       `json:"url"`
-	UseSSL  bool         `json:"ssl"`
-	Request RequestState `json:"request"`
-}
-
-type RequestState struct {
+	Method      string              `json:"method"`
+	URL         string              `json:"url"`
+	UseSSL      bool                `json:"ssl"`
 	QueryParams KeyValueEditorState `json:"queryParams"`
 	PathParams  KeyValueEditorState `json:"pathParams"`
 	Headers     KeyValueEditorState `json:"headers"`

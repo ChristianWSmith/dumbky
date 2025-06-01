@@ -4,7 +4,7 @@ import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features/exchange/model"
 	"dumbky/internal/features/exchange/view"
-	"dumbky/internal/features/request"
+	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/features/response"
 	"dumbky/internal/global"
 	"dumbky/internal/httputils"
@@ -12,6 +12,7 @@ import (
 	"dumbky/internal/state"
 	"dumbky/internal/utils"
 	"dumbky/internal/validators"
+	"errors"
 	"fmt"
 
 	"fyne.io/fyne/v2"
@@ -22,22 +23,33 @@ type controllerImpl struct {
 	model model.Model
 	view  view.View
 
-	requestCtrl  request.RequestController
 	responseCtrl response.ResponseController
+
+	queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController
+	pathParamsKeyValueCtrl  keyvalueeditor.KeyValueEditorController
+	headersKeyValueCtrl     keyvalueeditor.KeyValueEditorController
+	bodyFormKeyValueCtrl    keyvalueeditor.KeyValueEditorController
 }
 
 func NewController(
-	requestCtrl request.RequestController,
+	queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
+	pathParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
+	headersKeyValueCtrl keyvalueeditor.KeyValueEditorController,
+	bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController,
 	responseCtrl response.ResponseController) *controllerImpl {
 
 	c := &controllerImpl{
-		model:        model.NewModel(),
-		view:         view.NewView(requestCtrl.CanvasObject(), responseCtrl.CanvasObject()),
-		requestCtrl:  requestCtrl,
-		responseCtrl: responseCtrl,
+		model:                   model.NewModel(),
+		view:                    view.NewView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyFormKeyValueCtrl.CanvasObject(), responseCtrl.CanvasObject()),
+		responseCtrl:            responseCtrl,
+		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
+		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
+		headersKeyValueCtrl:     headersKeyValueCtrl,
+		bodyFormKeyValueCtrl:    bodyFormKeyValueCtrl,
 	}
 
 	c.bindAll()
+	c.model.SetBodyTypeListener(c.showBodyType)
 
 	c.view.SetUrlValidator(validators.ValidateURL)
 
@@ -45,13 +57,13 @@ func NewController(
 		method := c.model.GetMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
-			requestCtrl.SetBodyTypeSelectEnabled(false)
+			c.SetBodyTypeSelectEnabled(false)
 		} else if method == constants.HTTP_METHOD_DELETE ||
 			method == constants.HTTP_METHOD_OPTIONS ||
 			method == constants.HTTP_METHOD_PATCH ||
 			method == constants.HTTP_METHOD_POST ||
 			method == constants.HTTP_METHOD_PUT {
-			requestCtrl.SetBodyTypeSelectEnabled(true)
+			c.SetBodyTypeSelectEnabled(true)
 		} else {
 			log.Error(fmt.Errorf("invalid http method %s", method))
 		}
@@ -70,10 +82,15 @@ func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
 
 func (c *controllerImpl) ToState() state.ExchangeState {
 	return state.ExchangeState{
-		Method:  c.model.GetMethod(),
-		URL:     c.model.GetURL(),
-		UseSSL:  c.model.GetUseSSL(),
-		Request: c.requestCtrl.ToState(),
+		Method:      c.model.GetMethod(),
+		URL:         c.model.GetURL(),
+		UseSSL:      c.model.GetUseSSL(),
+		QueryParams: c.queryParamsKeyValueCtrl.ToState(),
+		PathParams:  c.pathParamsKeyValueCtrl.ToState(),
+		Headers:     c.headersKeyValueCtrl.ToState(),
+		BodyForm:    c.bodyFormKeyValueCtrl.ToState(),
+		BodyType:    c.model.GetBodyType(),
+		BodyRaw:     c.model.GetBodyRaw(),
 	}
 }
 
@@ -85,15 +102,32 @@ func (c *controllerImpl) LoadState(exchangeState state.ExchangeState) {
 	c.model.SetMethod(method)
 	c.model.SetURL(exchangeState.URL)
 	c.model.SetUseSSL(exchangeState.UseSSL)
-	c.requestCtrl.LoadState(exchangeState.Request)
+	c.queryParamsKeyValueCtrl.LoadState(exchangeState.QueryParams)
+	c.pathParamsKeyValueCtrl.LoadState(exchangeState.PathParams)
+	c.headersKeyValueCtrl.LoadState(exchangeState.Headers)
+	c.bodyFormKeyValueCtrl.LoadState(exchangeState.BodyForm)
+	c.model.SetBodyType(exchangeState.BodyType)
+	c.model.SetBodyRaw(exchangeState.BodyRaw)
 }
 
 func (c *controllerImpl) Validate() error {
-	err := c.requestCtrl.Validate()
+	err := c.queryParamsKeyValueCtrl.Validate()
 	if err != nil {
 		return err
 	}
-	return c.view.ValidateURL()
+	err = c.pathParamsKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	err = c.headersKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	err = c.bodyFormKeyValueCtrl.Validate()
+	if err != nil {
+		return err
+	}
+	return c.view.Validate()
 }
 
 func (c *controllerImpl) bindAll() {
@@ -102,6 +136,8 @@ func (c *controllerImpl) bindAll() {
 	bindables.Method.Bind(bindings.Method)
 	bindables.URL.Bind(bindings.URL)
 	bindables.UseSSL.Bind(bindings.UseSSL)
+	bindables.BodyRaw.Bind(bindings.BodyRaw)
+	bindables.BodyType.Bind(bindings.BodyType)
 }
 
 func (c *controllerImpl) setSendEnabled(enabled bool) {
@@ -138,11 +174,11 @@ func (c *controllerImpl) sendRequestWorker(requestConfig httputils.RequestConfig
 
 	go func() {
 		fyne.Do(func() {
-			bodyType := c.requestCtrl.GetBodyType()
+			bodyType := c.model.GetBodyType()
 			if bodyType != constants.UI_BODY_TYPE_RAW {
 				return
 			}
-			c.requestCtrl.FormatBodyRaw()
+			c.FormatBodyRaw()
 		})
 	}()
 
@@ -169,12 +205,12 @@ func (c *controllerImpl) RenderRequestConfig() (httputils.RequestConfig, error) 
 	method := c.model.GetMethod()
 	useSSL := c.model.GetUseSSL()
 
-	headers := c.requestCtrl.GetHeadersMap()
-	queryParams := c.requestCtrl.GetQueryParamsMap()
-	pathParams := c.requestCtrl.GetPathParamsMap()
-	bodyType := c.requestCtrl.GetBodyType()
-	bodyRaw := c.requestCtrl.GetBodyRaw()
-	bodyForm := c.requestCtrl.GetBodyFormMap()
+	headers := c.headersKeyValueCtrl.Get()
+	queryParams := c.queryParamsKeyValueCtrl.Get()
+	pathParams := c.pathParamsKeyValueCtrl.Get()
+	bodyType := c.model.GetBodyType()
+	bodyRaw := c.model.GetBodyRaw()
+	bodyForm := c.bodyFormKeyValueCtrl.Get()
 
 	return httputils.RequestConfig{
 		URL:         url,
@@ -187,4 +223,33 @@ func (c *controllerImpl) RenderRequestConfig() (httputils.RequestConfig, error) 
 		BodyRaw:     bodyRaw,
 		BodyForm:    bodyForm,
 	}, nil
+}
+
+func (c *controllerImpl) SetBodyTypeSelectEnabled(enabled bool) {
+	if enabled {
+		c.view.SetBodyTypeSelectEnabled(true)
+	} else {
+		c.view.SetBodyTypeSelectEnabled(false)
+		c.model.SetBodyType(constants.UI_BODY_TYPE_NONE)
+	}
+}
+
+func (c *controllerImpl) FormatBodyRaw() {
+	c.model.SetBodyRaw(utils.SmartFormat(c.model.GetBodyRaw()))
+}
+
+func (c *controllerImpl) showBodyType() {
+	bodyType := c.model.GetBodyType()
+	if bodyType == constants.UI_BODY_TYPE_FORM {
+		c.bodyFormKeyValueCtrl.SetVisible(true)
+		c.view.SetBodyRawVisible(false)
+	} else if bodyType == constants.UI_BODY_TYPE_RAW {
+		c.bodyFormKeyValueCtrl.SetVisible(false)
+		c.view.SetBodyRawVisible(true)
+	} else if bodyType == constants.UI_BODY_TYPE_NONE {
+		c.bodyFormKeyValueCtrl.SetVisible(false)
+		c.view.SetBodyRawVisible(false)
+	} else {
+		log.Error(errors.New("invalid body type"))
+	}
 }

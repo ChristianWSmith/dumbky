@@ -3,6 +3,7 @@ package view
 import (
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
+	"dumbky/internal/validators"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -17,11 +18,16 @@ type viewImpl struct {
 	urlEntry     *widget.Entry
 	sslCheck     *widget.Check
 	methodSelect *widget.Select
+
+	bodyRawEntry     *widget.Entry
+	bodyTypeSelect   *widget.Select
+	bodyContentStack *fyne.Container
 }
 
 type Bindables struct {
-	Method, URL features.StringBindable
-	UseSSL      features.BoolBindable
+	Method, URL       features.StringBindable
+	UseSSL            features.BoolBindable
+	BodyType, BodyRaw features.StringBindable
 }
 
 type View interface {
@@ -31,10 +37,12 @@ type View interface {
 	SetSendHandler(handler func())
 	EnableSend()
 	DisableSend()
-	ValidateURL() error
+	SetBodyRawVisible(visible bool)
+	SetBodyTypeSelectEnabled(enabled bool)
+	Validate() error
 }
 
-func NewView(requestUI, responseUI fyne.CanvasObject) View {
+func NewView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI, responseUI fyne.CanvasObject) View {
 
 	methodSelect := widget.NewSelect(constants.HttpMethods(), nil)
 	urlEntry := widget.NewEntry()
@@ -49,14 +57,39 @@ func NewView(requestUI, responseUI fyne.CanvasObject) View {
 	sslSend := container.NewHBox(sslCheck, sendButton)
 	headerUI := container.NewBorder(nil, nil, methodSelect, sslSend, urlEntry)
 
+	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsUI)
+	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsUI)
+	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersUI)
+
+	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
+	bodyRawEntry := widget.NewMultiLineEntry()
+	bodyRawEntry.TextStyle.Monospace = true
+	bodyRawEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_BODY_TYPE_RAW)
+
+	bodyContentStack := container.NewStack(bodyFormUI, bodyRawEntry)
+
+	bodyTypeSelect.SetSelected(constants.UI_BODY_TYPE_DEFAULT)
+
+	bodyRawEntry.Validator = validators.ValidateRawBodyContent
+
+	bodyUI := container.NewBorder(bodyTypeSelect, nil, nil, nil, bodyContentStack)
+
+	bodyTab := container.NewTabItem(constants.UI_LABEL_BODY, bodyUI)
+
+	tabs := container.NewAppTabs(queryParamsTab, pathParamsTab, headersTab, bodyTab)
+	requestUI := container.NewBorder(nil, nil, nil, nil, tabs)
+
 	requestResponseView := container.NewHSplit(requestUI, responseUI)
 	ui := container.NewBorder(headerUI, nil, nil, nil, requestResponseView)
 	return &viewImpl{
-		ui:           ui,
-		sendButton:   sendButton,
-		urlEntry:     urlEntry,
-		sslCheck:     sslCheck,
-		methodSelect: methodSelect,
+		ui:               ui,
+		sendButton:       sendButton,
+		urlEntry:         urlEntry,
+		sslCheck:         sslCheck,
+		methodSelect:     methodSelect,
+		bodyRawEntry:     bodyRawEntry,
+		bodyTypeSelect:   bodyTypeSelect,
+		bodyContentStack: bodyContentStack,
 	}
 }
 
@@ -66,9 +99,11 @@ func (v *viewImpl) CanvasObject() fyne.CanvasObject {
 
 func (v *viewImpl) GetBindables() Bindables {
 	return Bindables{
-		Method: v.methodSelect,
-		URL:    v.urlEntry,
-		UseSSL: v.sslCheck,
+		Method:   v.methodSelect,
+		URL:      v.urlEntry,
+		UseSSL:   v.sslCheck,
+		BodyType: v.bodyTypeSelect,
+		BodyRaw:  v.bodyRawEntry,
 	}
 }
 
@@ -89,6 +124,30 @@ func (v *viewImpl) DisableSend() {
 	v.sendButton.Disable()
 }
 
-func (v *viewImpl) ValidateURL() error {
-	return v.urlEntry.Validate()
+func (v *viewImpl) SetBodyRawVisible(visible bool) {
+	if visible {
+
+		v.bodyRawEntry.Show()
+		v.bodyContentStack.Refresh()
+	} else {
+
+		v.bodyRawEntry.Hide()
+		v.bodyContentStack.Refresh()
+	}
+}
+
+func (v *viewImpl) SetBodyTypeSelectEnabled(enabled bool) {
+	if enabled {
+		v.bodyTypeSelect.Enable()
+	} else {
+		v.bodyTypeSelect.Disable()
+	}
+}
+
+func (v *viewImpl) Validate() error {
+	err := v.urlEntry.Validate()
+	if err != nil {
+		return err
+	}
+	return v.bodyRawEntry.Validate()
 }

@@ -3,10 +3,11 @@ package exchange
 import (
 	"dumbky/internal/features"
 	"dumbky/internal/features/exchange/controller"
-	"dumbky/internal/features/request"
+	"dumbky/internal/features/keyvalueeditor"
 	"dumbky/internal/features/response"
 	"dumbky/internal/httputils"
 	"dumbky/internal/state"
+	"dumbky/internal/validators"
 )
 
 type ExchangeController interface {
@@ -18,7 +19,11 @@ type ExchangeController interface {
 }
 
 func New() ExchangeController {
-	requestCtrl := request.New()
 	responseCtrl := response.New()
-	return controller.NewController(requestCtrl, responseCtrl)
+
+	queryParamsKeyValueCtrl := keyvalueeditor.New(validators.ValidateQueryParamKey, validators.ValidateQueryParamValue)
+	pathParamsKeyValueCtrl := keyvalueeditor.New(validators.ValidatePathParamKey, validators.ValidatePathParamValue)
+	headersKeyValueCtrl := keyvalueeditor.New(validators.ValidateHeaderKey, validators.ValidateHeaderValue)
+	bodyFormKeyValueCtrl := keyvalueeditor.New(validators.ValidateFormBodyKey, validators.ValidateFormBodyValue)
+	return controller.NewController(queryParamsKeyValueCtrl, pathParamsKeyValueCtrl, headersKeyValueCtrl, bodyFormKeyValueCtrl, responseCtrl)
 }
