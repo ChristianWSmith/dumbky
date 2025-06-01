@@ -34,8 +34,12 @@ func NewController(
 	bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController) *controllerImpl {
 
 	c := &controllerImpl{
-		model:                   model.NewModel(),
-		view:                    view.NewView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyFormKeyValueCtrl.CanvasObject()),
+		model: model.NewModel(),
+		view: view.NewView(
+			queryParamsKeyValueCtrl.CanvasObject(),
+			pathParamsKeyValueCtrl.CanvasObject(),
+			headersKeyValueCtrl.CanvasObject(),
+			bodyFormKeyValueCtrl.CanvasObject()),
 		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
 		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
 		headersKeyValueCtrl:     headersKeyValueCtrl,
@@ -43,7 +47,7 @@ func NewController(
 	}
 
 	c.bindAll()
-	c.model.SetBodyTypeListener(c.showBodyType)
+	c.model.SetBodyTypeListener(c.showRequestBodyType)
 
 	c.view.SetUrlValidator(validators.ValidateURL)
 
@@ -51,13 +55,13 @@ func NewController(
 		method := c.model.GetMethod()
 		if method == constants.HTTP_METHOD_GET ||
 			method == constants.HTTP_METHOD_HEAD {
-			c.SetBodyTypeSelectEnabled(false)
+			c.setBodyTypeSelectEnabled(false)
 		} else if method == constants.HTTP_METHOD_DELETE ||
 			method == constants.HTTP_METHOD_OPTIONS ||
 			method == constants.HTTP_METHOD_PATCH ||
 			method == constants.HTTP_METHOD_POST ||
 			method == constants.HTTP_METHOD_PUT {
-			c.SetBodyTypeSelectEnabled(true)
+			c.setBodyTypeSelectEnabled(true)
 		} else {
 			log.Error(fmt.Errorf("invalid http method %s", method))
 		}
@@ -68,6 +72,19 @@ func NewController(
 	})
 
 	return c
+}
+
+func (c *controllerImpl) bindAll() {
+	bindings := c.model.GetBindings()
+	bindables := c.view.GetBindables()
+	bindables.Method.Bind(bindings.Method)
+	bindables.URL.Bind(bindings.URL)
+	bindables.UseSSL.Bind(bindings.UseSSL)
+	bindables.BodyRaw.Bind(bindings.BodyRaw)
+	bindables.BodyType.Bind(bindings.BodyType)
+	bindables.Body.Bind(bindings.ResponseBody)
+	bindables.Time.Bind(bindings.ResponseTime)
+	bindables.Status.Bind(bindings.ResponseStatus)
 }
 
 func (c *controllerImpl) CanvasObject() fyne.CanvasObject {
@@ -83,7 +100,7 @@ func (c *controllerImpl) ToState() state.ExchangeState {
 		PathParams:  c.pathParamsKeyValueCtrl.ToState(),
 		Headers:     c.headersKeyValueCtrl.ToState(),
 		BodyForm:    c.bodyFormKeyValueCtrl.ToState(),
-		BodyType:    c.model.GetBodyType(),
+		BodyType:    c.model.GetRequestBodyType(),
 		BodyRaw:     c.model.GetBodyRaw(),
 	}
 }
@@ -124,19 +141,6 @@ func (c *controllerImpl) validate() error {
 	return c.view.Validate()
 }
 
-func (c *controllerImpl) bindAll() {
-	bindings := c.model.GetBindings()
-	bindables := c.view.GetBindables()
-	bindables.Method.Bind(bindings.Method)
-	bindables.URL.Bind(bindings.URL)
-	bindables.UseSSL.Bind(bindings.UseSSL)
-	bindables.BodyRaw.Bind(bindings.BodyRaw)
-	bindables.BodyType.Bind(bindings.BodyType)
-	bindables.Body.Bind(bindings.ResponseBody)
-	bindables.Time.Bind(bindings.ResponseTime)
-	bindables.Status.Bind(bindings.ResponseStatus)
-}
-
 func (c *controllerImpl) setSendEnabled(enabled bool) {
 	if enabled {
 		c.view.EnableSend()
@@ -147,7 +151,12 @@ func (c *controllerImpl) setSendEnabled(enabled bool) {
 
 func (c *controllerImpl) setLoading(loading bool) {
 	c.setSendEnabled(!loading)
-	c.SetLoading(loading)
+	c.view.SetLoading(loading)
+	if loading {
+		c.model.SetResponse(constants.UI_LOADING_RESPONSE_STATUS,
+			constants.UI_LOADING_RESPONSE_TIME,
+			constants.UI_LOADING_RESPONSE_BODY)
+	}
 }
 
 func (c *controllerImpl) sendButtonHandler() {
@@ -171,11 +180,11 @@ func (c *controllerImpl) sendRequestWorker(requestConfig httputils.RequestConfig
 
 	go func() {
 		fyne.Do(func() {
-			bodyType := c.model.GetBodyType()
+			bodyType := c.model.GetRequestBodyType()
 			if bodyType != constants.UI_BODY_TYPE_RAW {
 				return
 			}
-			c.FormatBodyRaw()
+			c.formatBodyRaw()
 		})
 	}()
 
@@ -187,7 +196,7 @@ func (c *controllerImpl) sendRequestWorker(requestConfig httputils.RequestConfig
 	}
 
 	fyne.Do(func() {
-		c.Set(responsePayload)
+		c.setResponse(responsePayload)
 	})
 }
 
@@ -205,7 +214,7 @@ func (c *controllerImpl) renderRequestConfig() (httputils.RequestConfig, error) 
 	headers := c.headersKeyValueCtrl.Get()
 	queryParams := c.queryParamsKeyValueCtrl.Get()
 	pathParams := c.pathParamsKeyValueCtrl.Get()
-	bodyType := c.model.GetBodyType()
+	bodyType := c.model.GetRequestBodyType()
 	bodyRaw := c.model.GetBodyRaw()
 	bodyForm := c.bodyFormKeyValueCtrl.Get()
 
@@ -222,7 +231,7 @@ func (c *controllerImpl) renderRequestConfig() (httputils.RequestConfig, error) 
 	}, nil
 }
 
-func (c *controllerImpl) SetBodyTypeSelectEnabled(enabled bool) {
+func (c *controllerImpl) setBodyTypeSelectEnabled(enabled bool) {
 	if enabled {
 		c.view.SetBodyTypeSelectEnabled(true)
 	} else {
@@ -231,12 +240,12 @@ func (c *controllerImpl) SetBodyTypeSelectEnabled(enabled bool) {
 	}
 }
 
-func (c *controllerImpl) FormatBodyRaw() {
+func (c *controllerImpl) formatBodyRaw() {
 	c.model.SetBodyRaw(utils.SmartFormat(c.model.GetBodyRaw()))
 }
 
-func (c *controllerImpl) showBodyType() {
-	bodyType := c.model.GetBodyType()
+func (c *controllerImpl) showRequestBodyType() {
+	bodyType := c.model.GetRequestBodyType()
 	if bodyType == constants.UI_BODY_TYPE_FORM {
 		c.bodyFormKeyValueCtrl.SetVisible(true)
 		c.view.SetBodyRawVisible(false)
@@ -251,16 +260,7 @@ func (c *controllerImpl) showBodyType() {
 	}
 }
 
-func (c *controllerImpl) SetLoading(loading bool) {
-	c.view.SetLoading(loading)
-	if loading {
-		c.model.SetResponse(constants.UI_LOADING_RESPONSE_STATUS,
-			constants.UI_LOADING_RESPONSE_TIME,
-			constants.UI_LOADING_RESPONSE_BODY)
-	}
-}
-
-func (c *controllerImpl) Set(responsePayload httputils.ResponsePayload) {
+func (c *controllerImpl) setResponse(responsePayload httputils.ResponsePayload) {
 	c.model.SetResponse(
 		responsePayload.Status,
 		responsePayload.Time,

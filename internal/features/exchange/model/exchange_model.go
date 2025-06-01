@@ -8,21 +8,19 @@ import (
 )
 
 type modelImpl struct {
-	methodBinding   binding.String
-	urlBinding      binding.String
-	useSSLBinding   binding.Bool
-	bodyTypeBinding binding.String
-	bodyRawBinding  binding.String
+	method          binding.String
+	url             binding.String
+	useSSL          binding.Bool
+	requestBodyType binding.String
+	requestBodyRaw  binding.String
 	responseStatus  binding.String
 	responseTime    binding.String
 	responseBody    binding.String
 }
 
 type Bindings struct {
-	Method, URL                                binding.String
-	UseSSL                                     binding.Bool
-	BodyType, BodyRaw                          binding.String
-	ResponseStatus, ResponseTime, ResponseBody binding.String
+	Method, URL, BodyType, BodyRaw, ResponseStatus, ResponseTime, ResponseBody binding.String
+	UseSSL                                                                     binding.Bool
 }
 
 type Model interface {
@@ -35,7 +33,7 @@ type Model interface {
 	SetUseSSL(useSSL bool)
 	SetMethodListener(handler func())
 	SetBodyTypeListener(handler func())
-	GetBodyType() string
+	GetRequestBodyType() string
 	GetBodyRaw() string
 	SetBodyType(bodyType string)
 	SetBodyRaw(bodyRaw string)
@@ -48,11 +46,11 @@ func NewModel() Model {
 	bodyTypeBind := binding.NewString()
 	bodyTypeBind.Set(constants.UI_BODY_TYPE_DEFAULT)
 	return &modelImpl{
-		methodBinding:   methodBinding,
-		urlBinding:      binding.NewString(),
-		useSSLBinding:   binding.NewBool(),
-		bodyTypeBinding: bodyTypeBind,
-		bodyRawBinding:  binding.NewString(),
+		method:          methodBinding,
+		url:             binding.NewString(),
+		useSSL:          binding.NewBool(),
+		requestBodyType: bodyTypeBind,
+		requestBodyRaw:  binding.NewString(),
 		responseStatus:  binding.NewString(),
 		responseTime:    binding.NewString(),
 		responseBody:    binding.NewString(),
@@ -61,11 +59,11 @@ func NewModel() Model {
 
 func (m *modelImpl) GetBindings() Bindings {
 	return Bindings{
-		Method:         m.methodBinding,
-		URL:            m.urlBinding,
-		UseSSL:         m.useSSLBinding,
-		BodyType:       m.bodyTypeBinding,
-		BodyRaw:        m.bodyRawBinding,
+		Method:         m.method,
+		URL:            m.url,
+		UseSSL:         m.useSSL,
+		BodyType:       m.requestBodyType,
+		BodyRaw:        m.requestBodyRaw,
 		ResponseStatus: m.responseStatus,
 		ResponseTime:   m.responseTime,
 		ResponseBody:   m.responseBody,
@@ -73,47 +71,47 @@ func (m *modelImpl) GetBindings() Bindings {
 }
 
 func (m *modelImpl) GetMethod() string {
-	method, _ := m.methodBinding.Get()
+	method, _ := m.method.Get()
 	return method
 }
 
 func (m *modelImpl) GetURL() string {
-	url, _ := m.urlBinding.Get()
+	url, _ := m.url.Get()
 	return url
 }
 
 func (m *modelImpl) GetUseSSL() bool {
-	useSSL, _ := m.useSSLBinding.Get()
+	useSSL, _ := m.useSSL.Get()
 	return useSSL
 }
 
 func (m *modelImpl) SetMethod(method string) {
-	m.methodBinding.Set(method)
+	m.method.Set(method)
 }
 
 func (m *modelImpl) SetURL(url string) {
-	m.urlBinding.Set(url)
+	m.url.Set(url)
 }
 
 func (m *modelImpl) SetUseSSL(useSSL bool) {
-	m.useSSLBinding.Set(useSSL)
+	m.useSSL.Set(useSSL)
 }
 
 func (m *modelImpl) SetMethodListener(handler func()) {
-	m.methodBinding.AddListener(binding.NewDataListener(handler))
+	m.method.AddListener(binding.NewDataListener(handler))
 }
 
 func (m *modelImpl) SetBodyTypeListener(handler func()) {
-	m.bodyTypeBinding.AddListener(binding.NewDataListener(handler))
+	m.requestBodyType.AddListener(binding.NewDataListener(handler))
 }
 
-func (m *modelImpl) GetBodyType() string {
-	bodyType, _ := m.bodyTypeBinding.Get()
+func (m *modelImpl) GetRequestBodyType() string {
+	bodyType, _ := m.requestBodyType.Get()
 	return bodyType
 }
 
 func (m *modelImpl) GetBodyRaw() string {
-	bodyRaw, _ := m.bodyRawBinding.Get()
+	bodyRaw, _ := m.requestBodyRaw.Get()
 	return bodyRaw
 }
 
@@ -121,11 +119,11 @@ func (m *modelImpl) SetBodyType(bodyType string) {
 	if !utils.ElementInSlice(constants.UIBodyTypes(), bodyType) {
 		bodyType = constants.UI_BODY_TYPE_DEFAULT
 	}
-	m.bodyTypeBinding.Set(bodyType)
+	m.requestBodyType.Set(bodyType)
 }
 
 func (m *modelImpl) SetBodyRaw(bodyRaw string) {
-	m.bodyRawBinding.Set(bodyRaw)
+	m.requestBodyRaw.Set(bodyRaw)
 }
 
 func (m *modelImpl) SetResponse(status, time, body string) {
