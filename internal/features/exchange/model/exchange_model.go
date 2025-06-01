@@ -13,12 +13,16 @@ type modelImpl struct {
 	useSSLBinding   binding.Bool
 	bodyTypeBinding binding.String
 	bodyRawBinding  binding.String
+	responseStatus  binding.String
+	responseTime    binding.String
+	responseBody    binding.String
 }
 
 type Bindings struct {
-	Method, URL       binding.String
-	UseSSL            binding.Bool
-	BodyType, BodyRaw binding.String
+	Method, URL                                binding.String
+	UseSSL                                     binding.Bool
+	BodyType, BodyRaw                          binding.String
+	ResponseStatus, ResponseTime, ResponseBody binding.String
 }
 
 type Model interface {
@@ -35,6 +39,7 @@ type Model interface {
 	GetBodyRaw() string
 	SetBodyType(bodyType string)
 	SetBodyRaw(bodyRaw string)
+	SetResponse(responseStatus, responseTime, responseBody string)
 }
 
 func NewModel() Model {
@@ -48,16 +53,22 @@ func NewModel() Model {
 		useSSLBinding:   binding.NewBool(),
 		bodyTypeBinding: bodyTypeBind,
 		bodyRawBinding:  binding.NewString(),
+		responseStatus:  binding.NewString(),
+		responseTime:    binding.NewString(),
+		responseBody:    binding.NewString(),
 	}
 }
 
 func (m *modelImpl) GetBindings() Bindings {
 	return Bindings{
-		Method:   m.methodBinding,
-		URL:      m.urlBinding,
-		UseSSL:   m.useSSLBinding,
-		BodyType: m.bodyTypeBinding,
-		BodyRaw:  m.bodyRawBinding,
+		Method:         m.methodBinding,
+		URL:            m.urlBinding,
+		UseSSL:         m.useSSLBinding,
+		BodyType:       m.bodyTypeBinding,
+		BodyRaw:        m.bodyRawBinding,
+		ResponseStatus: m.responseStatus,
+		ResponseTime:   m.responseTime,
+		ResponseBody:   m.responseBody,
 	}
 }
 
@@ -115,4 +126,10 @@ func (m *modelImpl) SetBodyType(bodyType string) {
 
 func (m *modelImpl) SetBodyRaw(bodyRaw string) {
 	m.bodyRawBinding.Set(bodyRaw)
+}
+
+func (m *modelImpl) SetResponse(status, time, body string) {
+	m.responseStatus.Set(status)
+	m.responseTime.Set(time)
+	m.responseBody.Set(body)
 }

@@ -1,6 +1,7 @@
 package view
 
 import (
+	"dumbky/internal/components"
 	"dumbky/internal/constants"
 	"dumbky/internal/features"
 	"dumbky/internal/validators"
@@ -22,12 +23,19 @@ type viewImpl struct {
 	bodyRawEntry     *widget.Entry
 	bodyTypeSelect   *widget.Select
 	bodyContentStack *fyne.Container
+	status           *components.FancyLabel
+	time             *components.FancyLabel
+	body             *components.FancyLabel
+
+	loadingBar  *widget.ProgressBarInfinite
+	statusStack *fyne.Container
 }
 
 type Bindables struct {
-	Method, URL       features.StringBindable
-	UseSSL            features.BoolBindable
-	BodyType, BodyRaw features.StringBindable
+	Method, URL        features.StringBindable
+	UseSSL             features.BoolBindable
+	BodyType, BodyRaw  features.StringBindable
+	Status, Time, Body features.StringBindable
 }
 
 type View interface {
@@ -40,10 +48,19 @@ type View interface {
 	SetBodyRawVisible(visible bool)
 	SetBodyTypeSelectEnabled(enabled bool)
 	Validate() error
+	SetLoading(loading bool)
 }
 
-func NewView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI, responseUI fyne.CanvasObject) View {
+func styleLabel(label *components.FancyLabel) {
+	label.SetSelectable(true)
+	label.SetWrapping(fyne.TextWrapWord)
+	label.SetTextStyle(fyne.TextStyle{Monospace: true})
+	label.Refresh()
+}
 
+func NewView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI fyne.CanvasObject) View {
+
+	// header
 	methodSelect := widget.NewSelect(constants.HttpMethods(), nil)
 	urlEntry := widget.NewEntry()
 	urlEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_URL)
@@ -51,36 +68,44 @@ func NewView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI, responseUI fyne
 	sslCheck := widget.NewCheck(constants.UI_LABEL_SSL, nil)
 	sendButton := widget.NewButton(constants.UI_LABEL_SEND, nil)
 	sendButton.Icon = sendButton.Theme().Icon(theme.IconNameMailSend)
-
 	methodSelect.SetSelected(constants.HTTP_METHOD_DEFAULT)
-
 	sslSend := container.NewHBox(sslCheck, sendButton)
 	headerUI := container.NewBorder(nil, nil, methodSelect, sslSend, urlEntry)
 
+	// request pane
 	queryParamsTab := container.NewTabItem(constants.UI_LABEL_QUERY_PARAMETERS, queryParamsUI)
 	pathParamsTab := container.NewTabItem(constants.UI_LABEL_PATH_PARAMETERS, pathParamsUI)
 	headersTab := container.NewTabItem(constants.UI_LABEL_HEADERS, headersUI)
-
 	bodyTypeSelect := widget.NewSelect(constants.UIBodyTypes(), nil)
 	bodyRawEntry := widget.NewMultiLineEntry()
 	bodyRawEntry.TextStyle.Monospace = true
 	bodyRawEntry.SetPlaceHolder(constants.UI_PLACEHOLDER_BODY_TYPE_RAW)
-
 	bodyContentStack := container.NewStack(bodyFormUI, bodyRawEntry)
-
 	bodyTypeSelect.SetSelected(constants.UI_BODY_TYPE_DEFAULT)
-
 	bodyRawEntry.Validator = validators.ValidateRawBodyContent
-
 	bodyUI := container.NewBorder(bodyTypeSelect, nil, nil, nil, bodyContentStack)
-
 	bodyTab := container.NewTabItem(constants.UI_LABEL_BODY, bodyUI)
-
 	tabs := container.NewAppTabs(queryParamsTab, pathParamsTab, headersTab, bodyTab)
 	requestUI := container.NewBorder(nil, nil, nil, nil, tabs)
 
+	// response pane
+	statusEntry := components.NewFancyLabel(constants.UI_PLACEHOLDER_RESPONSE_STATUS)
+	timeEntry := components.NewFancyLabel(constants.UI_PLACEHOLDER_RESPONSE_TIME)
+	bodyEntry := components.NewFancyLabel(constants.UI_PLACEHOLDER_RESPONSE_BODY)
+	styleLabel(statusEntry)
+	styleLabel(timeEntry)
+	styleLabel(bodyEntry)
+	loadingBar := widget.NewProgressBarInfinite()
+	loadingBar.Hide()
+	statusStack := container.NewVBox(loadingBar, statusEntry)
+	info := container.NewVBox(statusStack, timeEntry)
+	scroll := components.NewScrollInterceptorWrapper(bodyEntry)
+	responseUI := container.NewBorder(info, nil, nil, nil, scroll)
+
+	// final UI
 	requestResponseView := container.NewHSplit(requestUI, responseUI)
 	ui := container.NewBorder(headerUI, nil, nil, nil, requestResponseView)
+
 	return &viewImpl{
 		ui:               ui,
 		sendButton:       sendButton,
@@ -90,6 +115,11 @@ func NewView(queryParamsUI, pathParamsUI, headersUI, bodyFormUI, responseUI fyne
 		bodyRawEntry:     bodyRawEntry,
 		bodyTypeSelect:   bodyTypeSelect,
 		bodyContentStack: bodyContentStack,
+		status:           statusEntry,
+		time:             timeEntry,
+		body:             bodyEntry,
+		loadingBar:       loadingBar,
+		statusStack:      statusStack,
 	}
 }
 
@@ -104,6 +134,9 @@ func (v *viewImpl) GetBindables() Bindables {
 		UseSSL:   v.sslCheck,
 		BodyType: v.bodyTypeSelect,
 		BodyRaw:  v.bodyRawEntry,
+		Status:   v.status,
+		Time:     v.time,
+		Body:     v.body,
 	}
 }
 
@@ -150,4 +183,17 @@ func (v *viewImpl) Validate() error {
 		return err
 	}
 	return v.bodyRawEntry.Validate()
+}
+
+func (v *viewImpl) SetLoading(loading bool) {
+	if loading {
+		v.status.Hide()
+		v.loadingBar.Start()
+		v.loadingBar.Show()
+	} else {
+		v.loadingBar.Stop()
+		v.loadingBar.Hide()
+		v.status.Show()
+	}
+	v.statusStack.Refresh()
 }

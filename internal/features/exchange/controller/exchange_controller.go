@@ -5,7 +5,6 @@ import (
 	"dumbky/internal/features/exchange/model"
 	"dumbky/internal/features/exchange/view"
 	"dumbky/internal/features/keyvalueeditor"
-	"dumbky/internal/features/response"
 	"dumbky/internal/global"
 	"dumbky/internal/httputils"
 	"dumbky/internal/log"
@@ -20,11 +19,8 @@ import (
 )
 
 type controllerImpl struct {
-	model model.Model
-	view  view.View
-
-	responseCtrl response.ResponseController
-
+	model                   model.Model
+	view                    view.View
 	queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController
 	pathParamsKeyValueCtrl  keyvalueeditor.KeyValueEditorController
 	headersKeyValueCtrl     keyvalueeditor.KeyValueEditorController
@@ -35,13 +31,11 @@ func NewController(
 	queryParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
 	pathParamsKeyValueCtrl keyvalueeditor.KeyValueEditorController,
 	headersKeyValueCtrl keyvalueeditor.KeyValueEditorController,
-	bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController,
-	responseCtrl response.ResponseController) *controllerImpl {
+	bodyFormKeyValueCtrl keyvalueeditor.KeyValueEditorController) *controllerImpl {
 
 	c := &controllerImpl{
 		model:                   model.NewModel(),
-		view:                    view.NewView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyFormKeyValueCtrl.CanvasObject(), responseCtrl.CanvasObject()),
-		responseCtrl:            responseCtrl,
+		view:                    view.NewView(queryParamsKeyValueCtrl.CanvasObject(), pathParamsKeyValueCtrl.CanvasObject(), headersKeyValueCtrl.CanvasObject(), bodyFormKeyValueCtrl.CanvasObject()),
 		queryParamsKeyValueCtrl: queryParamsKeyValueCtrl,
 		pathParamsKeyValueCtrl:  pathParamsKeyValueCtrl,
 		headersKeyValueCtrl:     headersKeyValueCtrl,
@@ -110,7 +104,7 @@ func (c *controllerImpl) LoadState(exchangeState state.ExchangeState) {
 	c.model.SetBodyRaw(exchangeState.BodyRaw)
 }
 
-func (c *controllerImpl) Validate() error {
+func (c *controllerImpl) validate() error {
 	err := c.queryParamsKeyValueCtrl.Validate()
 	if err != nil {
 		return err
@@ -138,6 +132,9 @@ func (c *controllerImpl) bindAll() {
 	bindables.UseSSL.Bind(bindings.UseSSL)
 	bindables.BodyRaw.Bind(bindings.BodyRaw)
 	bindables.BodyType.Bind(bindings.BodyType)
+	bindables.Body.Bind(bindings.ResponseBody)
+	bindables.Time.Bind(bindings.ResponseTime)
+	bindables.Status.Bind(bindings.ResponseStatus)
 }
 
 func (c *controllerImpl) setSendEnabled(enabled bool) {
@@ -150,13 +147,13 @@ func (c *controllerImpl) setSendEnabled(enabled bool) {
 
 func (c *controllerImpl) setLoading(loading bool) {
 	c.setSendEnabled(!loading)
-	c.responseCtrl.SetLoading(loading)
+	c.SetLoading(loading)
 }
 
 func (c *controllerImpl) sendButtonHandler() {
 	c.setLoading(true)
 
-	requestPayload, err := c.RenderRequestConfig()
+	requestPayload, err := c.renderRequestConfig()
 	if err != nil {
 		// TODO: error feedback
 		log.Error(err)
@@ -190,12 +187,12 @@ func (c *controllerImpl) sendRequestWorker(requestConfig httputils.RequestConfig
 	}
 
 	fyne.Do(func() {
-		c.responseCtrl.Set(responsePayload)
+		c.Set(responsePayload)
 	})
 }
 
-func (c *controllerImpl) RenderRequestConfig() (httputils.RequestConfig, error) {
-	err := c.Validate()
+func (c *controllerImpl) renderRequestConfig() (httputils.RequestConfig, error) {
+	err := c.validate()
 	if err != nil {
 		log.Warn(err)
 		return httputils.RequestConfig{}, err
@@ -252,4 +249,20 @@ func (c *controllerImpl) showBodyType() {
 	} else {
 		log.Error(errors.New("invalid body type"))
 	}
+}
+
+func (c *controllerImpl) SetLoading(loading bool) {
+	c.view.SetLoading(loading)
+	if loading {
+		c.model.SetResponse(constants.UI_LOADING_RESPONSE_STATUS,
+			constants.UI_LOADING_RESPONSE_TIME,
+			constants.UI_LOADING_RESPONSE_BODY)
+	}
+}
+
+func (c *controllerImpl) Set(responsePayload httputils.ResponsePayload) {
+	c.model.SetResponse(
+		responsePayload.Status,
+		responsePayload.Time,
+		utils.SmartFormat(responsePayload.Body))
 }
